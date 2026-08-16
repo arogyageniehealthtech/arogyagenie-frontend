@@ -4,17 +4,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Stethoscope, Search, Filter, CheckCircle, XCircle, Phone, MapPin } from "lucide-react";
+import { Pill, Search, Filter, CheckCircle, XCircle, Phone, MapPin } from "lucide-react";
 import { DashboardLayout } from "../component/AdminLayout";
 import { useToast } from "@/hooks/use-toast";
 import type { AdminUser } from "../data/mockAdminData";
 
-export function AdminDoctorsPage() {
+export function AdminPharmaciesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data: users, isLoading } = useListAdminUsers({
-    role: "doctor",
+    role: "pharmacy",
     search: searchQuery.length > 0 ? searchQuery : undefined,
   });
 
@@ -27,7 +27,7 @@ export function AdminDoctorsPage() {
       {
         onSuccess: () => {
           toast({
-            title: "Doctor Status Updated",
+            title: "Pharmacy Status Updated",
             description: `Account status updated to ${status}.`,
             variant: "success",
           });
@@ -35,7 +35,7 @@ export function AdminDoctorsPage() {
         onError: (err: Error) => {
           toast({
             title: "Update Failed",
-            description: err instanceof Error ? err.message : "Error updating doctor status",
+            description: err instanceof Error ? err.message : "Error updating pharmacy status",
             variant: "destructive",
           });
         },
@@ -43,7 +43,7 @@ export function AdminDoctorsPage() {
     );
   };
 
-  const filteredDoctors = users?.filter((u: AdminUser) => {
+  const filteredPharmacies = users?.filter((u: AdminUser) => {
     if (statusFilter === "all") return true;
     return u.status === statusFilter;
   });
@@ -52,8 +52,8 @@ export function AdminDoctorsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Doctor Provider Directory</h1>
-          <p className="text-slate-500 mt-1">Review medical licenses, clinical specialties, and doctor account status.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Pharmacy Provider Directory</h1>
+          <p className="text-slate-500 mt-1">Manage partner pharmacies, view locations, contact info, and account status.</p>
         </div>
 
         {/* Search & Filter Bar */}
@@ -63,7 +63,7 @@ export function AdminDoctorsPage() {
               <div className="relative w-full max-w-sm">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <Input
-                  placeholder="Search doctor by name or email..."
+                  placeholder="Search pharmacy by name or email..."
                   value={searchQuery}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -88,81 +88,80 @@ export function AdminDoctorsPage() {
           </CardContent>
         </Card>
 
-        {/* Doctors Grid */}
+        {/* Pharmacies Grid */}
         {isLoading ? (
-          <div className="py-16 text-center text-slate-500">Loading doctor directory...</div>
-        ) : !filteredDoctors || filteredDoctors.length === 0 ? (
+          <div className="py-16 text-center text-slate-500">Loading pharmacy directory...</div>
+        ) : !filteredPharmacies || filteredPharmacies.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-slate-500">
-              <Stethoscope className="h-12 w-12 text-slate-300 mb-4" />
-              <p className="text-lg font-medium text-slate-700">No doctors found</p>
+              <Pill className="h-12 w-12 text-slate-300 mb-4" />
+              <p className="text-lg font-medium text-slate-700">No pharmacies found</p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDoctors.map((d: AdminUser) => (
-              <Card key={d.id} className="overflow-hidden hover:shadow-md transition-shadow">
+            {filteredPharmacies.map((p: AdminUser) => (
+              <Card key={p.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-lg">
-                        Dr
+                      <div className="h-12 w-12 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center font-bold text-lg">
+                        <Pill className="h-6 w-6" />
                       </div>
                       <div>
                         <h3 className="font-bold text-lg text-slate-900">
-                          Dr. {d.firstName || d.lastName ? `${d.firstName ?? ""} ${d.lastName ?? ""}`.trim() : d.email}
+                          {p.firstName || p.lastName ? `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() : p.name || p.email}
                         </h3>
-                        <p className="text-xs text-blue-700 font-semibold">{d.specialty || "General Physician"}</p>
-                        <p className="text-xs text-slate-500">{d.email}</p>
+                        <p className="text-xs text-slate-500">{p.email}</p>
                       </div>
                     </div>
                     <span
                       className={`text-xs px-2 py-0.5 rounded font-semibold uppercase ${
-                        d.status === "active"
+                        p.status === "active"
                           ? "bg-green-100 text-green-800"
-                          : d.status === "suspended"
+                          : p.status === "suspended"
                           ? "bg-red-100 text-red-800"
                           : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {d.status}
+                      {p.status}
                     </span>
                   </div>
 
                   <div className="space-y-1.5 text-xs text-slate-600 border-t pt-3">
-                    {d.phone && (
+                    {p.phone && (
                       <p className="flex items-center gap-1.5">
                         <Phone className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{d.phone}</span>
+                        <span>{p.phone}</span>
                       </p>
                     )}
-                    {d.address && (
+                    {p.address && (
                       <p className="flex items-center gap-1.5">
                         <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{d.address}</span>
+                        <span>{p.address}</span>
                       </p>
                     )}
-                    <p className="text-slate-400 pt-1">Registered: {new Date(d.createdAt).toLocaleDateString()}</p>
+                    <p className="text-slate-400 pt-1">Registered: {new Date(p.createdAt).toLocaleDateString()}</p>
                   </div>
 
                   <div className="flex items-center gap-2 border-t pt-3">
-                    {d.status !== "active" && (
+                    {p.status !== "active" && (
                       <Button
                         size="sm"
                         variant="outline"
                         className="bg-white text-green-600 hover:text-green-700 h-8 gap-1 flex-1 cursor-pointer"
-                        onClick={() => handleUpdateStatus(d.id, "active")}
+                        onClick={() => handleUpdateStatus(p.id, "active")}
                         disabled={updateStatus.isPending}
                       >
                         <CheckCircle className="h-3.5 w-3.5" /> Activate
                       </Button>
                     )}
-                    {d.status !== "suspended" && (
+                    {p.status !== "suspended" && (
                       <Button
                         size="sm"
                         variant="outline"
                         className="bg-white text-red-600 hover:text-red-700 h-8 gap-1 flex-1 cursor-pointer"
-                        onClick={() => handleUpdateStatus(d.id, "suspended")}
+                        onClick={() => handleUpdateStatus(p.id, "suspended")}
                         disabled={updateStatus.isPending}
                       >
                         <XCircle className="h-3.5 w-3.5" /> Suspend
@@ -179,5 +178,5 @@ export function AdminDoctorsPage() {
   );
 }
 
-export const DoctorsPage = AdminDoctorsPage;
-export default AdminDoctorsPage;
+export const PharmaciesPage = AdminPharmaciesPage;
+export default AdminPharmaciesPage;

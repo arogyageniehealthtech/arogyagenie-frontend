@@ -10,7 +10,6 @@ export const getAppointments = async (): Promise<Appointment[]> => {
   return [...MOCK_APPOINTMENTS];
 };
 
-export const toggleFavoriteDoctor = async (doctorId: string, isFavorite: boolean): Promise<void> => {
+export const toggleFavoriteDoctor = async (_doctorId: string, _isFavorite: boolean): Promise<void> => {
   await delay(300);
-
 };

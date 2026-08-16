@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { Loader2 } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn } from '@/lib/utils';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /**
    * The visual style of the button.
    * @default "primary"
    */
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'success';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'default';
   /**
    * The size of the button.
    * @default "md"
@@ -48,14 +48,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }, 
     ref
   ) => {
-    // Determine whether to render a standard button or use Radix Slot
     const Comp = asChild ? Slot : 'button';
 
-    // Base classes applied to all buttons
-    const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-[18px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6D5DF6] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]";
+    const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-[14px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6D5DF6] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] cursor-pointer";
 
-    // Variant mappings
-    const variants = {
+    const variants: Record<string, string> = {
+      default: "bg-[#6D5DF6] text-white shadow-sm hover:bg-[#5A4AD4]",
       primary: "bg-[#6D5DF6] text-white shadow-[0_4px_20px_0_rgba(109,93,246,0.2)] hover:bg-[#5A4AD4] hover:shadow-[0_10px_40px_-10px_rgba(109,93,246,0.5)]",
       secondary: "bg-[#8A7DFF]/10 text-[#6D5DF6] hover:bg-[#8A7DFF]/20",
       outline: "border border-[#E2E8F0] bg-white text-[#1E293B] shadow-[0_4px_20px_0_rgba(0,0,0,0.05)] hover:bg-slate-50 hover:border-[#6D5DF6]/30",
@@ -64,7 +62,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       success: "bg-[#34C759] text-white shadow-sm hover:bg-[#34C759]/90 shadow-[0_4px_20px_0_rgba(52,199,89,0.2)]",
     };
 
-    // Size mappings
     const sizes = {
       sm: "h-9 px-4 text-xs",
       md: "h-11 px-6 py-2.5 text-sm",
@@ -78,13 +75,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         className={cn(
           baseStyles,
-          variants[variant],
+          variants[variant] || variants.default,
           sizes[size],
           className
         )}
         {...props}
       >
-        {/* If asChild is true, Slot expects a single child and passes props directly to it */}
         {asChild ? (
           children
         ) : (

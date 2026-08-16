@@ -1,52 +1,46 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes.constants.ts";
-// import { ROLES } from "../constants/roles.constants.ts";
-// import { ProtectedRoute } from "../routes/ProtectedRoute.tsx";
 import { GuestRoute } from "../routes/GuestRoute.tsx";
-// import { RoleBasedRoute } from "../routes/RoleBasedRoute.tsx";
 import { PageLoader } from "../components/ui/PageLoader.tsx";
 
-
-
 // ================================LAYOUT============================================================
-// const DoctorLayout = lazy(()=>import ("../layouts/DoctorLayout.tsx"))
-const PatientLayout = lazy(()=>import ("../layouts/PatientLayout.tsx"))
-// const AdminLayout = lazy(()=>import ("../layouts/AdminLayout.tsx"))
-// ===================================================================================================
-
+const PatientLayout = lazy(() => import("../layouts/PatientLayout.tsx"));
+const AdminLayout = lazy(() => import("../layouts/AdminLayout.tsx"));
 
 // ====================================AUTH===========================================================
-const LoginPage = lazy(() => import ("../features/auth/pages/LoginPage.tsx"));
+const LoginPage = lazy(() => import("../features/auth/pages/LoginPage.tsx"));
 const RegisterPage = lazy(() => import("../features/auth/pages/RegisterPage.tsx"));
 const ForgotPasswordPage = lazy(() => import("../features/auth/pages/ForgotPasswordPage.tsx"));
 const ResetPasswordPage = lazy(() => import("../features/auth/pages/ResetPasswordPage.tsx"));
 const VerifyOtpPage = lazy(() => import("../features/auth/pages/VerifyOtpPage.tsx"));
-// const ProfileSetupPage = lazy(() => import("../features/auth/pages/ProfileSetupPage.tsx"));
-
-
 
 // =====================================PATIENT=========================================================
 const DashboardPage = lazy(() => import("../features/patient/pages/DashboardPage.tsx"));
 const AiChatPage = lazy(() => import("../features/patient/pages/AiChatPage.tsx"));
-const CarePage = lazy(()=> import("../features/patient/pages/CarePage.tsx"))
+const CarePage = lazy(() => import("../features/patient/pages/CarePage.tsx"));
 const ProfilePage = lazy(() => import("../features/patient/pages/ProfilePage.tsx"));
 const AppointmentsPage = lazy(() => import("../features/patient/pages/AppointmentsPage.tsx"));
 const HospitalDetailsPage = lazy(() => import("../features/patient/pages/HospitalDetailsPage.tsx"));
 const Checkhospital = lazy(() => import("../features/patient/pages/Checkhospital.tsx"));
 
-
-
-
+// =====================================ADMIN===========================================================
+const AdminDashboardPage = lazy(() => import("../features/admin/pages/AdminDashboardPage.tsx"));
+const PendingApplicationPage = lazy(() => import("../features/admin/pages/PendingApplicationPage.tsx"));
+const UsersPage = lazy(() => import("../features/admin/pages/UsersPage.tsx"));
+const PatientPage = lazy(() => import("../features/admin/pages/PatientPage.tsx"));
+const DoctorsPage = lazy(() => import("../features/admin/pages/DoctorsPage.tsx"));
+const DiagnosticCenterPage = lazy(() => import("../features/admin/pages/DiagnosticCenterPage.tsx"));
+const PharmaciesPage = lazy(() => import("../features/admin/pages/Pharmacies.tsx"));
+const AdminAppointmentsPage = lazy(() => import("../features/admin/pages/AppointmentsPage.tsx"));
+const SettingsPage = lazy(() => import("../features/admin/pages/SettingsPage.tsx"));
+const AiMonitoringPage = lazy(() => import("../features/admin/pages/AiMonitoringPage.tsx"));
+const HealthReportsPage = lazy(() => import("../features/admin/pages/HealthReportsPage.tsx"));
+const NotificationsPage = lazy(() => import("../features/admin/pages/NotificationsPage.tsx"));
 
 // ==============================OTHERS=================================================================
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage.tsx"));
 const UnauthorizedPage = lazy(() => import("../pages/UnauthorizedPage.tsx"));
-// const Test = lazy(() => import("../Test.tsx"));
-
-
-
-
 
 function withSuspense(element: React.ReactNode) {
   return <Suspense fallback={<PageLoader />}>{element}</Suspense>;
@@ -57,7 +51,7 @@ export const router = createBrowserRouter([
   {
     element: <GuestRoute />,
     children: [
-      { path: ROUTES.AUTH.LOGIN , element: withSuspense(<LoginPage />) },
+      { path: ROUTES.AUTH.LOGIN, element: withSuspense(<LoginPage />) },
       { path: ROUTES.AUTH.REGISTER, element: withSuspense(<RegisterPage />) },
       { path: ROUTES.AUTH.FORGOT_PASSWORD, element: withSuspense(<ForgotPasswordPage />) },
       { path: ROUTES.AUTH.RESET_PASSWORD, element: withSuspense(<ResetPasswordPage />) },
@@ -67,16 +61,13 @@ export const router = createBrowserRouter([
 
   // --- Authenticated, but outside the dashboard chrome ----------------
   {
-    // element: <ProtectedRoute />,
     children: [{ path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) }],
   },
 
   // --- Authenticated + PATIENT role, inside the dashboard shell -------
   {
-    // element: <ProtectedRoute />,
     children: [
       {
-        // element: <RoleBasedRoute allowedRoles={[ROLES.PATIENT]} />,
         children: [
           {
             element: <PatientLayout />,
@@ -85,57 +76,37 @@ export const router = createBrowserRouter([
               { path: ROUTES.PATIENT.AI_CHAT, element: withSuspense(<AiChatPage />) },
               { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
               { path: ROUTES.PATIENT.CARE, element: withSuspense(<CarePage />) },
-              { path: ROUTES.PATIENT.ALLHOSPITAL, element: withSuspense(<Checkhospital/>) },
+              { path: ROUTES.PATIENT.ALLHOSPITAL, element: withSuspense(<Checkhospital />) },
               { path: ROUTES.PATIENT.APPOINTMENTS(1), element: withSuspense(<AppointmentsPage />) },
               { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDetailsPage />) },
-              // { path: ROUTES.PATIENT.APPOINTMENTS(1), element: withSuspense(<AppointmentsPage />) },
-             
             ],
           },
         ],
       },
     ],
   },
-  // {
-  //   element: <ProtectedRoute />,
-  //   children: [
-  //     {
-  //       element: <RoleBasedRoute allowedRoles={[ROLES.DOCTOR]} />,
-  //       children: [
-  //         {
-  //           element: <DoctorLayout />, 
-  //           children: [
-  //             { path: ROUTES.DOCTOR.DASHBOARD, element: withSuspense(<DoctorDashboard />) },
-  //             { path: ROUTES.DOCTOR.SCHEDULE, element: withSuspense(<DoctorSchedule />) },
-              
-  //           ],
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
-  // {
-  //   element: <ProtectedRoute />,
-  //   children: [
-  //     {
-  //       element: <RoleBasedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]} />,
-  //       children: [
-  //         {
-  //           element: <AdminLayout />, // Admin-specific Sidebar & Header
-  //           children: [
-  //             { path: ROUTES.ADMIN.SYSTEM_DASHBOARD, element: withSuspense(<AdminDashboard />) },
-  //             
-  //           ],
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
 
- 
+  // --- ADMIN PORTAL ROUTES --------------------------------------------
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: <Navigate to={ROUTES.ADMIN.DASHBOARD} replace /> },
+      { path: ROUTES.ADMIN.DASHBOARD, element: withSuspense(<AdminDashboardPage />) },
+      { path: ROUTES.ADMIN.PENDING_APPLICATIONS, element: withSuspense(<PendingApplicationPage />) },
+      { path: ROUTES.ADMIN.USERS, element: withSuspense(<UsersPage />) },
+      { path: ROUTES.ADMIN.PATIENTS, element: withSuspense(<PatientPage />) },
+      { path: ROUTES.ADMIN.DOCTORS, element: withSuspense(<DoctorsPage />) },
+      { path: ROUTES.ADMIN.DIAGNOSTIC_CENTERS, element: withSuspense(<DiagnosticCenterPage />) },
+      { path: ROUTES.ADMIN.PHARMACIES, element: withSuspense(<PharmaciesPage />) },
+      { path: ROUTES.ADMIN.APPOINTMENTS, element: withSuspense(<AdminAppointmentsPage />) },
+      { path: ROUTES.ADMIN.SETTINGS, element: withSuspense(<SettingsPage />) },
+      { path: ROUTES.ADMIN.AI_MONITORING, element: withSuspense(<AiMonitoringPage />) },
+      { path: ROUTES.ADMIN.HEALTH_REPORTS, element: withSuspense(<HealthReportsPage />) },
+      { path: ROUTES.ADMIN.NOTIFICATIONS, element: withSuspense(<NotificationsPage />) },
+    ],
+  },
 
   { path: ROUTES.COMMON.UNAUTHORIZED, element: withSuspense(<UnauthorizedPage />) },
   { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<NotFoundPage />) },
-  
-
 ]);

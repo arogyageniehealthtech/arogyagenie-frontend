@@ -1,11 +1,7 @@
+import { DashboardLayout } from "../features/admin/component/AdminLayout";
 
-
-function AdminLayout() {
-  return (
-    <div>
-      
-    </div>
-  )
+export function AdminLayout() {
+  return <DashboardLayout />;
 }
 
-export default AdminLayout
+export default AdminLayout;

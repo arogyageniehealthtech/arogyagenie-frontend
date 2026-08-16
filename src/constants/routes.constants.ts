@@ -1,5 +1,4 @@
 export const ROUTES = {
-
   AUTH: {
     LOGIN: '/login',
     REGISTER: '/register',
@@ -8,27 +7,36 @@ export const ROUTES = {
     RESET_PASSWORD: '/reset-password',
   },
 
-  
   PATIENT: {
     DASHBOARD: '/dashboard',
     AI_CHAT: '/ai-health-assistant',
     CARE: '/care',
-    APPOINTMENTS: (doctorId:string | number ) => `/appointments/${doctorId}`,
+    APPOINTMENTS: (doctorId: string | number) => `/appointments/${doctorId}`,
     MEDICINE_DELIVERY: '/medicine-delivery',
-    PROFILE:'/profile',
-    ALLHOSPITAL:'/Checkhospital',
-    HOSPITAL : '/hospitals',
-    AMBULANCE:'/ambulance'
+    PROFILE: '/profile',
+    ALLHOSPITAL: '/Checkhospital',
+    HOSPITAL: '/hospitals',
+    AMBULANCE: '/ambulance',
+    EMERGENCY: '/ambulance',
   },
 
- 
   DOCTOR: {
     DASHBOARD: '/doctor-dashboard',
   },
 
-
   ADMIN: {
-
+    DASHBOARD: '/admin/dashboard',
+    PENDING_APPLICATIONS: '/admin/pending-applications',
+    USERS: '/admin/users',
+    PATIENTS: '/admin/patients',
+    DOCTORS: '/admin/doctors',
+    DIAGNOSTIC_CENTERS: '/admin/diagnostic-centers',
+    PHARMACIES: '/admin/pharmacies',
+    APPOINTMENTS: '/admin/appointments',
+    SETTINGS: '/admin/settings',
+    AI_MONITORING: '/admin/ai-monitoring',
+    HEALTH_REPORTS: '/admin/health-reports',
+    NOTIFICATIONS: '/admin/notifications',
   },
 
   COMMON: {
