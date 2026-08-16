@@ -1,0 +1,17 @@
+
+export const ROLES = {
+  PATIENT: 'PATIENT',
+  DOCTOR: 'DOCTOR',
+  DELIVERY_PARTER : 'DELIVERY_PARTER',
+  ORHANIZATION: {
+    DIAGNOSTICIAN:'DIAGNOSTICIAN',
+    LAB_RECEIPTIONIST :'RECEIPTIONIST'},
+  PHARMACY:'SELLER',
+  ADMIN: {
+    SUPERADMIN:'SUPERADMIN',
+    ADMIN:'ADMIN'
+  }
+} as const;
+
+
+export type UserRole = typeof ROLES[keyof typeof ROLES];

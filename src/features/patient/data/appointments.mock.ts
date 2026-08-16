@@ -1,0 +1,53 @@
+import type { Appointment } from "../types/appointment.types";
+import { APPOINTMENT_STATUS } from "../../../constants/appointment.constants";
+
+export const MOCK_APPOINTMENTS: Appointment[] = [
+  {
+    id: "apt_001",
+    doctorId: "doc_001",
+    doctorName: "Dr. Sarah Johnson",
+    doctorSpecialty: "Cardiologist",
+    doctorImage: "https://i.pravatar.cc/150?u=sarah",
+    hospitalName: "CarePlus Hospital",
+    appointmentDate: "2025-05-24T10:30:00Z",
+    appointmentTime: "10:30 AM",
+    status: APPOINTMENT_STATUS.CONFIRMED,
+    isFavorite: true,
+  },
+  {
+    id: "apt_002",
+    doctorId: "doc_002",
+    doctorName: "Dr. Michael Brown",
+    doctorSpecialty: "General Physician",
+    doctorImage: "https://i.pravatar.cc/150?u=michael",
+    hospitalName: "City Medical Center",
+    appointmentDate: "2025-05-28T11:00:00Z",
+    appointmentTime: "11:00 AM",
+    status: APPOINTMENT_STATUS.UPCOMING,
+    isFavorite: false,
+  },
+  {
+    id: "apt_003",
+    doctorId: "doc_003",
+    doctorName: "Dr. Emily Chen",
+    doctorSpecialty: "Dermatologist",
+    doctorImage: "https://i.pravatar.cc/150?u=emily",
+    hospitalName: "Skin Care Clinic",
+    appointmentDate: "2025-05-10T09:00:00Z",
+    appointmentTime: "09:00 AM",
+    status: APPOINTMENT_STATUS.COMPLETED,
+    isFavorite: false,
+  },
+  {
+    id: "apt_004",
+    doctorId: "doc_004",
+    doctorName: "Dr. Robert Smith",
+    doctorSpecialty: "Orthopedics",
+    doctorImage: "https://i.pravatar.cc/150?u=robert",
+    hospitalName: "OrthoPlus Center",
+    appointmentDate: "2025-05-15T14:00:00Z",
+    appointmentTime: "02:00 PM",
+    status: APPOINTMENT_STATUS.CANCELLED,
+    isFavorite: false,
+  },
+];

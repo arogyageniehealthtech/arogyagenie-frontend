@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+:root {
+  --color-arogya-dark: #13102F;
+  --color-arogya-purple: #5B21B6;
+  --color-arogya-background: #F8FAFC;
+  --color-arogya-text: #14152B;
+}
