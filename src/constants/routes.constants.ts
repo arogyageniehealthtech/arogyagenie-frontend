@@ -39,6 +39,23 @@ export const ROUTES = {
     NOTIFICATIONS: '/admin/notifications',
   },
 
+  PARTNER: {
+    ROOT: '/partner',
+    DASHBOARD: '/partner/dashboard',
+    REQUESTS: '/partner/requests',
+    ORDERS: '/partner/orders',
+    INVENTORY: '/partner/inventory',
+    TEST_BOOKINGS: '/partner/test-bookings',
+    LAB_REPORTS: '/partner/lab-reports',
+    APPOINTMENTS: '/partner/appointments',
+    CHECK_INS: '/partner/check-ins',
+    PATIENTS: '/partner/patients',
+    SERVICES: '/partner/services',
+    ANALYTICS: '/partner/analytics',
+    NOTIFICATIONS: '/partner/notifications',
+    SETTINGS: '/partner/settings',
+  },
+
   COMMON: {
     UNAUTHORIZED: '/unauthorized',
     NOT_FOUND: '*',

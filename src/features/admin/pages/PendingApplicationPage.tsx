@@ -20,7 +20,7 @@ export function AdminPendingApplicationsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   const [selectedApp, setSelectedApp] = useState<ProviderApplication | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
