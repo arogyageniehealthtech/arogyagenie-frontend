@@ -1,18 +1,32 @@
-import { APPOINTMENT_STATUS } from "../../../constants/appointment.constants";
-
-export type AppointmentStatus = typeof APPOINTMENT_STATUS[keyof typeof APPOINTMENT_STATUS];
-
-export interface Appointment {
-  id: string;
-  doctorId: string;
-  doctorName: string;
-  doctorSpecialty: string;
-  doctorImage: string;
-  hospitalName: string;
-  appointmentDate: string; // ISO String
-  appointmentTime: string; // e.g., "10:30 AM"
-  status: AppointmentStatus;
-  isFavorite: boolean;
+export interface ConsultationType {
+  id: "in-person" | "video";
+  label: string;
+  fee: number;
 }
 
-export type TabValue = "upcoming" | "completed" | "cancelled";
+export interface Doctor {
+  id: string;
+  name: string;
+  specialization: string;
+  clinicName?: string;
+  clinicAddress?: string;
+  consultationTypes: ConsultationType[];
+}
+
+export interface ConsultationSlot {
+  id: string;
+  date: string; // YYYY-MM-DD
+  time: string; // e.g., "12:30 PM"
+  consultationType: "in-person" | "video";
+  status: "available" | "booked" | "past";
+}
+
+export interface Appointment {
+  doctorId: string;
+  date: string;
+  timeSlot: string;
+  consultationType: "in-person" | "video";
+  consultationFee: number;
+  reason?: string;
+  meetingUrl?: string;
+}

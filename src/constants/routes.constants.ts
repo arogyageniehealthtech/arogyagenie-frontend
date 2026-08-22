@@ -8,16 +8,22 @@ export const ROUTES = {
   },
 
   PATIENT: {
-    DASHBOARD: '/dashboard',
+    DASHBOARD: '/',
     AI_CHAT: '/ai-health-assistant',
     CARE: '/care',
-    APPOINTMENTS: (doctorId: string | number) => `/appointments/${doctorId}`,
+    // APPOINTMENTS: (doctorId: string | number) => `/appointments/${doctorId}`,
+    APPOINTMENTS:'/appointment',
     MEDICINE_DELIVERY: '/medicine-delivery',
     PROFILE: '/profile',
     ALLHOSPITAL: '/Checkhospital',
     HOSPITAL: '/hospitals',
     AMBULANCE: '/ambulance',
-    EMERGENCY: '/ambulance',
+    FINDDOCTOR: '/finddoctor',
+    LAB: '/lab',
+    MEDICINE: '/medicine',
+    PRESCRIBTION:'/patient/Prescriptions',
+    LAB_REPORTS:'/patient/lab_report',
+    CART_ITEMS:'/patient/cart_item'
   },
 
   DOCTOR: {
