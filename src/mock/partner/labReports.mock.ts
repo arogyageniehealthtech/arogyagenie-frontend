@@ -1,0 +1,58 @@
+import type { LabReport } from '../../types/partner.types';
+
+export const MOCK_LAB_REPORTS: LabReport[] = [
+  {
+    id: 'rep-001',
+    providerId: 'provider-lab-1',
+    bookingId: 'lab-bk-003',
+    reportNumber: 'REP-NABL-7731',
+    patient: {
+      id: 'pat-101',
+      name: 'Aarav Sharma',
+      age: 38,
+      gender: 'MALE',
+      phone: '+91 98451 23456',
+      bloodGroup: 'O_POS',
+    },
+    testName: 'HbA1c & Fasting Lipid Profile',
+    completionDate: '2026-08-19',
+    reportStatus: 'RELEASED',
+    resultSummary: 'HbA1c 5.8% (Pre-diabetic threshold). Mildly elevated Triglycerides (178 mg/dL). Other parameters normal.',
+    normalRangeFlags: [
+      { parameter: 'HbA1c (Glycated Hemoglobin)', value: '5.8 %', referenceRange: '4.0 - 5.6 %', isAbnormal: true },
+      { parameter: 'Average Estimated Glucose', value: '120 mg/dL', referenceRange: '70 - 110 mg/dL', isAbnormal: true },
+      { parameter: 'Total Cholesterol', value: '190 mg/dL', referenceRange: '< 200 mg/dL', isAbnormal: false },
+      { parameter: 'Triglycerides', value: '178 mg/dL', referenceRange: '< 150 mg/dL', isAbnormal: true },
+      { parameter: 'HDL Cholesterol', value: '44 mg/dL', referenceRange: '> 40 mg/dL', isAbnormal: false },
+      { parameter: 'LDL Cholesterol', value: '110 mg/dL', referenceRange: '< 100 mg/dL', isAbnormal: true },
+    ],
+    verifiedByDoctor: 'Dr. Sunita Deshmukh, MD (Pathology)',
+    releasedAt: '2026-08-19 02:40 PM',
+  },
+  {
+    id: 'rep-002',
+    providerId: 'provider-lab-1',
+    bookingId: 'lab-bk-002',
+    reportNumber: 'REP-NABL-7740',
+    patient: {
+      id: 'pat-105',
+      name: 'Vikram Nair',
+      age: 52,
+      gender: 'MALE',
+      phone: '+91 97401 55667',
+      bloodGroup: 'A_POS',
+    },
+    testName: 'Thyroid Panel & Vitamin D3/B12 Profile',
+    completionDate: '2026-08-20',
+    reportStatus: 'PENDING_VALIDATION',
+    resultSummary: 'TSH slightly elevated (5.4 uIU/mL). Severe Vitamin D deficiency (11.2 ng/mL). Vitamin B12 within normal limits.',
+    normalRangeFlags: [
+      { parameter: 'TSH (Thyroid Stimulating Hormone)', value: '5.4 uIU/mL', referenceRange: '0.35 - 4.94 uIU/mL', isAbnormal: true },
+      { parameter: 'Free T3', value: '2.8 pg/mL', referenceRange: '1.71 - 3.71 pg/mL', isAbnormal: false },
+      { parameter: 'Free T4', value: '1.1 ng/dL', referenceRange: '0.70 - 1.48 ng/dL', isAbnormal: false },
+      { parameter: '25-OH Vitamin D', value: '11.2 ng/mL', referenceRange: '30.0 - 100.0 ng/mL', isAbnormal: true },
+      { parameter: 'Vitamin B12', value: '380 pg/mL', referenceRange: '211 - 911 pg/mL', isAbnormal: false },
+    ],
+    verifiedByDoctor: 'Dr. Ankit Mukherjee, MD (Biochemistry)',
+  },
+];

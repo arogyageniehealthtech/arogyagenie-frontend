@@ -1,11 +1,7 @@
+import { DoctorLayout as DoctorDashboardLayout } from "../features/doctor/component/DoctorLayout";
 
-
-function DoctorLayout() {
-  return (
-    <div>
-      
-    </div>
-  )
+export function DoctorLayout() {
+  return <DoctorDashboardLayout />;
 }
 
-export default DoctorLayout
+export default DoctorLayout;

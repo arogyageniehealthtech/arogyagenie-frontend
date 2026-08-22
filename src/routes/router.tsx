@@ -7,6 +7,7 @@ import Test from"../Test.tsx"
 // ================================LAYOUT============================================================
 const PatientLayout = lazy(() => import("../layouts/PatientLayout.tsx"));
 const AdminLayout = lazy(() => import("../layouts/AdminLayout.tsx"));
+const PartnerLayout = lazy(() => import("../layouts/PartnerLayout.tsx"));
 
 // ====================================AUTH===========================================================
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage.tsx"));
@@ -47,6 +48,21 @@ const AiMonitoringPage = lazy(() => import("../features/admin/pages/AiMonitoring
 const HealthReportsPage = lazy(() => import("../features/admin/pages/HealthReportsPage.tsx"));
 const NotificationsPage = lazy(() => import("../features/admin/pages/NotificationsPage.tsx"));
 
+// =====================================PARTNER=========================================================
+const PartnerDashboardPage = lazy(() => import("../features/partner/pages/PartnerDashboardPage.tsx"));
+const PartnerRequestsPage = lazy(() => import("../features/partner/pages/PartnerRequestsPage.tsx"));
+const PharmacyOrdersPage = lazy(() => import("../features/partner/pages/PharmacyOrdersPage.tsx"));
+const PharmacyInventoryPage = lazy(() => import("../features/partner/pages/PharmacyInventoryPage.tsx"));
+const LabBookingsPage = lazy(() => import("../features/partner/pages/LabBookingsPage.tsx"));
+const LabReportsPage = lazy(() => import("../features/partner/pages/LabReportsPage.tsx"));
+const HospitalAppointmentsPage = lazy(() => import("../features/partner/pages/HospitalAppointmentsPage.tsx"));
+const HospitalCheckInsPage = lazy(() => import("../features/partner/pages/HospitalCheckInsPage.tsx"));
+const PartnerPatientsPage = lazy(() => import("../features/partner/pages/PartnerPatientsPage.tsx"));
+const PartnerServicesPage = lazy(() => import("../features/partner/pages/PartnerServicesPage.tsx"));
+const PartnerAnalyticsPage = lazy(() => import("../features/partner/pages/PartnerAnalyticsPage.tsx"));
+const PartnerNotificationsPage = lazy(() => import("../features/partner/pages/PartnerNotificationsPage.tsx"));
+const PartnerSettingsPage = lazy(() => import("../features/partner/pages/PartnerSettingsPage.tsx"));
+
 // ==============================OTHERS=================================================================
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage.tsx"));
 const UnauthorizedPage = lazy(() => import("../pages/UnauthorizedPage.tsx"));
@@ -68,6 +84,7 @@ export const router = createBrowserRouter([
   {
     element: <GuestRoute />,
     children: [
+      { path: "/", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
       { path: ROUTES.AUTH.LOGIN, element: withSuspense(<LoginPage />) },
       { path: ROUTES.AUTH.REGISTER, element: withSuspense(<RegisterPage />) },
       { path: ROUTES.AUTH.FORGOT_PASSWORD, element: withSuspense(<ForgotPasswordPage />) },
@@ -130,6 +147,28 @@ export const router = createBrowserRouter([
       { path: ROUTES.ADMIN.AI_MONITORING, element: withSuspense(<AiMonitoringPage />) },
       { path: ROUTES.ADMIN.HEALTH_REPORTS, element: withSuspense(<HealthReportsPage />) },
       { path: ROUTES.ADMIN.NOTIFICATIONS, element: withSuspense(<NotificationsPage />) },
+    ],
+  },
+
+  // --- PARTNER / PROVIDER PORTAL ROUTES --------------------------------
+  {
+    path: "/partner",
+    element: <PartnerLayout />,
+    children: [
+      { index: true, element: <Navigate to={ROUTES.PARTNER.DASHBOARD} replace /> },
+      { path: ROUTES.PARTNER.DASHBOARD, element: withSuspense(<PartnerDashboardPage />) },
+      { path: ROUTES.PARTNER.REQUESTS, element: withSuspense(<PartnerRequestsPage />) },
+      { path: ROUTES.PARTNER.ORDERS, element: withSuspense(<PharmacyOrdersPage />) },
+      { path: ROUTES.PARTNER.INVENTORY, element: withSuspense(<PharmacyInventoryPage />) },
+      { path: ROUTES.PARTNER.TEST_BOOKINGS, element: withSuspense(<LabBookingsPage />) },
+      { path: ROUTES.PARTNER.LAB_REPORTS, element: withSuspense(<LabReportsPage />) },
+      { path: ROUTES.PARTNER.APPOINTMENTS, element: withSuspense(<HospitalAppointmentsPage />) },
+      { path: ROUTES.PARTNER.CHECK_INS, element: withSuspense(<HospitalCheckInsPage />) },
+      { path: ROUTES.PARTNER.PATIENTS, element: withSuspense(<PartnerPatientsPage />) },
+      { path: ROUTES.PARTNER.SERVICES, element: withSuspense(<PartnerServicesPage />) },
+      { path: ROUTES.PARTNER.ANALYTICS, element: withSuspense(<PartnerAnalyticsPage />) },
+      { path: ROUTES.PARTNER.NOTIFICATIONS, element: withSuspense(<PartnerNotificationsPage />) },
+      { path: ROUTES.PARTNER.SETTINGS, element: withSuspense(<PartnerSettingsPage />) },
     ],
   },
 
