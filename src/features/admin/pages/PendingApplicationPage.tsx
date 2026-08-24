@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/features/patient/hooks/use-toast";
 import { Search, Eye, Check, X, Clock, Stethoscope, Building, Pill, AlertTriangle } from "lucide-react";
 import type { ProviderApplication } from "../data/mockAdminData";
 

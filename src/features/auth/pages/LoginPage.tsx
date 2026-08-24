@@ -5,20 +5,20 @@ import { AuthCard } from "../components/AuthCard";
 import { GoogleLoginButton } from "../components/GoogleLoginButton";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "@/constants/routes.constants";
-import type { UserRole } from "@/types/auth.types";
+import type { BackendUserType } from "@/types/auth.types";
 
-const ROLE_OPTIONS: { role: UserRole; label: string; icon: React.ElementType }[] = [
-  { role: "PATIENT", label: "Patient", icon: UserCheck },
-  { role: "DOCTOR", label: "Doctor", icon: Stethoscope },
-  { role: "SYSTEM_ADMIN", label: "Admin", icon: Shield },
-  { role: "PHARMACY", label: "Pharmacy", icon: Pill },
-  { role: "LAB", label: "Lab / Diagnostic", icon: Building2 },
+const ROLE_OPTIONS: { userType: BackendUserType; label: string; icon: React.ElementType }[] = [
+  { userType: "PATIENT", label: "Patient", icon: UserCheck },
+  { userType: "DOCTOR", label: "Doctor", icon: Stethoscope },
+  { userType: "SYSTEM_ADMIN", label: "Admin", icon: Shield },
+  { userType: "PHARMACY", label: "Pharmacy", icon: Pill },
+  { userType: "LAB", label: "Lab / Diagnostic", icon: Building2 },
 ];
 
 export function LoginPage() {
   const { login, isLoading, error, clearError } = useAuth();
 
-  const [selectedRole, setSelectedRole] = useState<UserRole>("PATIENT");
+  const [selectedRole, setSelectedRole] = useState<BackendUserType>("PATIENT");
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,19 +44,41 @@ export function LoginPage() {
       await login({
         emailOrPhone: emailOrPhone.trim(),
         password,
-        role: selectedRole,
+        userType: selectedRole,
         rememberMe,
       });
-    } catch {
-      // Handled via auth hook state
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setValidationError(err.message);
+      }
     }
   };
 
-  const handleQuickDemoFill = (role: UserRole) => {
-    setSelectedRole(role);
+  const handleGoogleLogin = async () => {
+    try {
+      clearError();
+      setValidationError(null);
+      const googleEmail = "google.user@gmail.com";
+      setEmailOrPhone(googleEmail);
+      
+      await login({
+        emailOrPhone: googleEmail,
+        password: "GoogleAuthPass123",
+        userType: selectedRole,
+        rememberMe: true,
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setValidationError(err.message);
+      }
+    }
+  };
+
+  const handleQuickDemoFill = (userType: BackendUserType) => {
+    setSelectedRole(userType);
     clearError();
     setValidationError(null);
-    switch (role) {
+    switch (userType) {
       case "PATIENT":
         setEmailOrPhone("patient@arogyagenie.com");
         setPassword("Password@123");
@@ -104,13 +126,13 @@ export function LoginPage() {
         </label>
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 p-1 rounded-2xl bg-white/5 border border-white/10">
           {ROLE_OPTIONS.map((item) => {
-            const isSelected = selectedRole === item.role;
+            const isSelected = selectedRole === item.userType;
             const Icon = item.icon;
             return (
               <button
-                key={item.role}
+                key={item.userType}
                 type="button"
-                onClick={() => handleQuickDemoFill(item.role)}
+                onClick={() => handleQuickDemoFill(item.userType)}
                 className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
                   isSelected
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold"
@@ -214,7 +236,7 @@ export function LoginPage() {
           ) : (
             <>
               <LogIn className="h-4 w-4" />
-              <span>Sign In as {ROLE_OPTIONS.find((r) => r.role === selectedRole)?.label}</span>
+              <span>Sign In as {ROLE_OPTIONS.find((r) => r.userType === selectedRole)?.label}</span>
             </>
           )}
         </button>
@@ -229,15 +251,7 @@ export function LoginPage() {
 
       {/* Google Sign In */}
       <GoogleLoginButton
-        onClick={() => {
-          setEmailOrPhone("google.user@gmail.com");
-          setPassword("GoogleAuthPass123");
-          login({
-            emailOrPhone: "google.user@gmail.com",
-            role: selectedRole,
-            rememberMe: true,
-          });
-        }}
+        onClick={handleGoogleLogin}
         isLoading={isLoading}
       />
     </AuthCard>

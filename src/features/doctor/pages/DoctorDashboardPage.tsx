@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Users, Clock, Clipboard, CheckCircle, XCircle, Plus, User } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/features/patient/hooks/use-toast";
 import { PrescribeModal } from "./PrescribeModal";
 
 export function DoctorDashboard() {

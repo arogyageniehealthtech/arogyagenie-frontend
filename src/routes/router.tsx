@@ -1,9 +1,9 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes.constants.ts";
-import { GuestRoute } from "../routes/GuestRoute.tsx";
+// import { GuestRoute } from "../routes/GuestRoute.tsx";
 import { PageLoader } from "../components/ui/PageLoader.tsx";
-import Test from"../Test.tsx"
+// import Test from"../Test.tsx"
 // ================================LAYOUT============================================================
 const PatientLayout = lazy(() => import("../layouts/PatientLayout.tsx"));
 const AdminLayout = lazy(() => import("../layouts/AdminLayout.tsx"));
@@ -14,26 +14,18 @@ const LoginPage = lazy(() => import("../features/auth/pages/LoginPage.tsx"));
 const RegisterPage = lazy(() => import("../features/auth/pages/RegisterPage.tsx"));
 const ForgotPasswordPage = lazy(() => import("../features/auth/pages/ForgotPasswordPage.tsx"));
 const ResetPasswordPage = lazy(() => import("../features/auth/pages/ResetPasswordPage.tsx"));
-const VerifyOtpPage = lazy(() => import("../features/auth/pages/VerifyOtpPage.tsx"));
+const VerifyEmailPage = lazy(() => import("../features/auth/pages/VerifyEmailPage.tsx"));
 
 // =====================================user=========================================================
-const DashboardPage = lazy(() => import("../features/user/pages/DashboardPage.tsx"));
-const AiChatPage = lazy(() => import("../features/user/pages/AiChatPage.tsx"));
-const HealthcareDiscoveryPage = lazy(() => import("../features/care/pages/HealthcareDiscoveryPage.tsx"));
-const ProfilePage = lazy(() => import("../features/user/pages/ProfilePage.tsx"));
-const PrescriptionsPage = lazy(() => import("../features/user/pages/PrescriptionsPage.tsx"));
-const AppointmentsPage1 = lazy(() => import("../features/user/pages/AppointmentsPage1.tsx"));
-const LabReportsPage = lazy(() => import("../features/user/pages/LabReportsPage.tsx"));
-// const AppointmentsPage = lazy(() => import("../features/user/pages/AppointmentsPage.tsx"));
-// const HospitalDetailsPage = lazy(() => import("../features/user/pages/HospitalDetailsPage.tsx"));
-// const Checkhospital = lazy(() => import("../features/user/pages/Checkhospital.tsx"));
-// -----------------
-const DiagnosticDiscoveryPage =lazy(()=>import ("../pages/DiagnosticDiscoveryPage.tsx"))
-const DoctorDiscoveryPage =lazy(()=>import ("../pages/DoctorDiscoveryPage.tsx"))
-const HospitalDiscoveryPage =lazy(()=>import ("../pages/HospitalDiscoveryPage.tsx"))
-const PharmacyModule =lazy(()=>import ("../pages/PharmacyModule.tsx"))
-
-
+const DashboardPage = lazy(() => import("../features/patient/pages/DashboardPage.tsx"));
+const ProfilePage = lazy(() => import("../features/patient/pages/ProfilePage.tsx"));
+const PrescriptionsPage = lazy(() => import("../features/patient/pages/PrescriptionsPage.tsx"));
+const AppointmentsPage = lazy(() => import("../features/patient/pages/AppointmentsPage.tsx"));
+const LabReportsPage = lazy(() => import("../features/patient/pages/LabReportsPage.tsx"));
+const DoctorDiscoveryPage = lazy(() => import("../features/patient/pages/DoctorDiscoveryPage.tsx"));
+// const PharmacyModule1 = lazy(() => import("../features/user/pages/PharmacyModule1.tsx"));
+const DiagnosticDiscoveryPage = lazy(() => import("../features/patient/pages/DiagnosticDiscoveryPage.tsx"));
+const HospitalDiscoveryPage = lazy(() => import("../features/patient/pages/HospitalDiscoveryPage.tsx"));
 // =====================================ADMIN===========================================================
 const AdminDashboardPage = lazy(() => import("../features/admin/pages/AdminDashboardPage.tsx"));
 const PendingApplicationPage = lazy(() => import("../features/admin/pages/PendingApplicationPage.tsx"));
@@ -54,7 +46,7 @@ const PartnerRequestsPage = lazy(() => import("../features/partner/pages/Partner
 const PharmacyOrdersPage = lazy(() => import("../features/partner/pages/PharmacyOrdersPage.tsx"));
 const PharmacyInventoryPage = lazy(() => import("../features/partner/pages/PharmacyInventoryPage.tsx"));
 const LabBookingsPage = lazy(() => import("../features/partner/pages/LabBookingsPage.tsx"));
-const LabReportsPage = lazy(() => import("../features/partner/pages/LabReportsPage.tsx"));
+// const LabReportsPage = lazy(() => import("../features/partner/pages/LabReportsPage.tsx"));
 const HospitalAppointmentsPage = lazy(() => import("../features/partner/pages/HospitalAppointmentsPage.tsx"));
 const HospitalCheckInsPage = lazy(() => import("../features/partner/pages/HospitalCheckInsPage.tsx"));
 const PartnerPatientsPage = lazy(() => import("../features/partner/pages/PartnerPatientsPage.tsx"));
@@ -67,11 +59,7 @@ const PartnerSettingsPage = lazy(() => import("../features/partner/pages/Partner
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage.tsx"));
 const UnauthorizedPage = lazy(() => import("../pages/UnauthorizedPage.tsx"));
 // ----------------------------------
-const DoctorDiscoveryPage1 = lazy(() => import("../features/user/pages/DoctorDiscoveryPage1.tsx"));
-const PharmacyModule1 = lazy(() => import("../features/user/pages/PharmacyModule1.tsx"));
-const DiagnosticDiscoveryPage1 = lazy(() => import("../features/user/pages/DiagnosticDiscoveryPage1.tsx"));
-const HospitalDiscoveryPage1 = lazy(() => import("../features/user/pages/HospitalDiscoveryPage1.tsx"));
-const CartCheckoutPage = lazy(() => import("../features/user/components/features/CartCheckoutPage.tsx"));
+
 
 
 
@@ -82,20 +70,20 @@ function withSuspense(element: React.ReactNode) {
 export const router = createBrowserRouter([
   // --- Guest-only ----------------------------------------------------
   {
-    element: <GuestRoute />,
+    // element: <GuestRoute />,
     children: [
-      { path: "/", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
+      // { path: "/", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
       { path: ROUTES.AUTH.LOGIN, element: withSuspense(<LoginPage />) },
       { path: ROUTES.AUTH.REGISTER, element: withSuspense(<RegisterPage />) },
       { path: ROUTES.AUTH.FORGOT_PASSWORD, element: withSuspense(<ForgotPasswordPage />) },
       { path: ROUTES.AUTH.RESET_PASSWORD, element: withSuspense(<ResetPasswordPage />) },
-      { path: ROUTES.AUTH.VERIFY_OTP, element: withSuspense(<VerifyOtpPage />) },
+      { path: ROUTES.AUTH.VERIFY_EMAIL, element: withSuspense(<VerifyEmailPage />) },
     ],
   },
 
   // --- Authenticated, but outside the dashboard chrome ----------------
   {
-    children: [{ path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) }],
+    // children: [{ path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) }],
   },
 
   // --- Authenticated + user role, inside the dashboard shell -------
@@ -107,21 +95,15 @@ export const router = createBrowserRouter([
             element: <PatientLayout />,
             children: [
               { path: ROUTES.PATIENT.DASHBOARD, element: withSuspense(<DashboardPage />) },
-              { path: ROUTES.PATIENT.AI_CHAT, element: withSuspense(<AiChatPage />) },
               { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
               { path: ROUTES.PATIENT.PRESCRIBTION, element: withSuspense(<PrescriptionsPage />) },
-              { path: ROUTES.PATIENT.APPOINTMENTS, element: withSuspense(<AppointmentsPage1 />) },
+              { path: ROUTES.PATIENT.APPOINTMENTS, element: withSuspense(<AppointmentsPage />) },
               { path: ROUTES.PATIENT.LAB_REPORTS, element: withSuspense(<LabReportsPage />) },
-              // { path: ROUTES.user.CARE, element: withSuspense(<HealthcareDiscoveryPage />) },
-              // { path: ROUTES.user.ALLHOSPITAL, element: withSuspense(<Checkhospital />) },
-              // { path: ROUTES.user.APPOINTMENTS(1), element: withSuspense(<AppointmentsPage />) },
-              // --------------
-              { path: ROUTES.PATIENT.LAB, element: withSuspense(<DiagnosticDiscoveryPage1 />) },
-              { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage1 />) },
-              { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage1 />) },
-              { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule1 />) },
-              { path: ROUTES.PATIENT.CART_ITEMS, element: withSuspense(<CartCheckoutPage />) },
-              // { path: ROUTES.user.HOSPITAL, element: withSuspense(<HospitalDetailsPage />) },
+              { path: ROUTES.PATIENT.LAB, element: withSuspense(<DiagnosticDiscoveryPage />) },
+              { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage />) },
+              { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage />) },
+              // { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule1 />) },
+              { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
             ],
           },
         ],
@@ -173,6 +155,5 @@ export const router = createBrowserRouter([
   },
 
   { path: ROUTES.COMMON.UNAUTHORIZED, element: withSuspense(<UnauthorizedPage />) },
-  { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<HealthcareDiscoveryPage />) },
   // { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<Test />) },
 ]);

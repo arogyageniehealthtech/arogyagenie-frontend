@@ -13,7 +13,6 @@ import {
   Bell,
   FileText,
   ClipboardList,
-  ShoppingBag,
   Calendar,
   Ambulance,
   Pill,
@@ -21,46 +20,15 @@ import {
   Trash2,
   Pill as PillIcon,
   AlertCircle,
-  MapPin
+  MapPin,
+  ChevronDown
 } from 'lucide-react';
 import { ROUTES } from '../constants/routes.constants';
 import { useAppSelector } from '../store/hooks';
+import type { NotificationItem } from '../types/Notification.types';
+import {INITIAL_NOTIFICATIONS} from '../data/notification.data'
 
-interface NotificationItem {
-  id: string;
-  title: string;
-  message: string;
-  timestamp: string;
-  category: 'appointments' | 'orders' | 'reports' | 'alerts';
-  read: boolean;
-}
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'n1',
-    title: 'Appointment Confirmed',
-    message: 'Your upcoming consultation with Dr. Arup Kumar is confirmed for tomorrow.',
-    timestamp: '10m ago',
-    category: 'appointments',
-    read: false,
-  },
-  {
-    id: 'n2',
-    title: 'Medicine Request Accepted',
-    message: 'Apollo Pharmacy accepted your order and is preparing it for dispatch.',
-    timestamp: '1h ago',
-    category: 'orders',
-    read: false,
-  },
-  {
-    id: 'n3',
-    title: 'Lab Report Ready',
-    message: 'Your CBC lab report from City Diagnostics is now available.',
-    timestamp: 'Yesterday',
-    category: 'reports',
-    read: true,
-  },
-];
 
 // Helper to generate initials from a name
 const getInitials = (name?: string) => {
@@ -96,10 +64,23 @@ const getPageTitle = (pathname: string) => {
   if (path.includes('ambulance')) return 'Ambulance Services';
   if (path.includes('profile')) return 'My Profile';
   if (path.includes('notification')) return 'Notifications';
-  if (path.includes('patient/cart_item')) return 'Cart & Fulfillment Checkou';
+  if (path.includes('patient/cart_item')) return 'Cart & Fulfillment Checkout';
   
   return 'Patient Dashboard';
 };
+
+// --- Bottom tab bar items (mobile only) ---
+// These mirror the "discovery" style destinations that used to live inside the
+// hamburger menu. On phones they're promoted to a YouTube-style bottom tab bar;
+// on tablet/desktop they remain exactly where they were, inside the sidebar.
+const getBottomNavItems = () => [
+  { to: ROUTES.PATIENT.DASHBOARD, icon: Home, label: 'Home' },
+  { to: ROUTES.PATIENT.FINDDOCTOR, icon: Stethoscope, label: 'Doctor' },
+  { to: ROUTES.PATIENT.HOSPITAL, icon: Building2, label: 'Hospital' },
+  { to: ROUTES.PATIENT.LAB, icon: Microscope, label: 'Lab' },
+  { to: ROUTES.PATIENT.MEDICINE, icon: Pill, label: 'Medicine' },
+  { to: ROUTES.PATIENT.PROFILE, icon: User, label: 'Profile' },
+];
 
 export default function PatientLayout() {
   const { user } = useAppSelector((state) => state.auth);
@@ -109,12 +90,23 @@ export default function PatientLayout() {
   const navigate = useNavigate();
 
   // Hide navigation on AI Chat page
-  const isAiChatPage = location.pathname === ROUTES.PATIENT.AI_CHAT;
+  const isAiChatPage = location.pathname === ROUTES.PATIENT.ASSISTANT;
 
   // States
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  
+  // Accordion toggle states
+  const [isDoctorOpen, setIsDoctorOpen] = useState(
+    location.pathname.includes('doctor') || location.pathname.includes('appointment') || location.pathname.includes('prescription')
+  );
+  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(
+    location.pathname.includes('lab') || location.pathname.includes('diagnostic')
+  );
+  const [isMedicineOpen, setIsMedicineOpen] = useState(
+    location.pathname.includes('medicine') || location.pathname.includes('medicine-orders')
+  );
 
   const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -128,21 +120,6 @@ export default function PatientLayout() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Combined Navigation Items for Left Sidebar
-  const sidebarItems = [
-    { icon: Home, label: "Home", to: ROUTES.PATIENT.DASHBOARD },
-    { icon: Stethoscope, label: "Doctor", to: ROUTES.PATIENT.FINDDOCTOR },
-    { icon: Building2, label: "Hospital", to: ROUTES.PATIENT.HOSPITAL }, 
-    { icon: Microscope, label: "Diagnostics", to: ROUTES.PATIENT.LAB },
-    { icon: Pill, label: "Medicine", to: ROUTES.PATIENT.MEDICINE },
-    { icon: ShoppingBag, label: "Medicines Order", to: '/patient/medicine-orders' }, 
-    { icon: Calendar, label: "Appointments", to: ROUTES.PATIENT.APPOINTMENTS }, 
-    { icon: ClipboardList, label: "Lab Reports", to: ROUTES.PATIENT.LAB_REPORTS }, 
-    { icon: FileText, label: "Prescriptions", to: ROUTES.PATIENT.PRESCRIBTION }, 
-    { icon: Ambulance, label: "Ambulance", to: ROUTES.PATIENT.AMBULANCE || '/patient/ambulance' }, 
-    { icon: User, label: "My Profile", to: ROUTES.PATIENT.PROFILE }, 
-  ];
 
   const isRouteActive = (itemTo: string) => {
     if (itemTo === ROUTES.PATIENT.DASHBOARD) {
@@ -166,98 +143,301 @@ export default function PatientLayout() {
     setNotifications(notifications.filter(item => item.id !== id));
   };
 
+  const bottomNavItems = getBottomNavItems();
+
   return (
-    /* Changed background to #F1F5F9 for a rich custom background tone */
-    <div className="min-h-screen bg-[#F1F5F9] font-sans relative flex">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans relative flex">
 
       {/* --- LEFT SIDEBAR --- */}
       {!isAiChatPage && (
         <>
-          {/* Mobile Overlay */}
+          {/* Mobile/Tablet Overlay */}
           {isSidebarOpen && (
             <div 
               className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
-
           <aside 
-            className={`fixed top-0 left-0 z-[70] h-full w-72 bg-[#13102F] shadow-xl border-r border-[#1e1a45] transform transition-transform duration-300 ease-in-out flex flex-col ${
+            className={`fixed top-0 left-0 z-[70] h-full w-56 sm:w-64 bg-[#13102F] shadow-xl border-r border-[#1e1a45] transform transition-transform duration-300 ease-in-out flex flex-col ${
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             }`}
           >
-            {/* Sidebar Header (Logo) */}
-            <div className="flex items-center justify-between px-6 h-20 border-b border-[#1e1a45] shrink-0">
-              <div className="flex items-center gap-3">
-                <img src="/LOGO.png" alt="ArogyaGenie Logo" className="h-8 w-8 object-contain brightness-0 invert" />
-                <div className="flex flex-col justify-center">
-                  <h1 className="text-lg font-bold text-white leading-none tracking-wide">ArogyaGenie</h1>
+            {/* Sidebar Header (Logo) - Responsive Padding */}
+            <div className="flex items-center justify-between px-3 sm:px-5 h-14 sm:h-20 border-b border-[#1e1a45] shrink-0">
+              <div className="flex items-center gap-2">
+                <img src="/LOGO.png" alt="ArogyaGenie Logo" className="h-6 sm:h-7 w-6 sm:w-7 object-contain brightness-0 invert" />
+                <div className="flex flex-col justify-center min-w-0">
+                  <h1 className="text-base sm:text-xl font-extrabold text-white leading-none tracking-wide truncate">ArogyaGenie</h1>
                 </div>
               </div>
               <button 
                 onClick={() => setIsSidebarOpen(false)}
-                className="lg:hidden p-2 -mr-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="lg:hidden p-1.5 -mr-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Sidebar Menu Items */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-6 space-y-1">
-              {sidebarItems.map((item, index) => {
-                const isActive = isRouteActive(item.to);
+            {/* Sidebar Menu Items - Responsive Padding & Spacing */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-2 sm:px-3 py-3 sm:py-4 space-y-0.5 sm:space-y-1">
+              
+              {/* Home */}
+              <NavLink
+                to={ROUTES.PATIENT.DASHBOARD}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`group flex w-full items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold text-xs sm:text-sm ${
+                  isRouteActive(ROUTES.PATIENT.DASHBOARD) 
+                    ? 'bg-indigo-500/20 text-indigo-400' 
+                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Home size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 2.5 : 2} className={`flex-shrink-0 ${isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <span className="truncate">Home</span>
+              </NavLink>
 
-                return (
-                  <React.Fragment key={index}>
-                    {index === 5 && <div className="my-4 border-t border-[#1e1a45]" />}
+              {/* --- DOCTOR ACCORDION WITH SUB-BRANCHES --- */}
+              <div>
+                <button
+                  onClick={() => setIsDoctorOpen(!isDoctorOpen)}
+                  className={`group flex w-full items-center justify-between px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold text-xs sm:text-sm ${
+                    location.pathname.includes('doctor') || location.pathname.includes('appointment') || location.pathname.includes('prescription')
+                      ? 'bg-indigo-500/20 text-indigo-400' 
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <Stethoscope size={16} strokeWidth={location.pathname.includes('doctor') ? 2.5 : 2} className={`flex-shrink-0 ${location.pathname.includes('doctor') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                    <span className="truncate">Doctor</span>
+                  </div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 flex-shrink-0 ${isDoctorOpen ? 'rotate-180' : ''}`} />
+                </button>
 
+                {isDoctorOpen && (
+                  <div className="pl-6 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
+                    {/* Find Doctor Sub-item — moved to the mobile bottom tab bar, still shown as normal on tablet/desktop */}
                     <NavLink
-                      to={item.to}
+                      to={ROUTES.PATIENT.FINDDOCTOR}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`group flex w-full items-center gap-3.5 px-4 py-3 rounded-xl transition-all font-semibold text-sm ${
-                        isActive 
-                          ? 'bg-indigo-500/20 text-indigo-400' 
-                          : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                      className={`hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        location.pathname === ROUTES.PATIENT.FINDDOCTOR
+                          ? 'text-indigo-400 bg-indigo-500/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
-                      <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'} />
-                      <span>{item.label}</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="truncate">Find Doctor</span>
                     </NavLink>
-                  </React.Fragment>
-                );
-              })}
+
+                    {/* Appointments Sub-item — stays in the hamburger menu on every device */}
+                    <NavLink
+                      to={ROUTES.PATIENT.APPOINTMENTS}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.APPOINTMENTS)
+                          ? 'text-indigo-400 bg-indigo-500/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="truncate">Appointments</span>
+                    </NavLink>
+
+                    {/* Prescriptions Sub-item — stays in the hamburger menu on every device */}
+                    <NavLink
+                      to={ROUTES.PATIENT.PRESCRIBTION}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.PRESCRIBTION)
+                          ? 'text-indigo-400 bg-indigo-500/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="truncate">Prescriptions</span>
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+
+              {/* --- HOSPITAL (Direct Link) --- */}
+              {/* Moved to the mobile bottom tab bar, still shown as normal on tablet/desktop */}
+              <NavLink
+                to={ROUTES.PATIENT.HOSPITAL}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`group hidden sm:flex w-full items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold text-xs sm:text-sm ${
+                  isRouteActive(ROUTES.PATIENT.HOSPITAL) 
+                    ? 'bg-indigo-500/20 text-indigo-400' 
+                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Building2 size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.HOSPITAL) ? 2.5 : 2} className={`flex-shrink-0 ${isRouteActive(ROUTES.PATIENT.HOSPITAL) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <span className="truncate">Hospital</span>
+              </NavLink>
+
+              {/* --- DIAGNOSTICS ACCORDION WITH SUB-BRANCHES --- */}
+              <div>
+                <button
+                  onClick={() => setIsDiagnosticsOpen(!isDiagnosticsOpen)}
+                  className={`group flex w-full items-center justify-between px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold text-xs sm:text-sm ${
+                    location.pathname.includes('lab') || location.pathname.includes('diagnostic') 
+                      ? 'bg-indigo-500/20 text-indigo-400' 
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <Microscope size={16} strokeWidth={location.pathname.includes('lab') ? 2.5 : 2} className={`flex-shrink-0 ${location.pathname.includes('lab') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                    <span className="truncate">Diagnostics</span>
+                  </div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 flex-shrink-0 ${isDiagnosticsOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isDiagnosticsOpen && (
+                  <div className="pl-6 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
+                    {/* Find Diagnostics Sub-item — moved to the mobile bottom tab bar, still shown as normal on tablet/desktop */}
+                    <NavLink
+                      to={ROUTES.PATIENT.LAB}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        location.pathname === ROUTES.PATIENT.LAB
+                          ? 'text-indigo-400 bg-indigo-500/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="truncate">Find Diagnostics</span>
+                    </NavLink>
+
+                    {/* Lab Report Sub-item — stays in the hamburger menu on every device */}
+                    <NavLink
+                      to={ROUTES.PATIENT.LAB_REPORTS}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.LAB_REPORTS)
+                          ? 'text-indigo-400 bg-indigo-500/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="truncate">Lab Report</span>
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+
+              {/* --- MEDICINE ACCORDION WITH SUB-BRANCHES --- */}
+              <div>
+                <button
+                  onClick={() => setIsMedicineOpen(!isMedicineOpen)}
+                  className={`group flex w-full items-center justify-between px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold text-xs sm:text-sm ${
+                    location.pathname.includes('medicine') || location.pathname.includes('medicine-orders')
+                      ? 'bg-indigo-500/20 text-indigo-400' 
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <Pill size={16} strokeWidth={location.pathname.includes('medicine') ? 2.5 : 2} className={`flex-shrink-0 ${location.pathname.includes('medicine') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                    <span className="truncate">Medicine</span>
+                  </div>
+                  <ChevronDown size={14} className={`transition-transform duration-200 flex-shrink-0 ${isMedicineOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isMedicineOpen && (
+                  <div className="pl-6 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
+                    {/* Find Pharmacy Sub-item — moved to the mobile bottom tab bar, still shown as normal on tablet/desktop */}
+                    <NavLink
+                      to={ROUTES.PATIENT.MEDICINE}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        location.pathname === ROUTES.PATIENT.MEDICINE
+                          ? 'text-indigo-400 bg-indigo-500/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="truncate">Find Pharmacy</span>
+                    </NavLink>
+
+                    {/* Medicine Order Sub-item — stays in the hamburger menu on every device */}
+                    <NavLink
+                      to="/patient/medicine-orders"
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive('/patient/medicine-orders')
+                          ? 'text-indigo-400 bg-indigo-500/10'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="truncate">Medicine Order</span>
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+
+              <div className="my-2 sm:my-4 border-t border-[#1e1a45]" />
+
+              {/* Ambulance — stays in the hamburger menu on every device */}
+              <NavLink
+                to={ROUTES.PATIENT.AMBULANCE}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`group flex w-full items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold text-xs sm:text-sm ${
+                  isRouteActive(ROUTES.PATIENT.AMBULANCE) 
+                    ? 'bg-indigo-500/20 text-indigo-400' 
+                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Ambulance size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.AMBULANCE) ? 2.5 : 2} className={`flex-shrink-0 ${isRouteActive(ROUTES.PATIENT.AMBULANCE) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <span className="truncate">Ambulance</span>
+              </NavLink>
+
+              {/* My Profile — moved to the mobile bottom tab bar, still shown as normal on tablet/desktop */}
+              <NavLink
+                to={ROUTES.PATIENT.PROFILE}
+                onClick={() => setIsSidebarOpen(false)}
+                className={`group hidden sm:flex w-full items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl transition-all font-semibold text-xs sm:text-sm ${
+                  isRouteActive(ROUTES.PATIENT.PROFILE) 
+                    ? 'bg-indigo-500/20 text-indigo-400' 
+                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <User size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.PROFILE) ? 2.5 : 2} className={`flex-shrink-0 ${isRouteActive(ROUTES.PATIENT.PROFILE) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <span className="truncate">My Profile</span>
+              </NavLink>
             </div>
 
-            {/* User Profile & Logout at Bottom */}
-            <div className="p-4 border-t border-[#1e1a45] shrink-0">
-              <div className="flex items-center gap-3 mb-4 px-2">
+            {/* User Profile & Logout at Bottom - Responsive Padding */}
+            <div className="p-2 sm:p-3.5 border-t border-[#1e1a45] shrink-0">
+              <div className="flex items-center gap-2 sm:gap-2.5 mb-2.5 sm:mb-3 px-1">
                 {user?.profilePicture ? (
                   <img 
                     src={user.profilePicture} 
                     alt="Profile" 
-                    className="h-10 w-10 rounded-full object-cover shrink-0 bg-slate-800"
+                    className="h-7 sm:h-9 w-7 sm:w-9 rounded-full object-cover flex-shrink-0 bg-slate-800"
                   />
                 ) : (
-                  <div className="h-10 w-10 rounded-full shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow-inner">
+                  <div className="h-7 sm:h-9 w-7 sm:w-9 rounded-full flex-shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-inner">
                     {getInitials(user?.name)}
                   </div>
                 )}
 
                 <div className="flex flex-col min-w-0">
-                  <h2 className="text-[14.5px] font-bold text-white leading-tight truncate">
-                    Hello, {user?.name ? user.name.split(" ")[0] : "Guest"}
+                  <h2 className="text-[10px] sm:text-xs font-bold text-white leading-tight truncate">
+                    Hi, {user?.name ? user.name.split(" ")[0] : "Guest"}
                   </h2>
                 </div>
               </div>
+              {/* FIX: sign-out is now a solid red button (was a faint outline) so it reads
+                  clearly as a destructive action against the dark indigo sidebar. */}
               <button 
                 onClick={() => {
                   setIsSidebarOpen(false);
-                  // Add actual logout logic/dispatch here
                 }}
-                className="flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm text-red-400 bg-transparent border border-red-900/50 hover:bg-red-500/10 hover:border-red-500/30 rounded-lg font-bold transition-all"
+                className="flex w-full items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border border-red-500/40 rounded-lg sm:rounded-lg font-bold transition-all shadow-sm shadow-red-950/40"
               >
-                <LogOut size={16} strokeWidth={2.5} />
-                Sign Out
+                <LogOut size={12} strokeWidth={2.5} />
+                <span className="hidden sm:inline">Sign Out</span>
+                <span className="sm:hidden">Logout</span>
               </button>
             </div>
           </aside>
@@ -265,100 +445,104 @@ export default function PatientLayout() {
       )}
 
       {/* --- MAIN LAYOUT WRAPPER --- */}
-      <div className={`flex-1 flex flex-col min-w-0 ${!isAiChatPage ? 'lg:ml-72' : ''}`}>
+      {/* margin-left only applies at the `lg` breakpoint, matching the point at
+          which the sidebar actually becomes static/visible on screen. */}
+      <div className={`flex-1 flex flex-col min-w-0 ${!isAiChatPage ? 'lg:ml-64' : ''}`}>
 
         {/* --- TOP NAVIGATION BAR --- */}
         {!isAiChatPage && (
-          <header className="sticky top-0 z-50 flex h-16 lg:h-20 w-full items-center justify-between border-b border-[#1e1a45] lg:border-slate-200 bg-[#13102F] lg:bg-white/90 px-4 lg:px-8 backdrop-blur-md shadow-sm">
+          <header className="sticky top-0 z-50 flex h-14 sm:h-16 lg:h-20 w-full items-center justify-between border-b border-[#1e1a45] lg:border-slate-200 bg-[#13102F] lg:bg-white/90 px-3 sm:px-4 lg:px-8 backdrop-blur-md shadow-sm gap-3">
 
-            {/* Left Side: Mobile Menu Toggle & Brand Logo/Name (Visible only on mobile) */}
-            <div className="flex items-center gap-3 lg:hidden z-10">
+            {/* Left Side: Mobile Menu Toggle & Brand Logo/Name */}
+            <div className="flex items-center gap-2 sm:gap-3 lg:hidden z-10 min-w-0">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+                title="Open navigation menu"
               >
-                <Menu size={24} />
+                <Menu size={20} />
               </button>
               
-              <div className="flex items-center gap-2">
-                <img src="/LOGO.png" alt="ArogyaGenie Logo" className="h-7 w-7 object-contain brightness-0 invert" />
-                <h1 className="text-[17px] font-bold text-white tracking-wide hidden sm:block">ArogyaGenie</h1>
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <img src="/LOGO.png" alt="ArogyaGenie Logo" className="h-6 sm:h-7 w-6 sm:w-7 object-contain brightness-0 invert flex-shrink-0" />
+                <h1 className="text-sm sm:text-base font-bold text-white tracking-wide truncate">ArogyaGenie</h1>
               </div>
             </div>
 
-            {/* --- IN-COLUMN NAVBAR TITLE & LOCATION BADGE --- */}
-            <div className="hidden lg:flex flex-col items-start justify-center gap-0.5">
-              <h2 className="text-xl lg:text-3xl  text-blue-800 font-bold tracking-tight whitespace-nowrap leading-none">
+            {/* --- NAVBAR TITLE & LOCATION BADGE (Desktop Only) --- */}
+            <div className="hidden lg:flex flex-col items-start justify-center gap-0.5 min-w-0">
+              <h2 className="text-2xl lg:text-3xl text-blue-800 font-bold tracking-tight leading-none truncate">
                 {getPageTitle(location.pathname)}
               </h2>
 
               <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium pl-0.5">
-                <MapPin size={14} className="text-indigo-600 shrink-0" />
-                <span className="leading-tight mt-0.5">Khardaha, WB</span>
+                <MapPin size={14} className="text-indigo-600 flex-shrink-0" />
+                <span className="leading-tight">Khardaha, WB</span>
               </div>
             </div>
 
             {/* RIGHT SIDE: Quick Actions */}
-            <div className="flex items-center gap-3 lg:gap-5 ml-auto shrink-0 z-10">
+            <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0 z-10">
               <button 
-                onClick={() => navigate(ROUTES.PATIENT.AI_CHAT)}
-                className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-full transition-colors flex items-center gap-2 px-3 lg:px-4"
+                onClick={() => navigate(ROUTES.PATIENT.ASSISTANT)}
+                className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-lg sm:rounded-full transition-colors flex items-center gap-2 px-2 sm:px-3 lg:px-4 min-h-[44px] min-w-[44px] justify-center sm:justify-start flex-shrink-0"
                 title="Chat with AI Health Assistant"
               >
-                <Bot size={20} />
-                <span className="text-sm font-bold hidden sm:block lg:text-indigo-600 text-white">AI Assistant</span>
+                <Bot size={18} sm:size={20} className="flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-bold hidden sm:block text-white lg:text-indigo-600">AI Assistant</span>
               </button>
 
               {/* Notification Bell */}
               <div className="relative pointer-events-auto" ref={notificationRef}>
                 <button 
                   onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                  className={`relative p-2 rounded-full transition-colors ${
+                  className={`relative p-2 rounded-lg sm:rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 ${
                     isNotificationOpen 
                       ? 'bg-indigo-500/20 text-indigo-300 lg:bg-indigo-50 lg:text-indigo-600' 
                       : 'text-slate-300 hover:bg-white/10 lg:text-slate-500 lg:hover:bg-slate-100'
                   }`}
                   title="Notifications"
                 >
-                  <Bell size={22} className={isNotificationOpen ? 'fill-indigo-400/20 lg:fill-indigo-100' : ''} />
+                  <Bell size={18} strokeWidth={2} className={isNotificationOpen ? 'fill-indigo-400/20 lg:fill-indigo-100' : ''} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded-full bg-red-500 border-2 border-[#13102F] lg:border-white"></span>
+                    <span className="absolute top-1 right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-red-500 border border-[#13102F] lg:border-white flex-shrink-0"></span>
                   )}
                 </button>
 
                 {/* --- NOTIFICATION DROPDOWN --- */}
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-4 w-[340px] sm:w-[420px] bg-white rounded-3xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right text-left">
+                  <div className="absolute right-0 mt-2 sm:mt-4 w-screen sm:w-[340px] md:w-[420px] bg-white rounded-2xl sm:rounded-3xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right text-left max-h-[70vh] sm:max-h-none flex flex-col mx-2 sm:mx-0">
 
                     {/* Header */}
-                    <div className="px-5 py-4 flex items-center justify-between bg-white z-10 relative shadow-[0_1px_0_0_rgba(0,0,0,0.03)]">
-                      <h3 className="text-[17px] font-bold text-slate-900 flex items-center gap-2.5">
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between bg-white z-10 relative shadow-[0_1px_0_0_rgba(0,0,0,0.03)] flex-shrink-0">
+                      <h3 className="text-base sm:text-[17px] font-bold text-slate-900 flex items-center gap-2 truncate">
                         Notifications
                         {unreadCount > 0 && (
-                          <span className="bg-indigo-100 text-indigo-700 text-[11px] px-2 py-0.5 rounded-full font-bold">
-                            {unreadCount} New
+                          <span className="bg-indigo-100 text-indigo-700 text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full font-bold flex-shrink-0">
+                            {unreadCount}
                           </span>
                         )}
                       </h3>
                       {unreadCount > 0 && (
                         <button 
                           onClick={handleMarkAllAsRead}
-                          className="text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1.5"
+                          className="text-[10px] sm:text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1 flex-shrink-0 ml-2"
                         >
-                          <CheckCheck size={14} /> Mark all read
+                          <CheckCheck size={12} sm:size={14} /> 
+                          <span className="hidden sm:inline">Mark all</span>
                         </button>
                       )}
                     </div>
 
                     {/* Notification List */}
-                    <div className="max-h-[380px] overflow-y-auto custom-scrollbar bg-slate-50/30">
+                    <div className="max-h-[calc(70vh-120px)] sm:max-h-[380px] overflow-y-auto custom-scrollbar bg-slate-50/30">
                       {notifications.length === 0 ? (
-                        <div className="p-10 flex flex-col items-center justify-center text-center">
-                          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-3">
-                            <Bell size={28} />
+                        <div className="p-6 sm:p-10 flex flex-col items-center justify-center text-center">
+                          <div className="w-12 sm:w-16 h-12 sm:h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-2 sm:mb-3">
+                            <Bell size={24} />
                           </div>
-                          <p className="text-slate-500 font-medium text-sm">You're all caught up!</p>
-                          <p className="text-slate-400 text-xs mt-1">No new notifications right now.</p>
+                          <p className="text-slate-500 font-medium text-xs sm:text-sm">You're all caught up!</p>
+                          <p className="text-slate-400 text-[10px] sm:text-xs mt-1">No new notifications.</p>
                         </div>
                       ) : (
                         <div className="flex flex-col">
@@ -377,21 +561,21 @@ export default function PatientLayout() {
                                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-r-full"></div>
                                 )}
 
-                                <div className="p-4 pl-5 flex gap-4">
-                                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-white ${bg} ${text} ${item.read ? 'opacity-60' : 'opacity-100'}`}>
-                                    <CategoryIcon size={20} />
+                                <div className="p-3 sm:p-4 pl-4 sm:pl-5 flex gap-3 sm:gap-4">
+                                  <div className={`w-9 sm:w-11 h-9 sm:h-11 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm border border-white ${bg} ${text} ${item.read ? 'opacity-60' : 'opacity-100'}`}>
+                                    <CategoryIcon size={16} sm:size={20} />
                                   </div>
 
-                                  <div className={`flex-1 min-w-0 pr-6 ${item.read ? 'opacity-70' : 'opacity-100'}`}>
+                                  <div className={`flex-1 min-w-0 pr-4 sm:pr-6 ${item.read ? 'opacity-70' : 'opacity-100'}`}>
                                     <div className="flex items-start justify-between gap-2 mb-1">
-                                      <h4 className="text-[13px] font-bold text-slate-900 leading-tight">
+                                      <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
                                         {item.title}
                                       </h4>
-                                      <span className="text-[10px] font-medium text-slate-400 shrink-0 whitespace-nowrap mt-0.5">
+                                      <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 flex-shrink-0 whitespace-nowrap mt-0.5">
                                         {item.timestamp}
                                       </span>
                                     </div>
-                                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                                    <p className="text-[11px] sm:text-xs text-slate-500 leading-relaxed line-clamp-2">
                                       {item.message}
                                     </p>
                                   </div>
@@ -399,10 +583,10 @@ export default function PatientLayout() {
 
                                 <button 
                                   onClick={(e) => handleDeleteNotification(item.id, e)}
-                                  className="absolute top-1/2 -translate-y-1/2 right-4 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 bg-white rounded-full shadow-sm border border-slate-100 opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition-all duration-200"
+                                  className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 bg-white rounded-full shadow-sm border border-slate-100 opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition-all duration-200 flex-shrink-0"
                                   title="Delete notification"
                                 >
-                                  <Trash2 size={14} />
+                                  <Trash2 size={12} sm:size={14} />
                                 </button>
                               </div>
                             );
@@ -412,13 +596,13 @@ export default function PatientLayout() {
                     </div>
 
                     {/* Footer */}
-                    <div className="p-3 border-t border-slate-100 bg-white relative z-10 shadow-[0_-1px_0_0_rgba(0,0,0,0.03)]">
+                    <div className="p-2 sm:p-3 border-t border-slate-100 bg-white relative z-10 shadow-[0_-1px_0_0_rgba(0,0,0,0.03)] flex-shrink-0">
                       <button 
                         onClick={() => {
                           setIsNotificationOpen(false);
                           navigate('/patient/notifications');
                         }}
-                        className="w-full py-2.5 text-[13px] font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-xl transition-colors flex items-center justify-center gap-2"
+                        className="w-full py-2 sm:py-2.5 text-xs sm:text-[13px] font-bold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/50 rounded-lg sm:rounded-xl transition-colors flex items-center justify-center gap-2"
                       >
                         View all activity
                       </button>
@@ -430,11 +614,42 @@ export default function PatientLayout() {
           </header>
         )}
 
-        {/* MAIN CONTENT AREA */}
-        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-screen' : 'max-w-7xl p-3 lg:p-1'}`}>
+        {/* MAIN CONTENT AREA - Responsive Padding */}
+        {/* pb-20 on mobile reserves space so content isn't hidden behind the fixed bottom tab bar */}
+        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-screen' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
           <Outlet />
         </main>
       </div>
+
+      {/* --- MOBILE-ONLY BOTTOM TAB BAR --- */}
+      {/* Visible strictly below the `sm` breakpoint (true phones). Tablet and desktop
+          keep the original sidebar-only navigation untouched. */}
+      {!isAiChatPage && (
+        <nav className="fixed bottom-0 left-0 right-0 z-[80] sm:hidden bg-[#13102F] border-t border-[#1e1a45] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.35)]">
+          <div className="flex items-stretch justify-between px-0.5">
+            {bottomNavItems.map((item) => {
+              const active = isRouteActive(item.to);
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0"
+                >
+                  <Icon
+                    size={20}
+                    strokeWidth={active ? 2.5 : 2}
+                    className={`flex-shrink-0 ${active ? 'text-indigo-400' : 'text-slate-400'}`}
+                  />
+                  <span className={`text-[9px] font-semibold truncate max-w-full ${active ? 'text-indigo-400' : 'text-slate-400'}`}>
+                    {item.label}
+                  </span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

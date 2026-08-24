@@ -1,3 +1,4 @@
+// import { response } from './../../../types/auth.types';
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -18,15 +19,18 @@ import type {
   LoginCredentials,
   RegisterPayload,
   ResetPasswordPayload,
-  UserRole,
+  BackendUserType,
   VerifyOtpPayload,
+  AuthResponse
 } from "@/types/auth.types";
 
 /**
  * Returns the default redirect URL based on user role
  */
-export function getRoleDashboardPath(role?: UserRole | null): string {
-  switch (role) {
+
+export type response = AuthResponse;
+export function getRoleDashboardPath(userType?: BackendUserType | null): string {
+  switch (userType) {
     case "PATIENT":
       return ROUTES.PATIENT.DASHBOARD;
     case "DOCTOR":
@@ -49,8 +53,8 @@ export function useAuth() {
 
   const {
     user,
-    userRole,
-    token,
+    userType,
+    AccessToken,
     isAuthenticated,
     isLoading,
     error,
@@ -64,7 +68,10 @@ export function useAuth() {
     async (credentials: LoginCredentials, redirect = true) => {
       dispatch(loginStart());
       try {
-        const response = await authApi.login(credentials);
+        const response  = await authApi.login(credentials);
+        if (!response) {
+          throw new Error("No response received from the server.");
+        }
 
         if (response.requiresMfa && response.tempToken && response.mfaType) {
           dispatch(
@@ -78,10 +85,10 @@ export function useAuth() {
           return response;
         }
 
-        dispatch(loginAction({ token: response.token, user: response.user }));
+        dispatch(loginAction({ AccessToken: response.AccessToken, user: response.user }));
 
         if (redirect) {
-          const redirectPath = getRoleDashboardPath(response.user.role);
+          const redirectPath = getRoleDashboardPath(response.user.userType);
           navigate(redirectPath, { replace: true });
         }
 
@@ -103,10 +110,14 @@ export function useAuth() {
       dispatch(loginStart());
       try {
         const response = await authApi.register(payload);
+        if (!response) {
+          throw new Error("No response received from the server.");
+        }
         if (autoLogin) {
-          dispatch(loginAction({ token: response.token, user: response.user }));
-          const redirectPath = getRoleDashboardPath(response.user.role);
-          navigate(redirectPath, { replace: true });
+          // dispatch(loginAction({ token: response.token, user: response.user }));
+          // const redirectPath = getRoleDashboardPath(response.user.userType );
+          
+          // navigate(redirectPath, { replace: true });
         }
         return response;
       } catch (err: unknown) {
@@ -126,9 +137,12 @@ export function useAuth() {
       dispatch(loginStart());
       try {
         const response = await authApi.verifyOtp(payload);
-        dispatch(loginAction({ token: response.token, user: response.user }));
+        if (!response) {
+          throw new Error("No response received from the server.");
+        }
+        dispatch(loginAction({ AccessToken: response.AccessToken, user: response.user }));
         if (redirect) {
-          const redirectPath = getRoleDashboardPath(response.user.role);
+          const redirectPath = getRoleDashboardPath(response.user.userType);
           navigate(redirectPath, { replace: true });
         }
         return response;
@@ -144,7 +158,7 @@ export function useAuth() {
   /**
    * Resend OTP
    */
-  const resendOtp = useCallback(async (emailOrPhone: string) => {
+  const resendEmail = useCallback(async (emailOrPhone: string) => {
     return authApi.resendOtp(emailOrPhone);
   }, []);
 
@@ -193,8 +207,8 @@ export function useAuth() {
 
   return {
     user,
-    userRole,
-    token,
+    userType,
+    AccessToken,
     isAuthenticated,
     isLoading,
     error,
@@ -202,7 +216,7 @@ export function useAuth() {
     login,
     register,
     verifyOtp,
-    resendOtp,
+    resendEmail,
     forgotPassword,
     resetPassword,
     logout,

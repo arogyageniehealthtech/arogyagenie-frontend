@@ -1,3 +1,4 @@
+// import { userType } from './../../../types/auth.types';
 import axiosInstance from "@/lib/axios";
 import type {
   AuthResponse,
@@ -8,143 +9,49 @@ import type {
   ResetPasswordPayload,
   UserRole,
   VerifyOtpPayload,
+  BackendUserType,
+  
 } from "@/types/auth.types";
-
+import {ROUTES} from '../../../constants/routes.constants'
 // Helper to create a mock demo user when the backend server is offline or unreachable
-function createMockUser(
-  emailOrPhone: string,
-  role: UserRole = "PATIENT",
-  firstName = "Demo",
-  lastName = "User"
-): AuthUser {
-  const isEmail = emailOrPhone.includes("@");
-  return {
-    id: "user-" + Math.random().toString(36).substring(2, 9),
-    email: isEmail ? emailOrPhone : `${emailOrPhone.replace(/\D/g, "")}@arogyagenie.com`,
-    phone: isEmail ? "+91 98765 43210" : emailOrPhone,
-    status: "ACTIVE",
-    emailVerifiedAt: new Date().toISOString(),
-    phoneVerifiedAt: new Date().toISOString(),
-    mfaEnabled: false,
-    role,
-    firstName,
-    lastName,
-    profilePicture: undefined,
-    patient:
-      role === "PATIENT"
-        ? {
-            id: "pat-" + Math.random().toString(36).substring(2, 9),
-            firstName,
-            lastName,
-            gender: "MALE",
-            bloodGroup: "O_POS",
-            dateOfBirth: "1995-06-15",
-          }
-        : null,
-    doctor:
-      role === "DOCTOR"
-        ? {
-            id: "doc-" + Math.random().toString(36).substring(2, 9),
-            firstName,
-            lastName,
-            licenseNumber: "MED-IN-889021",
-            licenseAuthority: "National Medical Commission",
-            experienceYears: 8,
-            verificationStatus: "VERIFIED",
-          }
-        : null,
-    employee:
-      role === "HOSPITAL_ADMIN" || role === "SYSTEM_ADMIN" || role === "LAB" || role === "PHARMACY"
-        ? {
-            id: "emp-" + Math.random().toString(36).substring(2, 9),
-            employeeCode: "AG-EMP-1001",
-            designation: role.replace("_", " "),
-          }
-        : null,
-    memberships: [
-      {
-        organizationId: "org-default-1",
-        organizationName: "ArogyaGenie Health Network",
-        role: role,
-      },
-    ],
-    createdAt: new Date().toISOString(),
-  };
-}
+
 
 export const authApi = {
   /**
    * Login with email/phone & password
    */
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+  async login(credentials: LoginCredentials): Promise<AuthResponse | undefined> {
     try {
-      const response = await axiosInstance.post<AuthResponse>("/api/auth/login", credentials);
+      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.LOGIN , credentials);
       return response.data;
     } catch {
-      // Graceful fallback for offline / mock demo development
-      const targetRole = credentials.role || "PATIENT";
-      const nameByRole: Record<UserRole, { first: string; last: string }> = {
-        PATIENT: { first: "Rahul", last: "Sharma" },
-        DOCTOR: { first: "Dr. Ananya", last: "Mukherjee" },
-        SYSTEM_ADMIN: { first: "System", last: "Administrator" },
-        HOSPITAL_ADMIN: { first: "Apollo", last: "Admin" },
-        LAB: { first: "Diagnostic", last: "Specialist" },
-        PHARMACY: { first: "MedPlus", last: "Pharmacist" },
-        DELIVERY_PARTNER: { first: "Vikram", last: "Delivery" },
-      };
-
-      const name = nameByRole[targetRole] || { first: "Demo", last: "User" };
-      const mockUser = createMockUser(credentials.emailOrPhone, targetRole, name.first, name.last);
-      const token = "mock_jwt_" + btoa(JSON.stringify({ userId: mockUser.id, role: targetRole }));
-
-      return {
-        user: mockUser,
-        token,
-        message: "Logged in successfully (Demo/Local mode)",
-      };
+    
     }
   },
 
   /**
    * Register a new account
    */
-  async register(payload: RegisterPayload): Promise<AuthResponse> {
+  async register(payload: RegisterPayload): Promise<AuthResponse | undefined> {
     try {
-      const response = await axiosInstance.post<AuthResponse>("/api/auth/register", payload);
+      const response = await axiosInstance.post<AuthResponse | undefined>(ROUTES.AUTH.REGISTER, payload);
+      console.log(response)
       return response.data;
-    } catch {
-      const mockUser = createMockUser(
-        payload.email,
-        payload.role,
-        payload.firstName,
-        payload.lastName
-      );
-      const token = "mock_jwt_" + btoa(JSON.stringify({ userId: mockUser.id, role: payload.role }));
-
-      return {
-        user: mockUser,
-        token,
-        message: "Registration successful. Please verify OTP.",
-      };
+    } catch(err) {
+      console.log(err);
+      
     }
   },
 
   /**
    * Verify OTP for email/phone verification, password reset, or MFA
    */
-  async verifyOtp(payload: VerifyOtpPayload): Promise<AuthResponse> {
+  async verifyOtp(payload: VerifyOtpPayload): Promise<AuthResponse | undefined> {
     try {
-      const response = await axiosInstance.post<AuthResponse>("/api/auth/verify-otp", payload);
+      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.VERIFY_OTP, payload);
       return response.data;
     } catch {
-      const mockUser = createMockUser(payload.emailOrPhone, "PATIENT", "Verified", "User");
-      const token = "mock_jwt_" + btoa(JSON.stringify({ userId: mockUser.id }));
-
-      return {
-        user: mockUser,
-        token,
-        message: "OTP verified successfully.",
-      };
+  
     }
   },
 
@@ -154,7 +61,7 @@ export const authApi = {
   async resendOtp(emailOrPhone: string): Promise<{ success: boolean; message: string }> {
     try {
       const response = await axiosInstance.post<{ success: boolean; message: string }>(
-        "/api/auth/resend-otp",
+       ROUTES.AUTH.RESEND_OTP,
         { emailOrPhone }
       );
       return response.data;
@@ -172,7 +79,7 @@ export const authApi = {
   async forgotPassword(payload: ForgotPasswordPayload): Promise<{ success: boolean; message: string }> {
     try {
       const response = await axiosInstance.post<{ success: boolean; message: string }>(
-        "/api/auth/forgot-password",
+       ROUTES.AUTH.FORGOT_PASSWORD,
         payload
       );
       return response.data;
@@ -190,7 +97,7 @@ export const authApi = {
   async resetPassword(payload: ResetPasswordPayload): Promise<{ success: boolean; message: string }> {
     try {
       const response = await axiosInstance.post<{ success: boolean; message: string }>(
-        "/api/auth/reset-password",
+        ROUTES.AUTH.RESET_PASSWORD,
         payload
       );
       return response.data;
@@ -205,17 +112,12 @@ export const authApi = {
   /**
    * Fetch currently authenticated user profile
    */
-  async getMe(): Promise<AuthUser> {
+  async getMe(): Promise<AuthUser | undefined> {
     try {
-      const response = await axiosInstance.get<AuthUser>("/api/auth/me");
+      const response = await axiosInstance.get<AuthUser>(ROUTES.AUTH.RELOAD);
       return response.data;
     } catch {
-      const savedAuth = localStorage.getItem("arogyagenie-auth");
-      if (savedAuth) {
-        const parsed = JSON.parse(savedAuth);
-        if (parsed.user) return parsed.user;
-      }
-      return createMockUser("patient@arogyagenie.com", "PATIENT", "Arogya", "Patient");
+     
     }
   },
 
@@ -224,7 +126,7 @@ export const authApi = {
    */
   async logout(): Promise<void> {
     try {
-      await axiosInstance.post("/api/auth/logout");
+      await axiosInstance.post(ROUTES.AUTH.LOGOUT);
     } catch {
       // Ignored for offline/mock
     }
@@ -233,18 +135,12 @@ export const authApi = {
   /**
    * Google OAuth login / registration
    */
-  async googleAuth(idToken: string): Promise<AuthResponse> {
+  async googleAuth(idToken: string): Promise<AuthResponse | undefined> {
     try {
-      const response = await axiosInstance.post<AuthResponse>("/api/auth/google", { idToken });
+      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.GOOGLE, { idToken });
       return response.data;
     } catch {
-      const mockUser = createMockUser("google.user@gmail.com", "PATIENT", "Google", "User");
-      const token = "mock_jwt_google_" + btoa(JSON.stringify({ userId: mockUser.id }));
-      return {
-        user: mockUser,
-        token,
-        message: "Authenticated with Google successfully.",
-      };
+    
     }
   },
 };

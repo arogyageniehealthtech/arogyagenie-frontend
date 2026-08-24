@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, Search, Filter, CheckCircle, XCircle, Phone, Calendar } from "lucide-react";
 import { DashboardLayout } from "../component/AdminLayout";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/features/patient/hooks/use-toast";
 import type { AdminUser } from "../data/mockAdminData";
 
 export function AdminPatientsPage() {

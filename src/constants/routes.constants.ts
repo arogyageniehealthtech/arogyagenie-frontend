@@ -1,15 +1,23 @@
+
+
 export const ROUTES = {
   AUTH: {
-    LOGIN: '/login',
-    REGISTER: '/register',
-    VERIFY_OTP: '/verify-otp',
-    FORGOT_PASSWORD: '/forgot-password',
-    RESET_PASSWORD: '/reset-password',
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    VERIFY_OTP: '/auth/verify-otp',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
+    GOOGLE: '/auth/google',
+    RESEND_OTP: '/auth/resend',
+    RELOAD:'/auth/me',
+    LOGOUT: '/auth/logout',
+   VERIFY_EMAIL: '/verify-email'
+    // GOOGLE: '/auth/google',
   },
 
   PATIENT: {
     DASHBOARD: '/',
-    AI_CHAT: '/ai-health-assistant',
+    AI_CHAT: '/ai-assistant',
     CARE: '/care',
     // APPOINTMENTS: (doctorId: string | number) => `/appointments/${doctorId}`,
     APPOINTMENTS:'/appointment',
@@ -23,7 +31,8 @@ export const ROUTES = {
     MEDICINE: '/medicine',
     PRESCRIBTION:'/patient/Prescriptions',
     LAB_REPORTS:'/patient/lab_report',
-    CART_ITEMS:'/patient/cart_item'
+    CART_ITEMS:'/patient/cart_item',
+    ASSISTANT:'/patient/chatbot'
   },
 
   DOCTOR: {

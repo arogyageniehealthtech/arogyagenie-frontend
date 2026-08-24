@@ -1,14 +1,14 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { AuthUser, UserRole } from '@/types/auth.types';
+import type { AuthUser, BackendUserType } from '@/types/auth.types';
 
 // Alias for backward compatibility
-export type { UserRole };
+export type { BackendUserType };
 export type User = AuthUser;
 
 export interface AuthState {
   isAuthenticated: boolean;
-  userRole: UserRole | null;
-  token: string | null;
+  userType: BackendUserType | null;
+  AccessToken: string | null;
   user: AuthUser | null;
   isLoading: boolean;
   error: string | null;
@@ -25,11 +25,11 @@ const loadInitialState = (): AuthState => {
     const serializedState = localStorage.getItem('arogyagenie-auth');
     if (serializedState) {
       const parsed = JSON.parse(serializedState);
-      const token = parsed.token || localStorage.getItem('auth_token') || null;
+      const AccessToken = parsed.AccessToken || localStorage.getItem('AccessToken') || null;
       return {
-        isAuthenticated: !!token && !!parsed.user,
-        userRole: parsed.userRole || (parsed.user ? parsed.user.role : null),
-        token,
+        isAuthenticated: !!AccessToken && !!parsed.user,
+        userType: parsed.userRole || (parsed.user ? parsed.user.role : null),
+        AccessToken,
         user: parsed.user || null,
         isLoading: false,
         error: null,
@@ -41,8 +41,8 @@ const loadInitialState = (): AuthState => {
   }
   return {
     isAuthenticated: false,
-    userRole: null,
-    token: null,
+    userType: null,
+    AccessToken: null,
     user: null,
     isLoading: false,
     error: null,
@@ -60,11 +60,11 @@ const authSlice = createSlice({
       state.isLoading = true;
       state.error = null;
     },
-    login: (state, action: PayloadAction<{ token: string; user: AuthUser }>) => {
+    login: (state, action: PayloadAction<{ AccessToken: string; user: AuthUser }>) => {
       state.isAuthenticated = true;
-      state.token = action.payload.token;
+      state.AccessToken = action.payload.AccessToken;
       state.user = action.payload.user;
-      state.userRole = action.payload.user.role;
+      // state.userType = action.payload.user.userType;
       state.isLoading = false;
       state.error = null;
       state.mfaPending = null;
@@ -74,12 +74,12 @@ const authSlice = createSlice({
           'arogyagenie-auth',
           JSON.stringify({
             isAuthenticated: true,
-            userRole: action.payload.user.role,
-            token: action.payload.token,
+            // userType: action.payload.user.userType,
+            AccessToken: action.payload.AccessToken,
             user: action.payload.user,
           })
         );
-        localStorage.setItem('auth_token', action.payload.token);
+        localStorage.setItem('AccessToken', action.payload.AccessToken);
       } catch (err) {
         console.error('Failed to persist auth state:', err);
       }
@@ -90,9 +90,9 @@ const authSlice = createSlice({
     },
     logout: (state) => {
       state.isAuthenticated = false;
-      state.token = null;
+      state.AccessToken = null;
       state.user = null;
-      state.userRole = null;
+      state.userType = null;
       state.isLoading = false;
       state.error = null;
       state.mfaPending = null;
@@ -107,16 +107,16 @@ const authSlice = createSlice({
     updateUser: (state, action: PayloadAction<Partial<AuthUser>>) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload } as AuthUser;
-        if (action.payload.role) {
-          state.userRole = action.payload.role;
+        if (action.payload.userType) {
+          state.userType = action.payload.userType;
         }
         try {
           localStorage.setItem(
             'arogyagenie-auth',
             JSON.stringify({
               isAuthenticated: state.isAuthenticated,
-              userRole: state.userRole,
-              token: state.token,
+              userRole: state.userType,
+              token: state.AccessToken,
               user: state.user,
             })
           );

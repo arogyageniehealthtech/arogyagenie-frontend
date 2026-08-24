@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/features/patient/hooks/use-toast";
 import { Stethoscope, Building, Award, Clock, DollarSign, Save } from "lucide-react";
 import { DOCTOR_SPECIALTIES } from "@/lib/specialties";
 

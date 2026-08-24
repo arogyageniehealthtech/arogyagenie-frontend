@@ -1,19 +1,20 @@
 import axios from "axios";
-import type { InternalAxiosRequestConfig , AxiosInstance,AxiosError } from "axios";
+import type { InternalAxiosRequestConfig, AxiosInstance, AxiosError } from "axios";
 
-// Create central Axios instance with a blank base URL (or relative path /api)
+// Create central Axios instance with credentials enabled for cookies
 export const axiosInstance: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "", // Empty string means it targets your local domain/mock handlers
+  baseURL: import.meta.env.VITE_API_BASE_URL ||"http://localhost:4000/api/v1", 
   timeout: 15000,
+  withCredentials: true, // <-- CRITICAL: Allows cookies to be sent and received cross-origin
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Request interceptor to inject Authorization token securely
+// Request interceptor to inject Authorization token securely (if using Bearer tokens alongside cookies)
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("auth_token");
+    const token = localStorage.getItem("AccessToken");
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -31,7 +32,8 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       const status = error.response.status;
       if (status === 401) {
-        localStorage.removeItem("auth_token");
+        // Fixed case-sensitivity mismatch here ("AccessToken")
+        localStorage.removeItem("AccessToken");
         window.location.href = "/login";
       }
     }

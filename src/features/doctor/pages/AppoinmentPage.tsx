@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar as CalendarIcon, CheckCircle, XCircle, Clipboard, Filter, Plus, Search } from "lucide-react";
 import { DashboardLayout } from "../../components/layout/DashboardLayout";
 import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/features/patient/hooks/use-toast";
 import { PrescribeModal } from "./PrescribeModal";
 
 export function DoctorAppointments() {

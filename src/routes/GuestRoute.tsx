@@ -4,13 +4,12 @@ import { useAppSelector } from '../store/hooks';
 
 export const GuestRoute = () => {
   
-  const { isAuthenticated, userRole } = useAppSelector((state) => state.auth);
-
+  const { isAuthenticated, userType } = useAppSelector((state) => state.auth);
   if (isAuthenticated) {
   
     let dashboardPath = '/dashboard';
 
-    switch (userRole) {
+    switch (userType) {
       case 'PATIENT':
         dashboardPath = '/dashboard';
         break;
@@ -24,7 +23,7 @@ export const GuestRoute = () => {
       case 'PHARMACY':
       case 'HOSPITAL_ADMIN':
        
-        dashboardPath = `/${userRole.toLowerCase().replace('_', '-')}-dashboard`;
+        dashboardPath = `/${userType.toLowerCase().replace('_', '-')}-dashboard`;
         break;
       default:
         dashboardPath = '/dashboard';
