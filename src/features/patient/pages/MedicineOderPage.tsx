@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes.constants';
 import { useAppSelector } from '../../../store/hooks';
+import { useAuth } from '../../../features/auth/hooks/useAuth';
 
 interface NotificationItem {
   id: string;
@@ -104,6 +105,7 @@ const getPageTitle = (pathname: string) => {
 
 export default function PatientLayout() {
   const { user } = useAppSelector((state) => state.auth);
+  const { logout } = useAuth();
 
   // Hooks for routing
   const location = useLocation();
@@ -398,6 +400,7 @@ export default function PatientLayout() {
               <button 
                 onClick={() => {
                   setIsSidebarOpen(false);
+                  logout();
                 }}
                 className="flex w-full items-center justify-center gap-2 px-3 py-2 text-xs text-red-400 bg-transparent border border-red-900/50 hover:bg-red-500/10 hover:border-red-500/30 rounded-lg font-bold transition-all"
               >

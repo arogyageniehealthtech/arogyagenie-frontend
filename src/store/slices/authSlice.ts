@@ -106,7 +106,7 @@ const authSlice = createSlice({
 
       try {
         localStorage.removeItem('arogyagenie-auth');
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('AccessToken');
       } catch (err) {
         console.error('Failed to remove auth state:', err);
       }

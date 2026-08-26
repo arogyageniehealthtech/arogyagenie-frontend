@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '../constants/routes.constants';
 import { useAppSelector } from '../store/hooks';
+import { useAuth } from '../features/auth/hooks/useAuth';
 import type { NotificationItem } from '../types/Notification.types';
 import {INITIAL_NOTIFICATIONS} from '../data/notification.data'
 
@@ -84,6 +85,7 @@ const getBottomNavItems = () => [
 
 export default function PatientLayout() {
   const { user } = useAppSelector((state) => state.auth);
+  const { logout } = useAuth();
 
   // Hooks for routing
   const location = useLocation();
@@ -432,6 +434,7 @@ export default function PatientLayout() {
               <button 
                 onClick={() => {
                   setIsSidebarOpen(false);
+                  logout();
                 }}
                 className="flex w-full items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border border-red-500/40 rounded-lg sm:rounded-lg font-bold transition-all shadow-sm shadow-red-950/40"
               >
