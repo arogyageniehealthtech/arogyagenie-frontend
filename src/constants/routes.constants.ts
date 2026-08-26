@@ -17,7 +17,6 @@ export const ROUTES = {
 
   PATIENT: {
     DASHBOARD: '/',
-    AI_CHAT: '/ai-assistant',
     CARE: '/care',
     // APPOINTMENTS: (doctorId: string | number) => `/appointments/${doctorId}`,
     APPOINTMENTS:'/appointment',
@@ -32,8 +31,8 @@ export const ROUTES = {
     PRESCRIBTION:'/patient/Prescriptions',
     LAB_REPORTS:'/patient/lab_report',
     CART_ITEMS:'/patient/cart_item',
-    ASSISTANT:'/patient/chatbot',
     EMERGENCY: '/ambulance',
+    ASSISTANT: '/assistant',
   },
 
   DOCTOR: {

@@ -7,7 +7,7 @@ export const AiHealthInsight: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate('/ai-chatbot'); 
+    window.dispatchEvent(new Event('open-ai-assistant')); 
   };
 
   return (

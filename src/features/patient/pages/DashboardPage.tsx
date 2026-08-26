@@ -128,15 +128,6 @@ export default function DashboardPage() {
 
       <Footer />
 
-      {/* Floating Action Button (Bottom Right) */}
-      <button
-        onClick={() => navigate(ROUTES.PATIENT.AI_CHAT)}
-        className="fixed bottom-24 right-5 lg:bottom-10 lg:right-10 z-100 flex items-center justify-center gap-2 rounded-full bg-[var(--color-arogya-dark)] px-4 py-4 sm:px-6 shadow-[0_8px_30px_rgba(79,70,229,0.4)] transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-700 hover:shadow-[0_12px_40px_rgba(79,70,229,0.5)] group"
-        aria-label="Open AI Health Assistant"
-      >
-        <Bot className="h-6 w-6 text-white group-hover:animate-bounce" />
-        <span className="hidden sm:inline font-bold text-white tracking-wide">Help</span>
-      </button>
     </>
   );
 }

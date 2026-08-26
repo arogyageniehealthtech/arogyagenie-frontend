@@ -446,7 +446,7 @@ export default function PatientLayout() {
             {/* RIGHT SIDE: Quick Actions */}
             <div className="flex items-center gap-3 lg:gap-5 ml-auto shrink-0 z-10">
               <button 
-                onClick={() => navigate(ROUTES.PATIENT.ASSISTANT)}
+                onClick={() => window.dispatchEvent(new Event('open-ai-assistant'))}
                 className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-full transition-colors flex items-center gap-2 px-3 lg:px-4"
                 title="Chat with AI Health Assistant"
               >
