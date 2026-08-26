@@ -1,6 +1,6 @@
 // src/api/diagnosticApi.ts
 import axiosClient from './axiosClient';
-import type { DiagnosticCentre } from '../../user/types/diagnostic';
+import type { DiagnosticCentre } from '../types/diagnostic';
 
 export interface DiagnosticSearchParams {
   query?: string;

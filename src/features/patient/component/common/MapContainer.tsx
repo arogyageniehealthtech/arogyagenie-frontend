@@ -5,10 +5,10 @@ interface MapContainerProps {
   locations: Array<{
     id: string;
     name: string;
-    lat: number;
-    lng: number;
+    lat?: number;
+    lng?: number;
     specialty?: string;
-    category: 'doctor' | 'clinic';
+    category?: string;
   }>;
   radiusKm: number;
   centerCoordinates?: { lat: number; lng: number };
@@ -135,8 +135,10 @@ export default function MapContainer({ locations, radiusKm, centerCoordinates }:
           }} 
         />
         
-        {/* Doctor Markers */}
-        {locations.map((loc) => (
+        {/* Markers */}
+        {locations
+          .filter((loc): loc is typeof loc & { lat: number; lng: number } => typeof loc.lat === 'number' && typeof loc.lng === 'number')
+          .map((loc) => (
           <MarkerF
             key={loc.id}
             position={{ lat: loc.lat, lng: loc.lng }}

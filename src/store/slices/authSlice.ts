@@ -1,13 +1,14 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { AuthUser, BackendUserType } from '@/types/auth.types';
+import type { AuthUser, BackendUserType, UserRole } from '@/types/auth.types';
 
 // Alias for backward compatibility
-export type { BackendUserType };
+export type { BackendUserType, UserRole };
 export type User = AuthUser;
 
 export interface AuthState {
   isAuthenticated: boolean;
   userType: BackendUserType | null;
+  userRole: BackendUserType | null;
   AccessToken: string | null;
   user: AuthUser | null;
   isLoading: boolean;
@@ -26,9 +27,11 @@ const loadInitialState = (): AuthState => {
     if (serializedState) {
       const parsed = JSON.parse(serializedState);
       const AccessToken = parsed.AccessToken || localStorage.getItem('AccessToken') || null;
+      const role = parsed.userRole || parsed.userType || (parsed.user ? parsed.user.userType : null);
       return {
         isAuthenticated: !!AccessToken && !!parsed.user,
-        userType: parsed.userRole || (parsed.user ? parsed.user.role : null),
+        userType: role,
+        userRole: role,
         AccessToken,
         user: parsed.user || null,
         isLoading: false,
@@ -42,6 +45,7 @@ const loadInitialState = (): AuthState => {
   return {
     isAuthenticated: false,
     userType: null,
+    userRole: null,
     AccessToken: null,
     user: null,
     isLoading: false,
@@ -64,7 +68,8 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.AccessToken = action.payload.AccessToken;
       state.user = action.payload.user;
-      // state.userType = action.payload.user.userType;
+      state.userType = action.payload.user.userType;
+      state.userRole = action.payload.user.userType;
       state.isLoading = false;
       state.error = null;
       state.mfaPending = null;
@@ -74,7 +79,8 @@ const authSlice = createSlice({
           'arogyagenie-auth',
           JSON.stringify({
             isAuthenticated: true,
-            // userType: action.payload.user.userType,
+            userRole: action.payload.user.userType,
+            userType: action.payload.user.userType,
             AccessToken: action.payload.AccessToken,
             user: action.payload.user,
           })
@@ -93,6 +99,7 @@ const authSlice = createSlice({
       state.AccessToken = null;
       state.user = null;
       state.userType = null;
+      state.userRole = null;
       state.isLoading = false;
       state.error = null;
       state.mfaPending = null;

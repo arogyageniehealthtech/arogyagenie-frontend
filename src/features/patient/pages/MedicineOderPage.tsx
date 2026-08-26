@@ -385,13 +385,13 @@ export default function PatientLayout() {
                   />
                 ) : (
                   <div className="h-9 w-9 rounded-full shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-inner">
-                    {getInitials(user?.name)}
+                    {getInitials(user ? `${user.firstName} ${user.lastName}` : undefined)}
                   </div>
                 )}
 
                 <div className="flex flex-col min-w-0">
                   <h2 className="text-xs font-bold text-white leading-tight truncate">
-                    Hello, {user?.name ? user.name.split(" ")[0] : "Guest"}
+                    Hello, {user ? (user.firstName || user.email.split('@')[0]) : "Guest"}
                   </h2>
                 </div>
               </div>

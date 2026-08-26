@@ -6,11 +6,20 @@ export interface MedicineItem {
   name: string;
   quantity: number;
   dosage: string;
-  price:number;
-  composition:string;
-  packSize:string;
+  price: number;
+  composition: string;
+  packSize: string;
   form: string;
   requiresPrescription: boolean;
+}
+
+export type Medicine = MedicineItem;
+
+export interface OrderPayload {
+  items: Array<{ medicineId: string; quantity: number }>;
+  pharmacyId?: string;
+  deliveryAddress?: string;
+  prescriptionUrl?: string;
 }
 
 export interface PharmacyOffer {
@@ -37,7 +46,7 @@ export interface MedicineRequest {
 export interface Pharmacy {
   id: string;
   name: string;
-  image: string;
+  image?: string;
   address: string;
   distance: number;
   status: string;      // e.g., 'OPEN' or 'CLOSED'

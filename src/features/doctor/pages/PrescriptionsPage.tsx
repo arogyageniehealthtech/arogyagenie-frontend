@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useListPrescriptions } from "@workspace/api-client-react";
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Clock, Plus, User } from "lucide-react";
-import { PrescribeModal } from "./PrescribeModal";
+import { PrescribeModal } from "../components/PrescribeModal";
 
 export function DoctorPrescriptions() {
   const { data: prescriptions, isLoading } = useListPrescriptions();

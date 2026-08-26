@@ -251,7 +251,7 @@ export default function DiagnosticDiscoveryPage() {
                 <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
                   {viewingCentre.availableTests?.map((test, idx) => (
                     <span key={idx} className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-purple-100">
-                      {test.name} (₹{test.price})
+                      {test.name} (₹{test.rate})
                     </span>
                   ))}
                 </div>

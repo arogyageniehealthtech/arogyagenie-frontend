@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useGetDoctorProfile, useUpdateDoctorProfile, getGetDoctorProfileQueryKey } from "@workspace/api-client-react";
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -34,7 +34,7 @@ export function DoctorProfile() {
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof doctorProfileSchema>>({
-    resolver: zodResolver(doctorProfileSchema),
+    resolver: zodResolver(doctorProfileSchema) as any,
     defaultValues: {
       specialty: "General Physician",
       qualification: "",

@@ -4,10 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Users, Search, Clipboard, User, Calendar, Mail, FileText } from "lucide-react";
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
-import { PrescribeModal } from "./PrescribeModal";
-import { DoctorPatientBriefingCard } from "../../components/health/DoctorPatientBriefingCard";
+import { Users, Search, ClipboardList as Clipboard, User, Calendar, Mail, FileText } from "lucide-react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { PrescribeModal } from "../components/PrescribeModal";
+import { DoctorPatientBriefingCard } from "../components/DoctorPatientBriefingCard";
 
 export function DoctorPatients() {
   const { data: patients, isLoading } = useListDoctorPatients();

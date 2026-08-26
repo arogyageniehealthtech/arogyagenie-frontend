@@ -32,7 +32,8 @@ export const ROUTES = {
     PRESCRIBTION:'/patient/Prescriptions',
     LAB_REPORTS:'/patient/lab_report',
     CART_ITEMS:'/patient/cart_item',
-    ASSISTANT:'/patient/chatbot'
+    ASSISTANT:'/patient/chatbot',
+    EMERGENCY: '/ambulance',
   },
 
   DOCTOR: {

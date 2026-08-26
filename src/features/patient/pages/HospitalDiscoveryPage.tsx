@@ -157,7 +157,7 @@ export default function HospitalDiscoveryPage() {
             
             <div className="w-full lg:flex-1 lg:sticky lg:top-22.5 z-10 rounded-2xl overflow-hidden shadow-sm border border-slate-200 h-65 sm:h-80 lg:h-[calc(100vh-140px)] lg:max-h-150">
               <MapContainer 
-                locations={filteredHospitals.name ? [] : filteredHospitals.map(h => ({ ...h, category: 'hospital' as const }))} 
+                locations={filteredHospitals.map(h => ({ ...h, category: 'hospital' }))} 
                 radiusKm={radiusKm} 
                 centerCoordinates={activeCoordinates} 
               />

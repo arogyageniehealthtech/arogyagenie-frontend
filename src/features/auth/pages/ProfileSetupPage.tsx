@@ -29,7 +29,7 @@ export function ProfileSetupPage() {
       },
     });
 
-    const target = getRoleDashboardPath(user?.role);
+    const target = getRoleDashboardPath(user?.userType);
     navigate(target, { replace: true });
   };
 

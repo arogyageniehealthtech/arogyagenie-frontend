@@ -4,11 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, CheckCircle, XCircle, Clipboard, Filter, Plus, Search } from "lucide-react";
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { Calendar as CalendarIcon, CheckCircle, XCircle, ClipboardList as Clipboard, Filter, Plus, Search } from "lucide-react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/features/patient/hooks/use-toast";
-import { PrescribeModal } from "./PrescribeModal";
+import { PrescribeModal } from "../components/PrescribeModal";
 
 export function DoctorAppointments() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");

@@ -30,6 +30,7 @@ export type AuthProviderType = 'GOOGLE';
 export type UserRole =
   | 'PATIENT'
   | 'DOCTOR'
+  | 'EMPLOYEE'
   | 'LAB'
   | 'PHARMACY'
   | 'HOSPITAL_ADMIN'

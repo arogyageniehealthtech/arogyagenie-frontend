@@ -417,13 +417,13 @@ export default function PatientLayout() {
                   />
                 ) : (
                   <div className="h-7 sm:h-9 w-7 sm:w-9 rounded-full flex-shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-inner">
-                    {getInitials(user?.name)}
+                    {getInitials(user ? `${user.firstName} ${user.lastName}` : undefined)}
                   </div>
                 )}
 
                 <div className="flex flex-col min-w-0">
                   <h2 className="text-[10px] sm:text-xs font-bold text-white leading-tight truncate">
-                    Hi, {user?.name ? user.name.split(" ")[0] : "Guest"}
+                    Hi, {user ? (user.firstName || user.email.split('@')[0]) : "Guest"}
                   </h2>
                 </div>
               </div>
@@ -488,7 +488,7 @@ export default function PatientLayout() {
                 className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-lg sm:rounded-full transition-colors flex items-center gap-2 px-2 sm:px-3 lg:px-4 min-h-[44px] min-w-[44px] justify-center sm:justify-start flex-shrink-0"
                 title="Chat with AI Health Assistant"
               >
-                <Bot size={18} sm:size={20} className="flex-shrink-0" />
+                <Bot size={20} className="flex-shrink-0" />
                 <span className="text-xs sm:text-sm font-bold hidden sm:block text-white lg:text-indigo-600">AI Assistant</span>
               </button>
 
@@ -528,7 +528,7 @@ export default function PatientLayout() {
                           onClick={handleMarkAllAsRead}
                           className="text-[10px] sm:text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1 flex-shrink-0 ml-2"
                         >
-                          <CheckCheck size={12} sm:size={14} /> 
+                          <CheckCheck size={14} /> 
                           <span className="hidden sm:inline">Mark all</span>
                         </button>
                       )}
@@ -563,7 +563,7 @@ export default function PatientLayout() {
 
                                 <div className="p-3 sm:p-4 pl-4 sm:pl-5 flex gap-3 sm:gap-4">
                                   <div className={`w-9 sm:w-11 h-9 sm:h-11 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm border border-white ${bg} ${text} ${item.read ? 'opacity-60' : 'opacity-100'}`}>
-                                    <CategoryIcon size={16} sm:size={20} />
+                                    <CategoryIcon size={18} />
                                   </div>
 
                                   <div className={`flex-1 min-w-0 pr-4 sm:pr-6 ${item.read ? 'opacity-70' : 'opacity-100'}`}>
@@ -586,7 +586,7 @@ export default function PatientLayout() {
                                   className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 bg-white rounded-full shadow-sm border border-slate-100 opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition-all duration-200 flex-shrink-0"
                                   title="Delete notification"
                                 >
-                                  <Trash2 size={12} sm:size={14} />
+                                  <Trash2 size={14} />
                                 </button>
                               </div>
                             );

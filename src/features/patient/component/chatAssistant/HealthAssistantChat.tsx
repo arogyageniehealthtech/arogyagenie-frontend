@@ -32,7 +32,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { useToast } from "@/features/patient/hooks/use-toast";
-import { useLocation } from "wouter";
 
 // ── Types ─────────────────────────────────────────────────────────────
 interface ChatMessage {

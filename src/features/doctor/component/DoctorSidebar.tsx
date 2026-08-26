@@ -54,7 +54,7 @@ export function DoctorSidebar() {
       : user.email?.split("@")[0] || "Doctor"
     : "Doctor";
 
-  const role = user?.role || "DOCTOR";
+  const role = user?.userType || "DOCTOR";
   const initials = getInitials(displayName, user?.email);
 
   const handleSignOut = () => {

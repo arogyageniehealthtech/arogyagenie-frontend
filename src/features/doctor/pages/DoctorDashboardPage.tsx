@@ -3,10 +3,10 @@ import { useGetDoctorDashboard, useUpdateAppointment, getGetDoctorDashboardQuery
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Users, Clock, Clipboard, CheckCircle, XCircle, Plus, User } from "lucide-react";
-import { DashboardLayout } from "../../components/layout/DashboardLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/features/patient/hooks/use-toast";
-import { PrescribeModal } from "./PrescribeModal";
+import { PrescribeModal } from "../components/PrescribeModal";
 
 export function DoctorDashboard() {
   const { data: dashboard, isLoading } = useGetDoctorDashboard();

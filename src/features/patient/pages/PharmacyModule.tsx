@@ -24,6 +24,9 @@ export default function PatientOrderPage() {
       name: selectedMedTemplate.name,
       dosage: selectedMedTemplate.dosage,
       form: selectedMedTemplate.form,
+      price: 50,
+      composition: selectedMedTemplate.name,
+      packSize: '1 Pack',
       quantity: customQty,
       requiresPrescription: selectedMedTemplate.requiresPrescription
     } : {
@@ -31,6 +34,9 @@ export default function PatientOrderPage() {
       name: medSearchQuery.trim(),
       dosage: '',
       form: 'Custom',
+      price: 50,
+      composition: 'Standard Formula',
+      packSize: '1 Unit',
       quantity: customQty,
       requiresPrescription: false
     };

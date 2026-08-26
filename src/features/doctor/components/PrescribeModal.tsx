@@ -42,7 +42,7 @@ export function PrescribeModal({
   const extractOcr = useExtractOcr();
 
   const form = useForm<z.infer<typeof prescriptionSchema>>({
-    resolver: zodResolver(prescriptionSchema),
+    resolver: zodResolver(prescriptionSchema) as any,
     defaultValues: {
       patientId: defaultPatientId ?? 0,
       appointmentId: defaultAppointmentId,
