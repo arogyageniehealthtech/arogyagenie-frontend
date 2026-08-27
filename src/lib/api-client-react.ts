@@ -297,3 +297,78 @@ export const useExtractOcr = () => {
     },
   });
 };
+
+
+// --- PATIENT DASHBOARD MOCKS ---
+export const customFetch = async <T>(url: string, options?: any): Promise<T> => {
+  if (url === '/api/medicine-orders') return [] as unknown as T;
+  return {} as T;
+};
+
+export const useGetPatientDashboard = () => {
+  return useQuery({
+    queryKey: ['patient-dashboard'],
+    queryFn: async () => ({
+      firstName: 'Patient',
+      userName: 'Patient User',
+      upcomingAppointments: 1,
+      activeMedicines: 2,
+      totalLabReports: 3,
+      totalPrescriptions: 4,
+      recentAppointments: [
+        {
+          id: 1,
+          doctorName: 'Rajesh Sharma',
+          doctorSpecialty: 'Cardiologist',
+          appointmentDate: new Date().toISOString(),
+          appointmentTime: '10:00 AM'
+        }
+      ],
+      activeMedicineReminders: [
+        {
+          id: 1,
+          medicineName: 'Paracetamol',
+          dosage: '500mg',
+          frequency: 'twice_a_day',
+          times: '08:00 AM, 08:00 PM'
+        }
+      ]
+    })
+  });
+};
+
+export const useGetPatientHealthSummary = () => {
+  return useQuery({
+    queryKey: ['patient-health-summary'],
+    queryFn: async () => ({
+      overallStatus: 'stable', aiInterpretation: 'Looking good.', recentHealthEvents: ['Checkup all clear'], currentMedicines: ['Paracetamol 500mg'], activeConcerns: ['Mild headache'], followUpRequirements: ['Routine checkup in 6 months'], disclaimer: 'AI generated summary',
+      keyInsights: ['Blood pressure is normal', 'Continue taking prescribed medicines'],
+      recommendations: ['Drink more water', 'Exercise regularly'],
+      lastUpdated: new Date().toISOString()
+    })
+  });
+};
+
+export const useListHealthEpisodes = () => {
+  return useQuery({
+    queryKey: ['health-episodes'],
+    queryFn: async () => ([
+      {
+        id: 1,
+        title: 'Routine Checkup',
+        date: new Date().toISOString(), startDate: new Date().toISOString(),
+        status: 'completed',
+        summary: 'All vitals normal'
+      }
+    ])
+  });
+};
+
+export const useGetLabTrends = () => {
+  return useQuery({
+    queryKey: ['lab-trends'],
+    queryFn: async () => ([
+      { testName: 'Hemoglobin', trendDirection: 'stable', summary: 'Normal', readings: [{date: '2026-08-20', value: 14.5, unit: 'g/dL', status: 'normal'}] }
+    ])
+  });
+};
