@@ -828,9 +828,7 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
                             <span>{msg.attachmentName}</span>
                           </div>
                         )}
-
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
-
+                        <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                         {/* RAG Verification & Sources Drawer */}
                         {msg.sender === "assistant" && (
                           <div className="mt-3 pt-2.5 border-t border-indigo-900/60 flex flex-wrap items-center justify-between gap-2 text-xs">
