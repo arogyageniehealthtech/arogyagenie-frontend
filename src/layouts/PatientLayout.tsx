@@ -362,10 +362,10 @@ export default function PatientLayout() {
 
                     {/* Medicine Order Sub-item — stays in the hamburger menu on every device */}
                     <NavLink
-                      to="/patient/medicine-orders"
+                      to={ROUTES.PATIENT.MEDICINE_ORDERS}
                       onClick={() => setIsSidebarOpen(false)}
                       className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
-                        isRouteActive('/patient/medicine-orders')
+                        isRouteActive(ROUTES.PATIENT.MEDICINE_ORDERS)
                           ? 'text-indigo-400 bg-indigo-500/10'
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}

@@ -28,6 +28,7 @@ export const ROUTES = {
     FINDDOCTOR: '/finddoctor',
     LAB: '/lab',
     MEDICINE: '/medicine',
+    MEDICINE_ORDERS: '/patient/medicine-orders',
     PRESCRIBTION:'/patient/Prescriptions',
     LAB_REPORTS:'/patient/lab_report',
     CART_ITEMS:'/patient/cart_item',
