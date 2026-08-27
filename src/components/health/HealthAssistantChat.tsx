@@ -526,14 +526,14 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
             <span className="text-[11px]">AI Online</span>
           </div>
 
-          {/* New Chat Button */}
           <Button
             type="button"
             size="sm"
             onClick={handleNewChat}
-            className="h-8 px-3 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-bold text-xs shadow-[0_0_15px_rgba(168,85,247,0.35)] border border-purple-400/40 gap-1 transition-all"
+            className="h-8 px-2 sm:px-3 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-bold text-xs shadow-[0_0_15px_rgba(168,85,247,0.35)] border border-purple-400/40 gap-1 transition-all"
           >
-            <span>New Chat</span>
+            <span className="hidden sm:inline">New Chat</span>
+            <span className="sm:hidden">New</span>
             <Plus className="h-3.5 w-3.5" />
           </Button>
 
@@ -726,8 +726,8 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
                 <div className="space-y-4">
                   {/* Mobile-Only Interactive 3D Bot Mascot Card */}
                   <div className="lg:hidden flex flex-col items-center justify-center p-2 rounded-3xl bg-[#080b26]/70 border border-indigo-500/30 relative overflow-hidden backdrop-blur-md shadow-lg">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full blur-2xl bg-cyan-500/15 pointer-events-none" />
-                    <div className="relative w-56 h-64 sm:w-64 sm:h-72 flex items-center justify-center">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl bg-cyan-500/15 pointer-events-none" />
+                    <div className="relative w-32 h-36 sm:w-64 sm:h-72 flex items-center justify-center">
                       <AarogyaBot3D className="w-full h-full" />
                     </div>
                     <div className="text-center pb-1">

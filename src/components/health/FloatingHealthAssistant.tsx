@@ -57,7 +57,7 @@ export function FloatingHealthAssistant() {
               damping: 28,
               mass: 0.9,
             }}
-            className="fixed inset-0 sm:inset-auto sm:bottom-16 sm:right-6 sm:left-auto z-50 w-full sm:w-[620px] md:w-[820px] lg:w-[990px] xl:w-[1080px] max-w-none sm:max-w-[calc(100vw-2rem)] h-[100dvh] sm:h-[680px] lg:h-[740px] max-h-none sm:max-h-[calc(100vh-5rem)] bg-[#060819] rounded-none sm:rounded-[32px] overflow-hidden flex flex-col border-0 sm:border sm:border-indigo-500/40"
+            className="fixed z-[90] flex flex-col overflow-hidden bg-[#060819] border border-indigo-500/40 shadow-2xl transition-all top-4 left-3 right-3 bottom-[calc(76px+env(safe-area-inset-bottom))] rounded-2xl sm:top-auto sm:left-auto sm:w-[620px] md:w-[820px] lg:w-[990px] xl:w-[1080px] sm:h-[680px] lg:h-[740px] sm:right-6 sm:bottom-6 sm:rounded-[32px] max-w-none sm:max-w-[calc(100vw-2rem)] max-h-none sm:max-h-[calc(100vh-5rem)]"
             style={{
               boxShadow:
                 "0 30px 100px -10px rgba(88, 28, 135, 0.5), 0 20px 50px -10px rgba(30, 27, 75, 0.7), 0 0 0 1px rgba(129, 140, 248, 0.3)",
@@ -75,7 +75,7 @@ export function FloatingHealthAssistant() {
       </AnimatePresence>
 
       {/* ── AI Health Orb & Floating Trigger ──────────────────────────────── */}
-      <div className={`fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 items-center gap-3 ${isOpen ? "hidden sm:flex" : "flex"}`}>
+      <div className={`fixed z-[90] items-center gap-3 right-3 bottom-[calc(76px+env(safe-area-inset-bottom))] sm:right-6 sm:bottom-6 ${isOpen ? "hidden sm:flex" : "flex"}`}>
         {/* Hover Pill Tooltip (Desktop only) */}
         <AnimatePresence>
           {!isOpen && isHovered && (
