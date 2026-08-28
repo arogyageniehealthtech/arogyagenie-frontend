@@ -42,10 +42,10 @@ export function LoginPage() {
 
     try {
       await login({
-        emailOrPhone: emailOrPhone.trim(),
+        email: emailOrPhone.trim(),
         password,
         userType: selectedRole,
-        rememberMe,
+        // rememberMe,
       });
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -62,10 +62,10 @@ export function LoginPage() {
       setEmailOrPhone(googleEmail);
       
       await login({
-        emailOrPhone: googleEmail,
+        email : googleEmail,
         password: "GoogleAuthPass123",
         userType: selectedRole,
-        rememberMe: true,
+        // rememberMe: true,
       });
     } catch (err: unknown) {
       if (err instanceof Error) {

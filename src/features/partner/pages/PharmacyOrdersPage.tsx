@@ -3,21 +3,13 @@ import {
   ShoppingBag,
   Truck,
   Store,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  FileText,
-  Eye,
-  Check,
-  ChevronRight,
-  IndianRupee,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { PartnerEmptyState } from '../components/common/PartnerEmptyState';
 import { PartnerSkeleton } from '../components/common/PartnerSkeleton';
 import { Button } from '@/components/ui/button';
-import type { PharmacyOrder, PartnerRequestStatus } from '@/types/partner.types';
+import type { PharmacyOrder } from '@/types/partner.types';
 
 export const PharmacyOrdersPage: React.FC = () => {
   const { orders, isLoading, updateOrderStatus } = usePartner();

@@ -1,5 +1,5 @@
 // src/api/hospitalApi.ts
-import axiosClient from './axiosClient';
+import axiosClient from '../../../lib/axios';
 import type { Hospital } from '../types/hospital';
 
 export interface HospitalSearchParams {

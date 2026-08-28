@@ -1,26 +1,30 @@
 // src/pages/VerifyEmailPage.tsx
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import axios from "axios";
-import { CheckCircle2, XCircle, Loader2, ArrowRight, Mail, RefreshCw } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { CheckCircle2, XCircle, Loader2, Mail, RefreshCw } from "lucide-react";
 import { ROUTES } from "@/constants/routes.constants";
 import { getRoleDashboardPath } from "../../auth/hooks/useAuth";
 import type { BackendUserType } from "@/types/auth.types";
+import {authApi} from '../api/auth.api'
 
 export default function VerifyEmailPage() {
-  const [searchParams] = useSearchParams();
+  const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const token = searchParams.get("token");
+
+  // Prevent double execution in React 18 StrictMode (development mode)
+  const isMountedRef = useRef(false);
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
-  
-  // State for resending verification email on 400 error
+
   const [email, setEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
 
   useEffect(() => {
+    if (isMountedRef.current) return;
+    isMountedRef.current = true;
+
     if (!token) {
       setStatus("error");
       setErrorMessage("Invalid or missing verification token in the URL.");
@@ -29,29 +33,31 @@ export default function VerifyEmailPage() {
 
     const verifyToken = async () => {
       try {
-        // Send request with token to backend
-        const response = await axios.post("http://localhost:4000/api/v1/auth/verify-email", { token });
-        
-        setStatus("success");
+        const response = await authApi.verifyEmail(token)
 
-        // Extract user role from backend response if available, then redirect automatically
-        const userRole = response.data?.user?.role || response.data?.role as BackendUserType;
-        const redirectPath = getRoleDashboardPath(userRole);
+        if(response.success){
+          console.log("Verification successful:", response);
+          setStatus("success");
+          const userRole = response?.user?.userType || (response?.user?.userType as BackendUserType);
+          const redirectPath = getRoleDashboardPath(userRole);
 
-        // Short delay to show success icon before navigating
-        setTimeout(() => {
-          navigate(redirectPath, { replace: true });
-        }, 1500);
-
+          setTimeout(() => {
+            navigate(redirectPath, { replace: true });
+          }, 1500);
+        }else{
+          setStatus("error");
+          console.log("here");
+          
+          console.log(response?.error?.message);
+          
+          setErrorMessage(response.message)
+        }
       } catch (err: any) {
         setStatus("error");
-        
-        // Handle specific 400 errors or general fallback messages
-        if (err.response?.status === 400) {
-          setErrorMessage(err.response?.data?.message || "Verification link has expired or is invalid.");
-        } else {
-          setErrorMessage(err.response?.data?.message || "An unexpected error occurred during verification.");
-        }
+        console.error("Verification error:", err.response?.data);
+        setErrorMessage(
+          "Verification link has expired or is invalid."
+        );
       }
     };
 
@@ -67,8 +73,11 @@ export default function VerifyEmailPage() {
     setErrorMessage("");
 
     try {
-      await axios.post("http://localhost:4000/api/v1/auth/resend-verification", { email });
-      setResendSuccess(true);
+      const response = await authApi.resendEmail(email)
+      console.log(response)
+      if (response){
+        setResendSuccess(true);
+      }
     } catch (err: any) {
       setErrorMessage(err.response?.data?.message || "Failed to resend verification email.");
     } finally {
@@ -79,8 +88,6 @@ export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-slate-900 border border-white/10 rounded-2xl p-8 text-center space-y-4">
-        
-        {/* LOADING STATE */}
         {status === "loading" && (
           <>
             <Loader2 className="h-12 w-12 text-indigo-500 animate-spin mx-auto" />
@@ -89,7 +96,6 @@ export default function VerifyEmailPage() {
           </>
         )}
 
-        {/* SUCCESS STATE */}
         {status === "success" && (
           <>
             <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
@@ -98,7 +104,6 @@ export default function VerifyEmailPage() {
           </>
         )}
 
-        {/* ERROR STATE (e.g., 400 Bad Request / Expired Token) */}
         {status === "error" && (
           <div className="space-y-4 text-left">
             <div className="text-center space-y-2">
@@ -107,7 +112,6 @@ export default function VerifyEmailPage() {
               <p className="text-red-400 text-sm text-center">{errorMessage}</p>
             </div>
 
-            {/* RESEND FORM BOX */}
             <div className="mt-6 pt-6 border-t border-slate-800 space-y-3">
               <p className="text-xs text-slate-300 text-center">
                 Your link may have expired. Enter your email address below to request a new verification link.
@@ -156,7 +160,6 @@ export default function VerifyEmailPage() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -1,14 +1,7 @@
 import React from 'react';
 import {
   Users2,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
   Megaphone,
-  UserCheck,
-  Building,
-  Activity,
-  ArrowRight,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';
 import { StatusBadge } from '../components/common/StatusBadge';

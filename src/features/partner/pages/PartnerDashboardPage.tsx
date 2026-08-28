@@ -4,8 +4,6 @@ import {
   Inbox,
   Clock,
   CheckCircle2,
-  TrendingUp,
-  AlertCircle,
   ArrowRight,
   Sparkles,
   ShoppingBag,
@@ -51,9 +49,9 @@ export const PartnerDashboardPage: React.FC = () => {
   }
 
   const pendingRequests = requests.filter((r) => r.status === 'PENDING');
-  const inProgressRequests = requests.filter(
-    (r) => r.status === 'IN_PROGRESS' || r.status === 'ACCEPTED'
-  );
+  // const inProgressRequests = requests.filter(
+  //   (r) => r.status === 'IN_PROGRESS' || r.status === 'ACCEPTED'
+  // );
   const providerType = activeProvider?.type || 'PHARMACY';
 
   const handleOpenDetails = (req: PartnerRequest) => {

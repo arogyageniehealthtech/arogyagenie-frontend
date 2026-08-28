@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import {
   FileCheck2,
-  Upload,
   CheckCircle2,
-  AlertTriangle,
   FileText,
   Download,
   Eye,

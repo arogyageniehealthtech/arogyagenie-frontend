@@ -1,8 +1,9 @@
-import type{ BaseFacility } from '../../patient/types/common';
+import type{ BaseFacility } from './common';
 
 export type CollectionMethod = 'centre' | 'home';
 
 export interface TestOption {
+  price: number;
   id: string;
   name: string;
   rate: number;

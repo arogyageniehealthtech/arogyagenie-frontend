@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { 
   Search, MapPin, 
   Plus, Minus, ShoppingBag, BedDouble 
@@ -105,7 +105,7 @@ export default function PatientOrderPage() {
           <button 
             onClick={handleAddToCart}
             disabled={!medSearchQuery.trim()}
-            className="h-10 md:h-11 px-5 bg-gradient-to-r from-[#5B21B6] to-indigo-600 hover:from-[#4c1d95] hover:to-indigo-700 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all disabled:opacity-50 shrink-0"
+            className="h-10 md:h-11 px-5 bg-linear-to-r from-[#5B21B6] to-indigo-600 hover:from-[#4c1d95] hover:to-indigo-700 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md transition-all disabled:opacity-50 shrink-0"
           >
             + Add to Cart
           </button>
@@ -127,7 +127,7 @@ export default function PatientOrderPage() {
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-xs ${
                     isSelected 
                       ? 'bg-[#5B21B6] text-white border-[#5B21B6] shadow-sm' 
-                      : 'bg-gradient-to-r from-purple-50/60 to-indigo-50/40 text-slate-700 border-purple-200/80 hover:border-purple-300'
+                      : 'bg-linear-to-r from-purple-50/60 to-indigo-50/40 text-slate-700 border-purple-200/80 hover:border-purple-300'
                   }`}
                 >
                   💊 {med.name}

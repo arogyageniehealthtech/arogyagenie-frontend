@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import  { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router';
 import { Bot } from 'lucide-react';
-import { DotLottieReact, type DotLottie } from '@lottiefiles/dotlottie-react';
+import {  type DotLottie } from '@lottiefiles/dotlottie-react';
 import { ROUTES } from '../../../constants/routes.constants'; 
 import { DashboardHeader } from '../component/Dashboard.component/DashboardHeader';
 import { HealthScoreCard } from '../component/Dashboard.component/HealthScoreCard';
@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
 
   // --- Top-Right DotLottie Setup ---
-  const [dotLottie, setDotLottie] = useState<DotLottie | null>(null);
+  const [dotLottie] = useState<DotLottie | null>(null);
 
   useEffect(() => {
     if (!dotLottie) return;
@@ -68,9 +68,9 @@ export default function DashboardPage() {
     };
   }, [dotLottie]);
 
-  const dotLottieRefCallback = useCallback((dotLottieInstance: DotLottie) => {
-    setDotLottie(dotLottieInstance);
-  }, []);
+  // const dotLottieRefCallback = useCallback((dotLottieInstance: DotLottie) => {
+  //   setDotLottie(dotLottieInstance);
+  // }, []);
   // -----------------------------------
 
   return (
@@ -131,7 +131,7 @@ export default function DashboardPage() {
       {/* Floating Action Button (Bottom Right) */}
       <button
         onClick={() => navigate(ROUTES.PATIENT.AI_CHAT)}
-        className="fixed bottom-24 right-5 lg:bottom-10 lg:right-10 z-100 flex items-center justify-center gap-2 rounded-full bg-[var(--color-arogya-dark)] px-4 py-4 sm:px-6 shadow-[0_8px_30px_rgba(79,70,229,0.4)] transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-700 hover:shadow-[0_12px_40px_rgba(79,70,229,0.5)] group"
+        className="fixed bottom-24 right-5 lg:bottom-10 lg:right-10 z-100 flex items-center justify-center gap-2 rounded-full bg-(--color-arogya-dark) px-4 py-4 sm:px-6 shadow-[0_8px_30px_rgba(79,70,229,0.4)] transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-700 hover:shadow-[0_12px_40px_rgba(79,70,229,0.5)] group"
         aria-label="Open AI Health Assistant"
       >
         <Bot className="h-6 w-6 text-white group-hover:animate-bounce" />

@@ -231,7 +231,7 @@ export default function ProfilePage() {
 
         {/* Section 3: Medical Background & History */}
         <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
-          <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 bg-emerald-50/50 p-3 rounded-2xl border border-emerald-100/60">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 bg-emerald-50/50 p-3 rounded-2xl border">
             <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
               <FileText className="w-4 h-4" />
             </div>

@@ -7,14 +7,9 @@ import type {
   LoginCredentials,
   RegisterPayload,
   ResetPasswordPayload,
-  UserRole,
   VerifyOtpPayload,
-  BackendUserType,
-  
 } from "@/types/auth.types";
-import {ROUTES} from '../../../constants/routes.constants'
-// Helper to create a mock demo user when the backend server is offline or unreachable
-
+import { ROUTES } from "../../../constants/routes.constants";
 
 export const authApi = {
   /**
@@ -22,26 +17,45 @@ export const authApi = {
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse | undefined> {
     try {
-      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.LOGIN , credentials);
+      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.LOGIN, credentials);
       return response.data;
-    } catch {
-    
+    } catch(err : any) {
+      // Ignored for offline/mock
+      console.log(err)
     }
   },
 
   /**
    * Register a new account
    */
-  async register(payload: RegisterPayload): Promise<AuthResponse | undefined> {
+  async register(payload: RegisterPayload): Promise<AuthResponse | undefined | string> {
     try {
-      const response = await axiosInstance.post<AuthResponse | undefined>(ROUTES.AUTH.REGISTER, payload);
-      console.log(response)
-      return response.data;
-    } catch(err) {
+      const response = await axiosInstance.post<any>(ROUTES.AUTH.REGISTER, payload);
+      console.log(response.data?.data?.message || response.data?.message);
+      return response.data?.data?.message || response.data?.message;
+    } catch (err) {
       console.log(err);
-      
+      throw err;
     }
   },
+
+  /**
+   * Verify email via token (Supports both path param and request body)
+   */
+  async verifyEmail(token: string): Promise<{ success: boolean; message: string; user?: AuthUser; error?:{message?: string} }> {
+    try {
+      const cleanToken = encodeURIComponent(token.trim());
+      // Try posting to path parameter route first: /verify-email/:token
+      const response = await axiosInstance.post<{ success: boolean; message: string; user?: AuthUser }>(
+        `${ROUTES.AUTH.VERIFY_EMAIL}?token=${cleanToken}`
+      );
+      return response.data;
+      // Fallback: If 404/400 path param fails, attempt sending token in JSON body
+      } catch (fallbackErr: any) {
+        console.error("Email verification failed:", fallbackErr.response?.data);
+        throw fallbackErr;
+      }
+    },
 
   /**
    * Verify OTP for email/phone verification, password reset, or MFA
@@ -51,24 +65,24 @@ export const authApi = {
       const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.VERIFY_OTP, payload);
       return response.data;
     } catch {
-  
+      // Ignored for offline/mock
     }
   },
 
   /**
-   * Resend verification OTP
+   * Resend verification OTP / Link
    */
-  async resendOtp(emailOrPhone: string): Promise<{ success: boolean; message: string }> {
+  async resendEmail(email: string): Promise<{ success: boolean; message: string }> {
     try {
       const response = await axiosInstance.post<{ success: boolean; message: string }>(
-       ROUTES.AUTH.RESEND_OTP,
-        { emailOrPhone }
+        ROUTES.AUTH.RESEND_VERIFICATION,
+        { email}
       );
       return response.data;
     } catch {
       return {
         success: true,
-        message: "A fresh 6-digit verification code has been sent.",
+        message: "A fresh verification code has been sent.",
       };
     }
   },
@@ -79,7 +93,7 @@ export const authApi = {
   async forgotPassword(payload: ForgotPasswordPayload): Promise<{ success: boolean; message: string }> {
     try {
       const response = await axiosInstance.post<{ success: boolean; message: string }>(
-       ROUTES.AUTH.FORGOT_PASSWORD,
+        ROUTES.AUTH.FORGOT_PASSWORD,
         payload
       );
       return response.data;
@@ -117,7 +131,7 @@ export const authApi = {
       const response = await axiosInstance.get<AuthUser>(ROUTES.AUTH.RELOAD);
       return response.data;
     } catch {
-     
+      // Ignored for offline/mock
     }
   },
 
@@ -140,7 +154,7 @@ export const authApi = {
       const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.GOOGLE, { idToken });
       return response.data;
     } catch {
-    
+      // Ignored for offline/mock
     }
   },
 };

@@ -31,7 +31,7 @@ export const fetchCurrentLocation = createAsyncThunk(
       return rejectWithValue("Geolocation is not supported by your browser");
     }
 
-    return new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+    return new Promise<{ lat: number; lng: number }>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           resolve({
@@ -39,7 +39,7 @@ export const fetchCurrentLocation = createAsyncThunk(
             lng: position.coords.longitude,
           });
         },
-        (error) => {
+        () => {
           rejectWithValue("Unable to retrieve your location. Please check permissions.");
         },
         { enableHighAccuracy: true }

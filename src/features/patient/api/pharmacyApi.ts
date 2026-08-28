@@ -1,7 +1,7 @@
 // src/api/pharmacyApi.ts
-import axiosClient from './axiosClient';
+import axiosClient from '../../../lib/axios';
 // Assuming you have Pharmacy and Medicine types defined
-import type { Pharmacy, Medicine, OrderPayload } from '../types/pharmacy'; 
+import type { Pharmacy ,MedicineItem , MedicineRequest} from '../types/pharmacy'; 
 
 export interface PharmacySearchParams {
   query?: string;
@@ -17,12 +17,12 @@ export const pharmacyApi = {
   },
 
   // Global search for specific medicines across all nearby pharmacies
-  searchMedicines: (query: string, lat?: number, lng?: number): Promise<Medicine[]> => {
+  searchMedicines: (query: string, lat?: number, lng?: number): Promise<MedicineItem[]> => {
     return axiosClient.get('/pharmacies/medicines/search', { params: { query, lat, lng } });
   },
 
   // Place an order for medicines
-  placeOrder: (payload: OrderPayload): Promise<{ success: boolean; orderId: string; eta: string }> => {
+  placeOrder: (payload: MedicineRequest): Promise<{ success: boolean; orderId: string; eta: string }> => {
     return axiosClient.post('/pharmacies/order', payload);
   },
 

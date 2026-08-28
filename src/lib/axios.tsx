@@ -3,7 +3,7 @@ import type { InternalAxiosRequestConfig, AxiosInstance, AxiosError } from "axio
 
 // Create central Axios instance with credentials enabled for cookies
 export const axiosInstance: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ||"http://localhost:4000/api/v1", 
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://arogyagenie-backend-1.onrender.com/api/v1/",
   timeout: 15000,
   withCredentials: true, // <-- CRITICAL: Allows cookies to be sent and received cross-origin
   headers: {
@@ -18,6 +18,12 @@ axiosInstance.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Let the browser set the correct multipart boundary for FormData uploads
+    if (config.data instanceof FormData && config.headers) {
+      delete config.headers["Content-Type"];
+    }
+
     return config;
   },
   (error: AxiosError) => {
@@ -32,9 +38,8 @@ axiosInstance.interceptors.response.use(
     if (error.response) {
       const status = error.response.status;
       if (status === 401) {
-        // Fixed case-sensitivity mismatch here ("AccessToken")
         localStorage.removeItem("AccessToken");
-        window.location.href = "/login";
+        // window.location.href = "/auth/login";
       }
     }
     return Promise.reject(error);

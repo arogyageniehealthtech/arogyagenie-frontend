@@ -1,16 +1,18 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import { 
   X, Video, Building2, ChevronLeft, ChevronRight, 
-  Calendar as CalendarIcon, Clock 
+  Calendar as CalendarIcon, Clock, Loader2 
 } from 'lucide-react';
-import type{ Doctor, ConsultationOption } from '../../types/doctor';
+import type { Doctor, ConsultationOption } from '../../types/doctor';
+import { doctorApi } from '../../api/doctorApi'; // Import your API service
 
 interface BookAppointmentModalProps {
   doctor: Doctor;
   onClose: () => void;
+  onSuccess?: () => void; // Optional callback on successful booking
 }
 
-export default function BookAppointmentModal({ doctor, onClose }: BookAppointmentModalProps) {
+export default function BookAppointmentModal({ doctor, onClose, onSuccess }: BookAppointmentModalProps) {
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState<ConsultationOption | null>(null);
   
@@ -19,8 +21,13 @@ export default function BookAppointmentModal({ doctor, onClose }: BookAppointmen
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  // Calendar calculations (base anchors to August 2026 as per context)
-  const baseDate = new Date(2026, 7 + monthOffset, 1); 
+  // API Booking States
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+
+  // Dynamic Calendar calculations (anchored relative to current date)
+  const today = new Date();
+  const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1); 
   const viewYear = baseDate.getFullYear();
   const viewMonth = baseDate.getMonth() + 1;
   const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
@@ -39,6 +46,34 @@ export default function BookAppointmentModal({ doctor, onClose }: BookAppointmen
 
   const timeSlots = ["09:00 AM", "10:30 AM", "12:30 PM", "02:00 PM", "04:30 PM"];
 
+  // Backend Booking Handler
+  const handleConfirmBooking = async () => {
+    if (!selectedType || !selectedDate || !selectedTime) return;
+
+    setIsSubmitting(true);
+    setBookingError(null);
+
+    try {
+      await doctorApi.bookAppointment({
+        doctorId: doctor.id,
+        consultationType: selectedType.mode,
+        // fee: selectedType.fee,
+        date: selectedDate,
+        time: selectedTime,
+        patientDetails: undefined
+      });
+
+      if (onSuccess) {
+        onSuccess();
+      }
+      onClose();
+    } catch (err: any) {
+      setBookingError(err?.response?.data?.message || "Failed to book appointment. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6">
       <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in-95 duration-200">
@@ -48,13 +83,14 @@ export default function BookAppointmentModal({ doctor, onClose }: BookAppointmen
           <div className="text-center mt-1">
             <h2 className="font-bold text-xl sm:text-2xl text-gray-900 tracking-tight">Book Appointment</h2>
             <p className="text-sm font-medium text-gray-600 mt-1.5">
-              {doctor.name} • <span className="text-purple-600">{doctor.specialty}</span>
+              {doctor.firstName}${doctor.lastName} • <span className="text-purple-600">{doctor.specialization?.name}</span>
             </p>
           </div>
           
           <button 
             onClick={onClose} 
-            className="absolute right-5 top-5 p-2 bg-white border border-gray-200 shadow-sm hover:bg-red-50 hover:text-red-500 text-gray-400 rounded-full transition-all focus:outline-none"
+            disabled={isSubmitting}
+            className="absolute right-5 top-5 p-2 bg-white border border-gray-200 shadow-sm hover:bg-red-50 hover:text-red-500 text-gray-400 rounded-full transition-all focus:outline-none disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
@@ -71,31 +107,31 @@ export default function BookAppointmentModal({ doctor, onClose }: BookAppointmen
               </div>
               
               <div className="space-y-3 pt-2">
-                {doctor.consultationOptions.map(opt => (
+                {doctor.consultationOptions?.map((opt,idx) => (
                   <button
-                    key={opt.type}
+                    key={idx}
                     onClick={() => setSelectedType(opt)}
                     className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
-                      selectedType?.type === opt.type 
+                      selectedType?.mode === opt.mode 
                         ? 'border-purple-600 bg-purple-50 shadow-sm' 
                         : 'border-gray-200 hover:border-purple-300'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${selectedType?.type === opt.type ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {opt.type === 'video' ? <Video className="w-6 h-6" /> : <Building2 className="w-6 h-6" />}
+                      <div className={`p-3 rounded-lg ${selectedType?.mode === opt.mode ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {opt.mode === "VIDEO" ? <Video className="w-6 h-6" /> : <Building2 className="w-6 h-6" />}
                       </div>
                       <div>
-                        <p className={`font-bold text-base ${selectedType?.type === opt.type ? 'text-purple-900' : 'text-gray-900'}`}>
-                          {opt.label}
+                        <p className={`font-bold text-base ${selectedType?.mode === opt.mode ? 'text-purple-900' : 'text-gray-900'}`}>
+                          {opt.mode}
                         </p>
                         <p className="text-sm font-semibold text-gray-600 mt-1">Fee: ₹{opt.fee}</p>
                       </div>
                     </div>
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      selectedType?.type === opt.type ? 'border-purple-600' : 'border-gray-300'
+                      selectedType?.mode === opt.mode ? 'border-purple-600' : 'border-gray-300'
                     }`}>
-                      {selectedType?.type === opt.type && <div className="w-2.5 h-2.5 bg-purple-600 rounded-full" />}
+                      {selectedType?.mode === opt.mode && <div className="w-2.5 h-2.5 bg-purple-600 rounded-full" />}
                     </div>
                   </button>
                 ))}
@@ -221,20 +257,26 @@ export default function BookAppointmentModal({ doctor, onClose }: BookAppointmen
             </div>
           )}
 
-          {/* Step 3: Summary */}
+          {/* Step 3: Summary & API Trigger */}
           {step === 3 && (
             <div className="space-y-6">
+              {bookingError && (
+                <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+                  {bookingError}
+                </div>
+              )}
+
               <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 space-y-5">
                 <h4 className="font-bold text-gray-900 text-lg border-b border-gray-200 pb-4">Appointment Summary</h4>
                 
                 <div className="grid grid-cols-2 gap-y-6 gap-x-4 text-sm">
                   <div>
                     <p className="text-gray-500 font-medium mb-1">Doctor</p>
-                    <p className="font-semibold text-gray-900">{doctor.name}</p>
+                    <p className="font-semibold text-gray-900">{doctor.firstName}${doctor.lastName}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 font-medium mb-1">Consultation</p>
-                    <p className="font-semibold text-gray-900">{selectedType?.label}</p>
+                    <p className="font-semibold text-gray-900">{selectedType?.mode}</p>
                   </div>
                   <div className="col-span-2 p-3 rounded-xl border bg-white border-gray-200 flex justify-between items-center shadow-sm">
                     <div>
@@ -253,17 +295,26 @@ export default function BookAppointmentModal({ doctor, onClose }: BookAppointmen
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => setStep(2)} className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">
+                <button 
+                  disabled={isSubmitting}
+                  onClick={() => setStep(2)} 
+                  className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
                   Back
                 </button>
                 <button 
-                  onClick={() => {
-                    alert("Appointment Confirmed! (Mock action)");
-                    onClose();
-                  }}
-                  className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-all shadow-md focus:ring-4 focus:ring-purple-100"
+                  disabled={isSubmitting}
+                  onClick={handleConfirmBooking}
+                  className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-all shadow-md focus:ring-4 focus:ring-purple-100 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Confirm Booking
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Booking...</span>
+                    </>
+                  ) : (
+                    <span>Confirm Booking</span>
+                  )}
                 </button>
               </div>
             </div>

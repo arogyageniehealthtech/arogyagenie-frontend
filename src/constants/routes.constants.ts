@@ -8,10 +8,10 @@ export const ROUTES = {
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
     GOOGLE: '/auth/google',
-    RESEND_OTP: '/auth/resend',
+    VERIFY_EMAIL: '/auth/verify-email',
     RELOAD:'/auth/me',
     LOGOUT: '/auth/logout',
-   VERIFY_EMAIL: '/verify-email'
+   RESEND_VERIFICATION: '/auth/resend-verification'
     // GOOGLE: '/auth/google',
   },
 

@@ -3,14 +3,6 @@ import {
   FlaskConical,
   Home,
   Building,
-  Barcode,
-  CheckCircle2,
-  Clock,
-  UserCheck,
-  AlertCircle,
-  Eye,
-  Check,
-  Phone,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';
 import { StatusBadge } from '../components/common/StatusBadge';

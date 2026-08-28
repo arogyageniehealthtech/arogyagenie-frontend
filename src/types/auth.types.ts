@@ -32,7 +32,7 @@ export type UserRole =
   | 'DOCTOR'
   | 'LAB'
   | 'PHARMACY'
-  | 'HOSPITAL_ADMIN'
+  | 'ADMIN'
   | 'SYSTEM_ADMIN'
   | 'DELIVERY_PARTNER';
 export type BackendUserType =
@@ -41,7 +41,7 @@ export type BackendUserType =
   | 'EMPLOYEE'
   | 'LAB'
   | 'PHARMACY'
-  | 'HOSPITAL_ADMIN'
+  | 'ADMIN'
   | 'SYSTEM_ADMIN'
   | 'DELIVERY_PARTNER';
 
@@ -94,6 +94,7 @@ export interface OrganizationMembershipSummary {
 
 export interface AuthUser {
   id: string;
+  name:string,
   email: string;
   phone?: string | null;
   status: AccountStatus;
@@ -141,10 +142,10 @@ export interface AuthUser {
 // -----------------------------------------------------------------------------
 
 export interface LoginCredentials {
-  emailOrPhone: string;
+  email: string;
   password?: string;
   userType?: BackendUserType;
-  rememberMe?: boolean;
+  // rememberMe?: boolean;
 }
 
 export interface RegisterPayload {
@@ -177,6 +178,7 @@ export interface ResetPasswordPayload {
 }
 
 export interface AuthResponse {
+  [x: string]: any;
   user: AuthUser;
   AccessToken: string;
   requiresMfa?: boolean;
@@ -190,3 +192,23 @@ export interface MfaVerifyPayload {
   code: string;
   mfaType: 'TOTP' | 'SMS_OTP' | 'EMAIL_OTP';
 }
+
+
+// export interface MfaRequiredResponse {
+//   requiresMfa: true;
+//   mfaToken: string;
+//   data?: {
+//     userId: string;
+//     email: string;
+//   };
+// }
+
+// export interface DirectLoginSuccess {
+//   requiresMfa: false;
+//   data: {
+//     user: AuthUser;
+//     token: string;
+//   };
+// }
+
+// export type LoginResult = DirectLoginSuccess | MfaRequiredResponse;

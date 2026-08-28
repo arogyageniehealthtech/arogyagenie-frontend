@@ -1,37 +1,94 @@
-import  { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, MapPin, X, Loader2 } from 'lucide-react'; 
 import { useAppSelector } from '../../../store/hooks'; 
 import CustomSelect from '../component/common/CustomSelect';
 import MapContainer from '../component/common/MapContainer';
 import DoctorCard from '../component/card.component/DoctorCard';
 import BookAppointmentModal from '../component/others/BookAppointmentModal';
-import { useSearchFilter } from '../hooks/useSearchFilter';
-import { useGeolocation } from '../hooks/useGeolocation'; // Import the custom hook
-import { MOCK_DOCTORS, DOCTOR_SPECIALTIES } from '../data/mockDoctors';
+import { useGeolocation } from '../hooks/useGeolocation';
+import { DOCTOR_SPECIALTIES } from '../data/mockDoctors';
 import type { Doctor } from '../types/doctor';
+import { doctorApi } from '../api/doctorApi';
 
 export default function DoctorDiscoveryPage() {
   const { coordinates: defaultCoordinates } = useAppSelector((state) => state.location);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
-  const [radiusKm, setRadiusKm] = useState<number>(32);
+  const [radius, setRadius] = useState<number>(32);
   const [bookingDoctor, setBookingDoctor] = useState<Doctor | null>(null);
   
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const RADIUS_PRESETS = [2, 4, 8, 16, 32];
 
-  // Cleanly consume the geolocation hook
+  // Geolocation custom hook
   const { coords: activeCoordinates, isLocating, error: locationError, fetchLocation } = useGeolocation(defaultCoordinates);
 
-  const filteredDoctors = useSearchFilter({
-    data: MOCK_DOCTORS,
-    query: searchQuery,
-    radiusKm,
-    categoryFilter: selectedSpecialty,
-    userLocation: activeCoordinates,
-    getSearchableText: (doc) => `${doc.name} ${doc.specialty} ${doc.clinicName}`,
-    getCategory: (doc) => doc.specialty
-  });
+  const [filteredDoctors, setDoctors] = useState<Doctor[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    setApiError(null);
+
+    const fetchDoctorsFromApi = async () => {
+      try {
+        const queryParams = {
+          // query: searchQuery || undefined,
+          // specialty: selectedSpecialty || undefined,
+          radius,
+         location:{
+           lat: activeCoordinates?.lat,
+            long: activeCoordinates?.lng,
+         }
+
+        };
+
+        const response: any = await doctorApi.getDoctors(queryParams);
+        console.log("API Response:", response);
+
+        // SAFELY UNWRAP RESPONSE DATA:
+        // Handles direct arrays, response.data, response.doctors, or nested data structures
+        let doctorsList: Doctor[] = [...response.data];
+
+        // if (Array.isArray(response)) {
+        //   doctorsList = response;
+        // } else if (Array.isArray(response?.data)) {
+        //   doctorsList = response.data;
+        // } else if (Array.isArray(response?.doctors)) {
+        //   doctorsList = response.doctors;
+        // } else if (Array.isArray(response?.data?.data)) {
+        //   doctorsList = response.data.data;
+        // }
+
+        if (isMounted) {
+          setDoctors(doctorsList);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setApiError(err?.response?.data?.message || "Failed to load doctors from server.");
+          setDoctors([]); // Fallback to empty array on error
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // Debounce backend API calls on text search input
+    const timer = setTimeout(() => {
+      fetchDoctorsFromApi();
+    }, 300);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, selectedSpecialty, radius, activeCoordinates]);
+
+  // Ensure safe array for iteration and mapping
+  const safeDoctorList = Array.isArray(filteredDoctors) ? filteredDoctors : [];
 
   return (
     <div className="min-h-screen flex flex-col font-sans relative bg-[#F1F5F9]">
@@ -74,15 +131,15 @@ export default function DoctorDiscoveryPage() {
               </div>
 
               {/* Native Browser Geolocation Button utilizing the hook */}
-               <button 
-                                          onClick={fetchLocation}
-                                          disabled={isLocating}
-                                          className="shrink-0 h-10 md:h-11 px-3.5 md:px-5 flex items-center justify-center gap-1.5 rounded-2xl font-bold transition-all text-xs bg-gradient-to-r from-[#5B21B6] to-indigo-600 text-white shadow-md hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70"
-                                          title="Fetch Browser Location"
-                                        >
-                                          {isLocating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-                                          <span className="hidden md:inline">{isLocating ? 'Locating...' : 'My Location'}</span>
-                                        </button>
+              <button 
+                onClick={fetchLocation}
+                disabled={isLocating}
+                className="shrink-0 h-10 md:h-11 px-3.5 md:px-5 flex items-center justify-center gap-1.5 rounded-2xl font-bold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-md hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70"
+                title="Fetch Browser Location"
+              >
+                {isLocating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                <span className="hidden md:inline">{isLocating ? 'Locating...' : 'My Location'}</span>
+              </button>
             </div>
 
             {/* Error banner if browser location fails */}
@@ -92,12 +149,18 @@ export default function DoctorDiscoveryPage() {
               </div>
             )}
 
+            {/* API Error banner */}
+            {apiError && (
+              <div className="text-[11px] text-rose-600 bg-rose-50 px-3 py-1 rounded-lg border border-rose-100 font-medium">
+                {apiError}
+              </div>
+            )}
+
             {/* Bottom Row: Radius Slider & Presets */}
             <div className="pt-2 border-t border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-              
               <div className="flex items-center justify-between lg:justify-start gap-2.5 w-full lg:w-auto">
                 <span className="text-slate-700 font-bold text-xs">Radius:</span>
-                <div className="bg-[#5B21B6]/10 text-[#5B21B6] px-2 py-0.5 rounded-lg text-xs font-bold border border-[#5B21B6]/20">{radiusKm} km</div>
+                <div className="bg-[#5B21B6]/10 text-[#5B21B6] px-2 py-0.5 rounded-lg text-xs font-bold border border-[#5B21B6]/20">{radius} km</div>
               </div>
               
               <div className="flex-1 flex items-center gap-2 w-full lg:max-w-sm">
@@ -106,8 +169,8 @@ export default function DoctorDiscoveryPage() {
                   min="2" 
                   max="32" 
                   step="2" 
-                  value={radiusKm} 
-                  onChange={(e) => setRadiusKm(Number(e.target.value))} 
+                  value={radius} 
+                  onChange={(e) => setRadius(Number(e.target.value))} 
                   className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#5B21B6]" 
                 />
               </div>
@@ -116,16 +179,15 @@ export default function DoctorDiscoveryPage() {
                 {RADIUS_PRESETS.map((preset) => (
                   <button 
                     key={preset} 
-                    onClick={() => setRadiusKm(preset)} 
+                    onClick={() => setRadius(preset)} 
                     className={`whitespace-nowrap px-3 py-1 text-xs font-semibold rounded-xl border transition-all ${
-                      radiusKm === preset ? 'bg-[#5B21B6] text-white border-[#5B21B6] shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-[#5B21B6]/40 hover:text-[#5B21B6]'
+                      radius === preset ? 'bg-[#5B21B6] text-white border-[#5B21B6] shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-[#5B21B6]/40 hover:text-[#5B21B6]'
                     }`}
                   >
                     {preset} km
                   </button>
                 ))}
               </div>
-
             </div>
 
           </section>
@@ -134,23 +196,30 @@ export default function DoctorDiscoveryPage() {
           <div className="flex flex-col lg:flex-row gap-3 items-start w-full relative pt-1">
             
             {/* List column */}
-            <div className="w-full lg:w-5/12 xl:w-[40%] flex-shrink-0 space-y-2">
+            <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
               
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  {filteredDoctors.length} {filteredDoctors.length === 1 ? 'Result' : 'Results'} Found
+                  {safeDoctorList.length} {safeDoctorList.length === 1 ? 'Result' : 'Results'} Found
                 </h2>
               </div>
 
-              {filteredDoctors.length === 0 ? (
+              {isLoading ? (
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="w-6 h-6 text-[#5B21B6] animate-spin" />
+                  <p className="text-xs font-semibold text-slate-600">Loading doctors...</p>
+                </div>
+              ) : safeDoctorList.length === 0 ? (
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm">
                   <Search className="w-6 h-6 text-slate-400 mx-auto mb-2" />
                   <h3 className="text-sm font-bold text-slate-900 mb-1">No doctors found</h3>
-                  <button onClick={() => {setSearchQuery(""); setSelectedSpecialty(null); setRadiusKm(32);}} className="text-[#5B21B6] text-xs font-bold hover:underline">Reset Search Filters</button>
+                  <button onClick={() => { setSearchQuery(""); setSelectedSpecialty(null); setRadius(32); }} className="text-[#5B21B6] text-xs font-bold hover:underline">
+                    Reset Search Filters
+                  </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 pb-4">
-                  {filteredDoctors.map(doctor => (
+                  {safeDoctorList.map((doctor) => (
                     <DoctorCard key={doctor.id} doctor={doctor} onBook={() => setBookingDoctor(doctor)} />
                   ))}
                 </div>
@@ -159,7 +228,22 @@ export default function DoctorDiscoveryPage() {
             
             {/* Map column */}
             <div className="w-full lg:flex-1 lg:sticky lg:top-22.5 z-10 rounded-2xl overflow-hidden shadow-sm border border-slate-200 h-65 sm:h-80 lg:h-[calc(100vh-140px)] lg:max-h-150">
-              <MapContainer locations={filteredDoctors.map(d => ({ ...d, category: 'doctor' as const }))} radiusKm={radiusKm} />
+              <MapContainer
+  locations={safeDoctorList
+    .map((d) => {
+      const address = d.facilityAffiliations?.[0]?.facility?.address;
+      const lat = address?.latitude ? Number(address.latitude) : undefined;
+      const lng = address?.longitude ? Number(address.longitude) : undefined;
+
+      if (lat === undefined || lng === undefined || Number.isNaN(lat) || Number.isNaN(lng)) {
+        return null;
+      }
+
+      return { ...d, lat, lng, category: 'doctor' as const };
+    })
+    .filter((d): d is NonNullable<typeof d> => d !== null)}
+  radiusKm={radius}
+/>
             </div>
 
           </div>

@@ -11,8 +11,6 @@ import {
   Menu, 
   X,
   Bell,
-  FileText,
-  ClipboardList,
   Calendar,
   Ambulance,
   Pill,
@@ -24,11 +22,10 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { ROUTES } from '../constants/routes.constants';
-import { useAppSelector } from '../store/hooks';
+import { useAppSelector,useAppDispatch } from '../store/hooks';
 import type { NotificationItem } from '../types/Notification.types';
 import {INITIAL_NOTIFICATIONS} from '../data/notification.data'
-
-
+import { logoutUser } from "../store/slices/authSlice";
 
 // Helper to generate initials from a name
 const getInitials = (name?: string) => {
@@ -88,7 +85,7 @@ export default function PatientLayout() {
   // Hooks for routing
   const location = useLocation();
   const navigate = useNavigate();
-
+const dispatch = useAppDispatch();
   // Hide navigation on AI Chat page
   const isAiChatPage = location.pathname === ROUTES.PATIENT.ASSISTANT;
 
@@ -145,6 +142,20 @@ export default function PatientLayout() {
 
   const bottomNavItems = getBottomNavItems();
 
+  const handleSignOut = async () => {
+    setIsSidebarOpen(false);
+    
+    try {
+      // Dispatch the logout thunk to hit the API & clear Redux/localStorage state
+      await dispatch(logoutUser()).unwrap();
+    } catch (error) {
+      console.error("Logout API failed, forcing local cleanup:", error);
+    } finally {
+      // Always navigate back to login screen regardless of API status
+      navigate(ROUTES.AUTH.LOGIN, { replace: true });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans relative flex">
 
@@ -154,12 +165,12 @@ export default function PatientLayout() {
           {/* Mobile/Tablet Overlay */}
           {isSidebarOpen && (
             <div 
-              className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity"
+              className="fixed inset-0 z-60 bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
           <aside 
-            className={`fixed top-0 left-0 z-[70] h-full w-56 sm:w-64 bg-[#13102F] shadow-xl border-r border-[#1e1a45] transform transition-transform duration-300 ease-in-out flex flex-col ${
+            className={`fixed top-0 left-0 z-70 h-full w-56 sm:w-64 bg-[#13102F] shadow-xl border-r border-[#1e1a45] transform transition-transform duration-300 ease-in-out flex flex-col ${
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             }`}
           >
@@ -173,7 +184,7 @@ export default function PatientLayout() {
               </div>
               <button 
                 onClick={() => setIsSidebarOpen(false)}
-                className="lg:hidden p-1.5 -mr-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+                className="lg:hidden p-1.5 -mr-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
               >
                 <X size={18} />
               </button>
@@ -192,7 +203,7 @@ export default function PatientLayout() {
                     : 'text-slate-300 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Home size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 2.5 : 2} className={`flex-shrink-0 ${isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <Home size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 2.5 : 2} className={`shrink-0 ${isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
                 <span className="truncate">Home</span>
               </NavLink>
 
@@ -207,10 +218,10 @@ export default function PatientLayout() {
                   }`}
                 >
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <Stethoscope size={16} strokeWidth={location.pathname.includes('doctor') ? 2.5 : 2} className={`flex-shrink-0 ${location.pathname.includes('doctor') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                    <Stethoscope size={16} strokeWidth={location.pathname.includes('doctor') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('doctor') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
                     <span className="truncate">Doctor</span>
                   </div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 flex-shrink-0 ${isDoctorOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${isDoctorOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isDoctorOpen && (
@@ -225,7 +236,7 @@ export default function PatientLayout() {
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
                       <span className="truncate">Find Doctor</span>
                     </NavLink>
 
@@ -239,7 +250,7 @@ export default function PatientLayout() {
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
                       <span className="truncate">Appointments</span>
                     </NavLink>
 
@@ -253,7 +264,7 @@ export default function PatientLayout() {
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
                       <span className="truncate">Prescriptions</span>
                     </NavLink>
                   </div>
@@ -271,7 +282,7 @@ export default function PatientLayout() {
                     : 'text-slate-300 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Building2 size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.HOSPITAL) ? 2.5 : 2} className={`flex-shrink-0 ${isRouteActive(ROUTES.PATIENT.HOSPITAL) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <Building2 size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.HOSPITAL) ? 2.5 : 2} className={`shrink-0 ${isRouteActive(ROUTES.PATIENT.HOSPITAL) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
                 <span className="truncate">Hospital</span>
               </NavLink>
 
@@ -286,10 +297,10 @@ export default function PatientLayout() {
                   }`}
                 >
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <Microscope size={16} strokeWidth={location.pathname.includes('lab') ? 2.5 : 2} className={`flex-shrink-0 ${location.pathname.includes('lab') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                    <Microscope size={16} strokeWidth={location.pathname.includes('lab') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('lab') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
                     <span className="truncate">Diagnostics</span>
                   </div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 flex-shrink-0 ${isDiagnosticsOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${isDiagnosticsOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isDiagnosticsOpen && (
@@ -304,7 +315,7 @@ export default function PatientLayout() {
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
                       <span className="truncate">Find Diagnostics</span>
                     </NavLink>
 
@@ -318,7 +329,7 @@ export default function PatientLayout() {
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
                       <span className="truncate">Lab Report</span>
                     </NavLink>
                   </div>
@@ -336,10 +347,10 @@ export default function PatientLayout() {
                   }`}
                 >
                   <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                    <Pill size={16} strokeWidth={location.pathname.includes('medicine') ? 2.5 : 2} className={`flex-shrink-0 ${location.pathname.includes('medicine') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                    <Pill size={16} strokeWidth={location.pathname.includes('medicine') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('medicine') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
                     <span className="truncate">Medicine</span>
                   </div>
-                  <ChevronDown size={14} className={`transition-transform duration-200 flex-shrink-0 ${isMedicineOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${isMedicineOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isMedicineOpen && (
@@ -354,7 +365,7 @@ export default function PatientLayout() {
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
                       <span className="truncate">Find Pharmacy</span>
                     </NavLink>
 
@@ -368,7 +379,7 @@ export default function PatientLayout() {
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 flex-shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
                       <span className="truncate">Medicine Order</span>
                     </NavLink>
                   </div>
@@ -387,7 +398,7 @@ export default function PatientLayout() {
                     : 'text-slate-300 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <Ambulance size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.AMBULANCE) ? 2.5 : 2} className={`flex-shrink-0 ${isRouteActive(ROUTES.PATIENT.AMBULANCE) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <Ambulance size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.AMBULANCE) ? 2.5 : 2} className={`shrink-0 ${isRouteActive(ROUTES.PATIENT.AMBULANCE) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
                 <span className="truncate">Ambulance</span>
               </NavLink>
 
@@ -401,7 +412,7 @@ export default function PatientLayout() {
                     : 'text-slate-300 hover:bg-white/5 hover:text-white'
                 }`}
               >
-                <User size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.PROFILE) ? 2.5 : 2} className={`flex-shrink-0 ${isRouteActive(ROUTES.PATIENT.PROFILE) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <User size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.PROFILE) ? 2.5 : 2} className={`shrink-0 ${isRouteActive(ROUTES.PATIENT.PROFILE) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
                 <span className="truncate">My Profile</span>
               </NavLink>
             </div>
@@ -413,10 +424,10 @@ export default function PatientLayout() {
                   <img 
                     src={user.profilePicture} 
                     alt="Profile" 
-                    className="h-7 sm:h-9 w-7 sm:w-9 rounded-full object-cover flex-shrink-0 bg-slate-800"
+                    className="h-7 sm:h-9 w-7 sm:w-9 rounded-full object-cover shrink-0 bg-slate-800"
                   />
                 ) : (
-                  <div className="h-7 sm:h-9 w-7 sm:w-9 rounded-full flex-shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-inner">
+                  <div className="h-7 sm:h-9 w-7 sm:w-9 rounded-full shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-inner">
                     {getInitials(user?.name)}
                   </div>
                 )}
@@ -430,15 +441,13 @@ export default function PatientLayout() {
               {/* FIX: sign-out is now a solid red button (was a faint outline) so it reads
                   clearly as a destructive action against the dark indigo sidebar. */}
               <button 
-                onClick={() => {
-                  setIsSidebarOpen(false);
-                }}
-                className="flex w-full items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border border-red-500/40 rounded-lg sm:rounded-lg font-bold transition-all shadow-sm shadow-red-950/40"
-              >
-                <LogOut size={12} strokeWidth={2.5} />
-                <span className="hidden sm:inline">Sign Out</span>
-                <span className="sm:hidden">Logout</span>
-              </button>
+                  onClick={handleSignOut}
+                  className="flex w-full items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border border-red-500/40 rounded-lg sm:rounded-lg font-bold transition-all shadow-sm shadow-red-950/40"
+                >
+                  <LogOut size={12} strokeWidth={2.5} />
+                  <span className="hidden sm:inline">Sign Out</span>
+                  <span className="sm:hidden">Logout</span>
+    </button>
             </div>
           </aside>
         </>
@@ -457,14 +466,14 @@ export default function PatientLayout() {
             <div className="flex items-center gap-2 sm:gap-3 lg:hidden z-10 min-w-0">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
+                className="p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
                 title="Open navigation menu"
               >
                 <Menu size={20} />
               </button>
               
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                <img src="/LOGO.png" alt="ArogyaGenie Logo" className="h-6 sm:h-7 w-6 sm:w-7 object-contain brightness-0 invert flex-shrink-0" />
+                <img src="/LOGO.png" alt="ArogyaGenie Logo" className="h-6 sm:h-7 w-6 sm:w-7 object-contain brightness-0 invert shrink-0" />
                 <h1 className="text-sm sm:text-base font-bold text-white tracking-wide truncate">ArogyaGenie</h1>
               </div>
             </div>
@@ -476,7 +485,7 @@ export default function PatientLayout() {
               </h2>
 
               <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium pl-0.5">
-                <MapPin size={14} className="text-indigo-600 flex-shrink-0" />
+                <MapPin size={14} className="text-indigo-600 shrink-0" />
                 <span className="leading-tight">Khardaha, WB</span>
               </div>
             </div>
@@ -485,10 +494,10 @@ export default function PatientLayout() {
             <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0 z-10">
               <button 
                 onClick={() => navigate(ROUTES.PATIENT.ASSISTANT)}
-                className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-lg sm:rounded-full transition-colors flex items-center gap-2 px-2 sm:px-3 lg:px-4 min-h-[44px] min-w-[44px] justify-center sm:justify-start flex-shrink-0"
+                className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-lg sm:rounded-full transition-colors flex items-center gap-2 px-2 sm:px-3 lg:px-4 min-h-11 min-w-11 justify-center sm:justify-start shrink-0"
                 title="Chat with AI Health Assistant"
               >
-                <Bot size={18} sm:size={20} className="flex-shrink-0" />
+                <Bot size={18} className="shrink-0" />
                 <span className="text-xs sm:text-sm font-bold hidden sm:block text-white lg:text-indigo-600">AI Assistant</span>
               </button>
 
@@ -496,7 +505,7 @@ export default function PatientLayout() {
               <div className="relative pointer-events-auto" ref={notificationRef}>
                 <button 
                   onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                  className={`relative p-2 rounded-lg sm:rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0 ${
+                  className={`relative p-2 rounded-lg sm:rounded-full transition-colors min-h-11 min-w-11 flex items-center justify-center shrink-0 ${
                     isNotificationOpen 
                       ? 'bg-indigo-500/20 text-indigo-300 lg:bg-indigo-50 lg:text-indigo-600' 
                       : 'text-slate-300 hover:bg-white/10 lg:text-slate-500 lg:hover:bg-slate-100'
@@ -505,20 +514,20 @@ export default function PatientLayout() {
                 >
                   <Bell size={18} strokeWidth={2} className={isNotificationOpen ? 'fill-indigo-400/20 lg:fill-indigo-100' : ''} />
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-red-500 border border-[#13102F] lg:border-white flex-shrink-0"></span>
+                    <span className="absolute top-1 right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-full bg-red-500 border border-[#13102F] lg:border-white shrink-0"></span>
                   )}
                 </button>
 
                 {/* --- NOTIFICATION DROPDOWN --- */}
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 sm:mt-4 w-screen sm:w-[340px] md:w-[420px] bg-white rounded-2xl sm:rounded-3xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right text-left max-h-[70vh] sm:max-h-none flex flex-col mx-2 sm:mx-0">
+                  <div className="absolute right-0 mt-2 sm:mt-4 w-screen sm:w-85 md:w-105 bg-white rounded-2xl sm:rounded-3xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right text-left max-h-[70vh] sm:max-h-none flex flex-col mx-2 sm:mx-0">
 
                     {/* Header */}
-                    <div className="px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between bg-white z-10 relative shadow-[0_1px_0_0_rgba(0,0,0,0.03)] flex-shrink-0">
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 flex items-center justify-between bg-white z-10 relative shadow-[0_1px_0_0_rgba(0,0,0,0.03)] shrink-0">
                       <h3 className="text-base sm:text-[17px] font-bold text-slate-900 flex items-center gap-2 truncate">
                         Notifications
                         {unreadCount > 0 && (
-                          <span className="bg-indigo-100 text-indigo-700 text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full font-bold flex-shrink-0">
+                          <span className="bg-indigo-100 text-indigo-700 text-[10px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full font-bold shrink-0">
                             {unreadCount}
                           </span>
                         )}
@@ -526,16 +535,16 @@ export default function PatientLayout() {
                       {unreadCount > 0 && (
                         <button 
                           onClick={handleMarkAllAsRead}
-                          className="text-[10px] sm:text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1 flex-shrink-0 ml-2"
+                          className="text-[10px] sm:text-xs font-bold text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1 shrink-0 ml-2"
                         >
-                          <CheckCheck size={12} sm:size={14} /> 
+                          <CheckCheck size={12}  /> 
                           <span className="hidden sm:inline">Mark all</span>
                         </button>
                       )}
                     </div>
 
                     {/* Notification List */}
-                    <div className="max-h-[calc(70vh-120px)] sm:max-h-[380px] overflow-y-auto custom-scrollbar bg-slate-50/30">
+                    <div className="max-h-[calc(70vh-120px)] sm:max-h-95 overflow-y-auto custom-scrollbar bg-slate-50/30">
                       {notifications.length === 0 ? (
                         <div className="p-6 sm:p-10 flex flex-col items-center justify-center text-center">
                           <div className="w-12 sm:w-16 h-12 sm:h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-2 sm:mb-3">
@@ -562,8 +571,8 @@ export default function PatientLayout() {
                                 )}
 
                                 <div className="p-3 sm:p-4 pl-4 sm:pl-5 flex gap-3 sm:gap-4">
-                                  <div className={`w-9 sm:w-11 h-9 sm:h-11 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm border border-white ${bg} ${text} ${item.read ? 'opacity-60' : 'opacity-100'}`}>
-                                    <CategoryIcon size={16} sm:size={20} />
+                                  <div className={`w-9 sm:w-11 h-9 sm:h-11 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-white ${bg} ${text} ${item.read ? 'opacity-60' : 'opacity-100'}`}>
+                                    <CategoryIcon size={16}  />
                                   </div>
 
                                   <div className={`flex-1 min-w-0 pr-4 sm:pr-6 ${item.read ? 'opacity-70' : 'opacity-100'}`}>
@@ -571,7 +580,7 @@ export default function PatientLayout() {
                                       <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 leading-tight">
                                         {item.title}
                                       </h4>
-                                      <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 flex-shrink-0 whitespace-nowrap mt-0.5">
+                                      <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 shrink-0 whitespace-nowrap mt-0.5">
                                         {item.timestamp}
                                       </span>
                                     </div>
@@ -583,10 +592,10 @@ export default function PatientLayout() {
 
                                 <button 
                                   onClick={(e) => handleDeleteNotification(item.id, e)}
-                                  className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 bg-white rounded-full shadow-sm border border-slate-100 opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition-all duration-200 flex-shrink-0"
+                                  className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 w-7 sm:w-8 h-7 sm:h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 bg-white rounded-full shadow-sm border border-slate-100 opacity-0 group-hover:opacity-100 transform scale-90 group-hover:scale-100 transition-all duration-200 shrink-0"
                                   title="Delete notification"
                                 >
-                                  <Trash2 size={12} sm:size={14} />
+                                  <Trash2 size={12} />
                                 </button>
                               </div>
                             );
@@ -596,7 +605,7 @@ export default function PatientLayout() {
                     </div>
 
                     {/* Footer */}
-                    <div className="p-2 sm:p-3 border-t border-slate-100 bg-white relative z-10 shadow-[0_-1px_0_0_rgba(0,0,0,0.03)] flex-shrink-0">
+                    <div className="p-2 sm:p-3 border-t border-slate-100 bg-white relative z-10 shadow-[0_-1px_0_0_rgba(0,0,0,0.03)] shrink-0">
                       <button 
                         onClick={() => {
                           setIsNotificationOpen(false);
@@ -625,7 +634,7 @@ export default function PatientLayout() {
       {/* Visible strictly below the `sm` breakpoint (true phones). Tablet and desktop
           keep the original sidebar-only navigation untouched. */}
       {!isAiChatPage && (
-        <nav className="fixed bottom-0 left-0 right-0 z-[80] sm:hidden bg-[#13102F] border-t border-[#1e1a45] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.35)]">
+        <nav className="fixed bottom-0 left-0 right-0 z-80 sm:hidden bg-[#13102F] border-t border-[#1e1a45] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.35)]">
           <div className="flex items-stretch justify-between px-0.5">
             {bottomNavItems.map((item) => {
               const active = isRouteActive(item.to);
@@ -639,7 +648,7 @@ export default function PatientLayout() {
                   <Icon
                     size={20}
                     strokeWidth={active ? 2.5 : 2}
-                    className={`flex-shrink-0 ${active ? 'text-indigo-400' : 'text-slate-400'}`}
+                    className={`shrink-0 ${active ? 'text-indigo-400' : 'text-slate-400'}`}
                   />
                   <span className={`text-[9px] font-semibold truncate max-w-full ${active ? 'text-indigo-400' : 'text-slate-400'}`}>
                     {item.label}

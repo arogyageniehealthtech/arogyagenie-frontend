@@ -6,11 +6,11 @@ export interface MedicineItem {
   name: string;
   quantity: number;
   dosage: string;
-  price:number;
-  composition:string;
-  packSize:string;
   form: string;
   requiresPrescription: boolean;
+  price?: number;        // Optional
+  composition?: string;  // Optional
+  packSize?: string;
 }
 
 export interface PharmacyOffer {

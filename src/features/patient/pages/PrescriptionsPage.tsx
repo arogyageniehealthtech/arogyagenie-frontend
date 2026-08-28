@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { 
-  FileText, Search, Calendar, User, Stethoscope, 
-  Download, Eye, Filter, ArrowLeft, Pill, Clock, Hospital,X
+  FileText, Search, Calendar, Stethoscope, 
+  Download, Eye, ArrowLeft, Pill,X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

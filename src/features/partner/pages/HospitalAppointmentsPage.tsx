@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
 import {
   CalendarCheck,
-  Stethoscope,
-  Clock,
   User,
-  HeartPulse,
-  CheckCircle2,
-  AlertCircle,
-  Eye,
-  Check,
-  Ban,
-  Activity,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';
 import { StatusBadge } from '../components/common/StatusBadge';

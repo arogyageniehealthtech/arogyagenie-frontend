@@ -13,13 +13,11 @@ import {
   Bell,
   FileText,
   ClipboardList,
-  ShoppingBag,
   Calendar,
   Ambulance,
   Pill,
   CheckCheck,
   Trash2,
-  Pill as PillIcon,
   AlertCircle,
   MapPin,
   ChevronDown
@@ -77,7 +75,7 @@ const getInitials = (name?: string) => {
 const getNotificationStyles = (category: string) => {
   switch(category) {
     case 'appointments': return { icon: Calendar, bg: 'bg-blue-50', text: 'text-blue-600' };
-    case 'orders': return { icon: PillIcon, bg: 'bg-emerald-50', text: 'text-emerald-600' };
+    case 'orders': return { icon: Pill, bg: 'bg-emerald-50', text: 'text-emerald-600' };
     case 'reports': return { icon: Microscope, bg: 'bg-purple-50', text: 'text-purple-600' };
     default: return { icon: AlertCircle, bg: 'bg-orange-50', text: 'text-orange-600' };
   }
@@ -90,7 +88,7 @@ const getPageTitle = (pathname: string) => {
   if (path.includes('doctor')) return 'Nearest Doctor Discovery';
   if (path.includes('hospital')) return 'Nearest Hospital Discovery';
   if (path.includes('lab') || path.includes('diagnostic')) return 'Nearest Diagnostics Discovery';
-  if (path.includes('medicine-order')) return 'Medicines Order';
+  if (path.includes('medicine-orders')) return 'Medicine Order';
   if (path.includes('medicine')) return 'Medicine Delivery';
   if (path.includes('appointment')) return 'My Appointments';
   if (path.includes('prescription')) return 'My Prescriptions';
@@ -119,10 +117,17 @@ export default function PatientLayout() {
   
   // State to manage expanding/collapsing the Medicine sub-menu in sidebar
   const [isMedicineOpen, setIsMedicineOpen] = useState(
-    location.pathname.includes('medicine') || location.pathname.includes('medicine-orders')
+    location.pathname.includes('medicine')
   );
 
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Keep medicine sub-menu open if route changes to medicine pages
+  useEffect(() => {
+    if (location.pathname.includes('medicine')) {
+      setIsMedicineOpen(true);
+    }
+  }, [location.pathname]);
 
   // Close notification dropdown when clicking outside
   useEffect(() => {
@@ -166,13 +171,13 @@ export default function PatientLayout() {
           {/* Mobile Overlay */}
           {isSidebarOpen && (
             <div 
-              className="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity"
+              className="fixed inset-0 z-60 bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity"
               onClick={() => setIsSidebarOpen(false)}
             />
           )}
 
           <aside 
-            className={`fixed top-0 left-0 z-[70] h-full w-64 bg-[#13102F] shadow-xl border-r border-[#1e1a45] transform transition-transform duration-300 ease-in-out flex flex-col ${
+            className={`fixed top-0 left-0 z-70 h-full w-64 bg-[#13102F] shadow-xl border-r border-[#1e1a45] transform transition-transform duration-300 ease-in-out flex flex-col ${
               isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
             }`}
           >
@@ -251,12 +256,12 @@ export default function PatientLayout() {
                 <span className="truncate">Diagnostics</span>
               </NavLink>
 
-              {/* --- MEDICINE ACCORDION WITH MEDICINE ORDER SUB-BRANCH --- */}
+              {/* --- MEDICINE ACCORDION --- */}
               <div>
                 <button
                   onClick={() => setIsMedicineOpen(!isMedicineOpen)}
                   className={`group flex w-full items-center justify-between px-3.5 py-2.5 rounded-xl transition-all font-semibold text-sm ${
-                    location.pathname.includes('medicine') || location.pathname.includes('medicine-orders')
+                    location.pathname.includes('medicine')
                       ? 'bg-indigo-500/20 text-indigo-400' 
                       : 'text-slate-300 hover:bg-white/5 hover:text-white'
                   }`}
@@ -284,7 +289,7 @@ export default function PatientLayout() {
                       <span>Find Pharmacy</span>
                     </NavLink>
 
-                    {/* Sub-branch: Medicine Order */}
+                    {/* Medicine Order Sub-item */}
                     <NavLink
                       to="/patient/medicine-orders"
                       onClick={() => setIsSidebarOpen(false)}
@@ -473,7 +478,7 @@ export default function PatientLayout() {
 
                 {/* --- NOTIFICATION DROPDOWN --- */}
                 {isNotificationOpen && (
-                  <div className="absolute right-0 mt-4 w-[340px] sm:w-[420px] bg-white rounded-3xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right text-left">
+                  <div className="absolute right-0 mt-4 w-85 sm:w-105 bg-white rounded-3xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.1)] border border-slate-100/80 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 origin-top-right text-left">
 
                     {/* Header */}
                     <div className="px-5 py-4 flex items-center justify-between bg-white z-10 relative shadow-[0_1px_0_0_rgba(0,0,0,0.03)]">
@@ -496,7 +501,7 @@ export default function PatientLayout() {
                     </div>
 
                     {/* Notification List */}
-                    <div className="max-h-[380px] overflow-y-auto custom-scrollbar bg-slate-50/30">
+                    <div className="max-h-95 overflow-y-auto custom-scrollbar bg-slate-50/30">
                       {notifications.length === 0 ? (
                         <div className="p-10 flex flex-col items-center justify-center text-center">
                           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-3">

@@ -2,13 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
   Settings,
   Building2,
-  Phone,
-  Mail,
-  MapPin,
   Clock,
   ShieldCheck,
   Save,
-  CheckCircle2,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';
 import { PartnerSkeleton } from '../components/common/PartnerSkeleton';

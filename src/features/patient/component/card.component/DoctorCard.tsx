@@ -2,10 +2,14 @@ import { Clock, MapPin, Building2, CalendarDays, Star, ShieldCheck, Navigation }
 import type { Doctor } from '../../types/doctor';
 
 export default function DoctorCard({ doctor, onBook }: { doctor: Doctor; onBook: () => void }) {
-  const priceDisplay = doctor.consultationOptions.length > 1 
-    ? `₹${Math.min(...doctor.consultationOptions.map(o => o.fee))} - ₹${Math.max(...doctor.consultationOptions.map(o => o.fee))}`
-    : `₹${doctor.consultationOptions[0]?.fee || 0}`;
-
+  // const priceDisplay = doctor.consultationOptions.length > 1 
+  //   ? `₹${Math.min(...doctor.consultationOptions.map(o => o.fee))} - ₹${Math.max(...doctor.consultationOptions.map(o => o.fee))}`
+  //   : `₹${doctor.consultationOptions[0]?.fee || 0}`;
+ const priceDisplay = doctor.facilityAffiliations[0]?.consultationFee
+  ? `₹${doctor.facilityAffiliations[0].consultationFee}`
+  : "N/A";
+  
+console.log(priceDisplay)
   return (
     <div className="relative bg-[#F4F6F9] rounded-xl sm:rounded-2xl border border-indigo-100 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_30px_-6px_rgba(99,102,241,0.15)] hover:border-indigo-300 transition-all duration-300 w-full overflow-hidden flex flex-col group">
       
@@ -20,10 +24,10 @@ export default function DoctorCard({ doctor, onBook }: { doctor: Doctor; onBook:
             <div className="relative shrink-0">
               <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-lg sm:rounded-2xl overflow-hidden bg-white border-2 border-white shadow-md">
                 {doctor.image ? (
-                  <img src={doctor.image} alt={doctor.name} className="w-full h-full object-cover" />
+                  <img src={doctor.image} alt={doctor.firstName} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-indigo-700 font-extrabold text-xl sm:text-2xl bg-indigo-50">
-                    {doctor.name.replace('Dr. ', '').charAt(0)}
+                    {doctor.firstName.replace('Dr. ', '').charAt(0)}
                   </div>
                 )}
               </div>
@@ -33,11 +37,11 @@ export default function DoctorCard({ doctor, onBook }: { doctor: Doctor; onBook:
             </div>
 
             <div className="min-w-0 flex flex-col justify-center">
-              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-snug truncate group-hover:text-indigo-600 transition-colors">
-                {doctor.name}
-              </h3>
+             <h3 className="text-sm sm:text-base font-black text-slate-900 leading-snug truncate group-hover:text-indigo-600 transition-colors">
+  {`${doctor.firstName} ${doctor.lastName}`}
+</h3>
               <p className="text-xs font-bold text-indigo-600 mt-0.5 truncate">
-                {doctor.specialty}
+                {doctor.specializations?.map(s => s.specialization.name).join(", ") || "General"}
               </p>
               <div className="flex items-center gap-0.5 text-xs text-slate-500 font-medium mt-1 truncate">
                 <Building2 className="w-3 h-3 shrink-0 text-slate-400" />

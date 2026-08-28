@@ -1,50 +1,100 @@
-import  { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { Search, MapPin, X, Loader2, Building2 } from 'lucide-react'; 
 import { useAppSelector } from '../../../store/hooks'; 
 import CustomSelect from '../component/common/CustomSelect';
 import MapContainer from '../component/common/MapContainer';
 import HospitalCard from '../component/card.component/HospitalCard';
 import BookBedModal from '../component/others/BookBedModal';
-// Optional: import a modal for details if you have one, or use a simple inline overlay
-import { useSearchFilter } from '../hooks/useSearchFilter';
+// import { useSearchFilter } from '../hooks/useSearchFilter';
 import { useGeolocation } from '../hooks/useGeolocation';
-import { MOCK_HOSPITALS, HOSPITAL_DEPARTMENTS } from '../data/mockHospitals';
+import { HOSPITAL_DEPARTMENTS } from '../data/mockHospitals';
 import type { Hospital } from '../types/hospital';
-
+import {hospitalApi} from '../api/hospitalApi'
 export default function HospitalDiscoveryPage() {
   const { coordinates: defaultCoordinates } = useAppSelector((state) => state.location);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [radiusKm, setRadiusKm] = useState<number>(32);
   const [bookingHospital, setBookingHospital] = useState<Hospital | null>(null);
-  
-  // State for viewing hospital details modal
   const [viewingHospital, setViewingHospital] = useState<Hospital | null>(null);
   
   const RADIUS_PRESETS = [2, 4, 8, 16, 32];
 
   const { coords: activeCoordinates, isLocating, error: locationError, fetchLocation } = useGeolocation(defaultCoordinates);
 
-  const filteredHospitals = useSearchFilter({
-    data: MOCK_HOSPITALS,
-    query: searchQuery,
-    radiusKm,
-    categoryFilter: selectedDepartment,
-    userLocation: activeCoordinates,
-    getSearchableText: (h) => `${h.name} ${h.facilityType}`,
-    getCategory: (h) => h.departments 
-  });
+    const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [apiError, setApiError] = useState<string | null>(null);
+  // const filteredHospitals = useSearchFilter({
+  //   data: MOCK_HOSPITALS,
+  //   query: searchQuery,
+  //   radiusKm,
+  //   categoryFilter: selectedDepartment,
+  //   userLocation: activeCoordinates,
+  //   getSearchableText: (h) => `${h.name} ${h.facilityType}`,
+  //   getCategory: (h) => h.departments 
+  // });
+   // Fetch Hospitals from API whenever query params or user location changes
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchHospitals = async () => {
+      try {
+        setIsLoading(true);
+        setApiError(null);
+
+        const data = await hospitalApi.getHospitals({
+          query: searchQuery.trim() || undefined,
+          department: selectedDepartment || undefined,
+          radiusKm,
+          lat: activeCoordinates?.lat,
+          lng: activeCoordinates?.lng,
+        });
+
+        if (isMounted) {
+          setHospitals(data || []);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setApiError(err?.response?.data?.message || 'Failed to fetch hospitals from server.');
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+   
+
+    // Debounce search query to reduce unnecessary API requests
+    const timeoutId = setTimeout(fetchHospitals, 300);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [searchQuery, selectedDepartment, radiusKm, activeCoordinates]);
+
+  // Type-safe coordinate extraction for Map markers
+   const mapLocations = hospitals
+    .filter((h): h is Hospital & { lat: number; lng: number } => 
+      typeof h.lat === 'number' && typeof h.lng === 'number'
+    )
+    .map((h) => ({
+      id: h.id,
+      name: h.name,
+      lat: h.lat,
+      lng: h.lng,
+      category: 'hospital' as const,
+    }));
 
   return (
     <div className="min-h-screen flex flex-col font-sans relative bg-[#F1F5F9]">
-      
-      {/* ================= FOREGROUND CONTENT ================= */}
       <div className="relative z-10 flex flex-col flex-1">
         <main className="flex-1 max-w-7xl mx-auto w-full px-1.5 md:px-3 py-1.5 md:py-3 flex flex-col gap-2.5">
           
-          {/* ================= SEARCH & PERMANENT FILTER SECTION ================= */}
+          {/* SEARCH & FILTER SECTION */}
           <section className="relative z-25 w-full bg-white px-3 py-2.5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col gap-2.5 transition-all">
-            
             <div className="flex flex-row gap-2 items-center">
               <div className="relative flex-1 group h-9 md:h-10">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -64,7 +114,7 @@ export default function HospitalDiscoveryPage() {
                 )}
               </div>
 
-              <div className="relative z-50 w-27.5 sm:w-35 md:w-52 h-9 md:h-10 shrink-0 text-xs">
+              <div className="relative z-50 w-28 sm:w-36 md:w-52 h-9 md:h-10 shrink-0 text-xs">
                 <CustomSelect 
                   value={selectedDepartment || ""} 
                   onChange={(val) => setSelectedDepartment(val === "All Departments" ? null : val)} 
@@ -73,15 +123,15 @@ export default function HospitalDiscoveryPage() {
                 />
               </div>
 
-           <button 
-                           onClick={fetchLocation}
-                           disabled={isLocating}
-                           className="shrink-0 h-10 md:h-11 px-3.5 md:px-5 flex items-center justify-center gap-1.5 rounded-2xl font-bold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-md hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70"
-                           title="Fetch Browser Location"
-                         >
-                           {isLocating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
-                           <span className="hidden md:inline">{isLocating ? 'Locating...' : 'My Location'}</span>
-                         </button>
+              <button 
+                onClick={fetchLocation}
+                disabled={isLocating}
+                className="shrink-0 h-10 md:h-11 px-3.5 md:px-5 flex items-center justify-center gap-1.5 rounded-2xl font-bold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-md hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70"
+                title="Fetch Browser Location"
+              >
+                {isLocating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                <span className="hidden md:inline">{isLocating ? 'Locating...' : 'My Location'}</span>
+              </button>
             </div>
 
             {locationError && (
@@ -122,20 +172,18 @@ export default function HospitalDiscoveryPage() {
                 ))}
               </div>
             </div>
-
           </section>
 
-          {/* ================= RESULTS & MAP SECTION ================= */}
+          {/* RESULTS & MAP SECTION */}
           <div className="flex flex-col lg:flex-row gap-3 items-start w-full relative pt-1">
-            
             <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  {filteredHospitals.length} {filteredHospitals.length === 1 ? 'Result' : 'Results'} Found
+                  {hospitals.length} {hospitals.length === 1 ? 'Result' : 'Results'} Found
                 </h2>
               </div>
 
-              {filteredHospitals.length === 0 ? (
+              {hospitals.length === 0 ? (
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm">
                   <Building2 className="w-6 h-6 text-slate-400 mx-auto mb-2" />
                   <h3 className="text-sm font-bold text-slate-900 mb-1">No hospitals found</h3>
@@ -143,7 +191,7 @@ export default function HospitalDiscoveryPage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 pb-4">
-                  {filteredHospitals.map(hospital => (
+                  {hospitals.map(hospital => (
                     <HospitalCard 
                       key={hospital.id} 
                       hospital={hospital} 
@@ -155,14 +203,13 @@ export default function HospitalDiscoveryPage() {
               )}
             </div>
             
-            <div className="w-full lg:flex-1 lg:sticky lg:top-22.5 z-10 rounded-2xl overflow-hidden shadow-sm border border-slate-200 h-65 sm:h-80 lg:h-[calc(100vh-140px)] lg:max-h-150">
+            <div className="w-full lg:flex-1 lg:sticky lg:top-20 z-10 rounded-2xl overflow-hidden shadow-sm border border-slate-200 h-64 sm:h-80 lg:h-[calc(100vh-140px)] lg:max-h-150">
               <MapContainer 
-                locations={filteredHospitals.name ? [] : filteredHospitals.map(h => ({ ...h, category: 'hospital' as const }))} 
+                locations={mapLocations} 
                 radiusKm={radiusKm} 
                 centerCoordinates={activeCoordinates} 
               />
             </div>
-
           </div>
         </main>
       </div>

@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { 
-  Calendar, Clock, Video, MapPin, 
-  ArrowLeft, Search, Plus, CalendarDays 
+  Calendar, Clock, Video, MapPin, Search, CalendarDays 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes.constants';

@@ -1,37 +1,37 @@
-import { Navigate, Outlet } from 'react-router';
-import { useAppSelector } from '../store/hooks';
+// import { Navigate, Outlet } from 'react-router';
+// import { useAppSelector } from '../store/hooks';
 
 
-export const GuestRoute = () => {
+// export const GuestRoute = () => {
   
-  const { isAuthenticated, userType } = useAppSelector((state) => state.auth);
-  if (isAuthenticated) {
+//   const { isAuthenticated, userType } = useAppSelector((state) => state.auth);
+//   if (isAuthenticated) {
   
-    let dashboardPath = '/dashboard';
+//     let dashboardPath = '/dashboard';
 
-    switch (userType) {
-      case 'PATIENT':
-        dashboardPath = '/dashboard';
-        break;
-      case 'DOCTOR':
-        dashboardPath = '/doctor-dashboard';
-        break;
-      case 'SYSTEM_ADMIN':
-        dashboardPath = '/admin-dashboard';
-        break;
-      case 'LAB':
-      case 'PHARMACY':
-      case 'HOSPITAL_ADMIN':
+//     switch (userType) {
+//       case 'PATIENT':
+//         dashboardPath = '/dashboard';
+//         break;
+//       case 'DOCTOR':
+//         dashboardPath = '/doctor-dashboard';
+//         break;
+//       case 'SYSTEM_ADMIN':
+//         dashboardPath = '/admin-dashboard';
+//         break;
+//       case 'LAB':
+//       case 'PHARMACY':
+//       case 'HOSPITAL_ADMIN':
        
-        dashboardPath = `/${userType.toLowerCase().replace('_', '-')}-dashboard`;
-        break;
-      default:
-        dashboardPath = '/dashboard';
-        break;
-    }
+//         dashboardPath = `/${userType.toLowerCase().replace('_', '-')}-dashboard`;
+//         break;
+//       default:
+//         dashboardPath = '/dashboard';
+//         break;
+//     }
 
-    return <Navigate to={dashboardPath} replace />;
-  }
+//     return <Navigate to={dashboardPath} replace />;
+//   }
 
-  return <Outlet />;
-};
+//   return <Outlet />;
+// };

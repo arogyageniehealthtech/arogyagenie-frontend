@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { 
-  X, SearchIcon, AlertTriangle, Home, Building2, TestTube, 
+  X, SearchIcon, Home, Building2, TestTube, 
   ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, 
-  User, Phone, Droplet, MapPin, Upload, FileText 
+  User, Phone, Droplet, MapPin, FileText 
 } from 'lucide-react';
 import CustomSelect from '../common/CustomSelect';
 import type { DiagnosticCentre, TestOption, CollectionMethod } from '../../types/diagnostic';

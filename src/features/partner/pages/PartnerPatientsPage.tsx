@@ -3,11 +3,7 @@ import {
   Users,
   Search,
   Phone,
-  Mail,
   Calendar,
-  ShieldAlert,
-  HeartPulse,
-  UserCheck,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';
 import { PartnerSkeleton } from '../components/common/PartnerSkeleton';

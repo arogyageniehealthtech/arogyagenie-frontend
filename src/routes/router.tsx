@@ -6,7 +6,7 @@ import { PageLoader } from "../components/ui/PageLoader.tsx";
 // import Test from"../Test.tsx"
 // ================================LAYOUT============================================================
 const PatientLayout = lazy(() => import("../layouts/PatientLayout.tsx"));
-const AdminLayout = lazy(() => import("../layouts/AdminLayout.tsx"));
+// const AdminLayout = lazy(() => import("../layouts/AdminLayout.tsx"));
 const PartnerLayout = lazy(() => import("../layouts/PartnerLayout.tsx"));
 
 // ====================================AUTH===========================================================
@@ -70,14 +70,16 @@ function withSuspense(element: React.ReactNode) {
 export const router = createBrowserRouter([
   // --- Guest-only ----------------------------------------------------
   {
+    // path:'/auth',
     // element: <GuestRoute />,
     children: [
       // { path: "/", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
+      { path: "/login", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
       { path: ROUTES.AUTH.LOGIN, element: withSuspense(<LoginPage />) },
       { path: ROUTES.AUTH.REGISTER, element: withSuspense(<RegisterPage />) },
       { path: ROUTES.AUTH.FORGOT_PASSWORD, element: withSuspense(<ForgotPasswordPage />) },
       { path: ROUTES.AUTH.RESET_PASSWORD, element: withSuspense(<ResetPasswordPage />) },
-      { path: ROUTES.AUTH.VERIFY_EMAIL, element: withSuspense(<VerifyEmailPage />) },
+      { path: `${ROUTES.AUTH.VERIFY_EMAIL}/:token`, element: withSuspense(<VerifyEmailPage />) },
     ],
   },
 
@@ -155,5 +157,6 @@ export const router = createBrowserRouter([
   },
 
   { path: ROUTES.COMMON.UNAUTHORIZED, element: withSuspense(<UnauthorizedPage />) },
+  { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<NotFoundPage />) },
   // { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<Test />) },
 ]);

@@ -1,19 +1,12 @@
-import React, { useState } from 'react';
+
 import {
   Stethoscope,
   Clock,
   IndianRupee,
-  CheckCircle2,
-  AlertCircle,
-  Plus,
-  ToggleLeft,
-  ToggleRight,
-  Sparkles,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';
 import { PartnerSkeleton } from '../components/common/PartnerSkeleton';
 import { PartnerEmptyState } from '../components/common/PartnerEmptyState';
-import { Button } from '@/components/ui/button';
 
 export const PartnerServicesPage: React.FC = () => {
   const { services, isLoading, toggleService } = usePartner();

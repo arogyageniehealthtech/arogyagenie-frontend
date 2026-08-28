@@ -1,15 +1,16 @@
 import  { useState, useCallback, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF, CircleF, InfoWindowF } from '@react-google-maps/api';
 
+export interface MapLocation {
+  id: string;
+  name?: string;
+  lat: number;
+  lng: number;
+  specialty?: string;
+  category: 'doctor' | 'clinic' | 'lab' | 'hospital';
+}
 interface MapContainerProps {
-  locations: Array<{
-    id: string;
-    name: string;
-    lat: number;
-    lng: number;
-    specialty?: string;
-    category: 'doctor' | 'clinic';
-  }>;
+ locations: MapLocation[];
   radiusKm: number;
   centerCoordinates?: { lat: number; lng: number };
 }

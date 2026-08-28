@@ -1,11 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import {
   Bell,
-  CheckCircle2,
   AlertTriangle,
   ShoppingBag,
   FlaskConical,
-  CalendarCheck,
   Check,
   ExternalLink,
 } from 'lucide-react';

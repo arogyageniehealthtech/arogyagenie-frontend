@@ -5,9 +5,7 @@ import {
   AlertTriangle,
   Plus,
   Minus,
-  CheckCircle2,
   Calendar,
-  Layers,
   Edit2,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';

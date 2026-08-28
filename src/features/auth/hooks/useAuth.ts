@@ -1,15 +1,15 @@
-// import { response } from './../../../types/auth.types';
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
-  loginStart,
   login as loginAction,
-  loginFailure,
-  logout as logoutAction,
-  setMfaPending,
   clearAuthError,
   updateUser as updateUserAction,
+  resetAuthState,
+} from "@/store/slices/authSlice";
+import {
+  loginUser,
+  logoutUser,
 } from "@/store/slices/authSlice";
 import { authApi } from "../api/auth.api";
 import { ROUTES } from "@/constants/routes.constants";
@@ -21,14 +21,11 @@ import type {
   ResetPasswordPayload,
   BackendUserType,
   VerifyOtpPayload,
-  AuthResponse
 } from "@/types/auth.types";
 
 /**
  * Returns the default redirect URL based on user role
  */
-
-export type response = AuthResponse;
 export function getRoleDashboardPath(userType?: BackendUserType | null): string {
   switch (userType) {
     case "PATIENT":
@@ -36,7 +33,7 @@ export function getRoleDashboardPath(userType?: BackendUserType | null): string 
     case "DOCTOR":
       return ROUTES.DOCTOR.DASHBOARD;
     case "SYSTEM_ADMIN":
-    case "HOSPITAL_ADMIN":
+    case "ADMIN":
       return ROUTES.ADMIN.DASHBOARD;
     case "PHARMACY":
       return "/pharmacy/dashboard";
@@ -66,36 +63,25 @@ export function useAuth() {
    */
   const login = useCallback(
     async (credentials: LoginCredentials, redirect = true) => {
-      dispatch(loginStart());
       try {
-        const response  = await authApi.login(credentials);
-        if (!response) {
-          throw new Error("No response received from the server.");
-        }
+        // Dispatches async thunk directly to keep slice & state synchronized
+        const result = await dispatch(loginUser(credentials)).unwrap();
 
-        if (response.requiresMfa && response.tempToken && response.mfaType) {
-          dispatch(
-            setMfaPending({
-              mfaType: response.mfaType,
-              tempToken: response.tempToken,
-              emailOrPhone: credentials.emailOrPhone,
-            })
-          );
+        console.log(result)
+        if ("mfaRequired" in result && result.mfaRequired) {
           navigate(ROUTES.AUTH.VERIFY_OTP);
-          return response;
+          return result;
         }
 
-        dispatch(loginAction({ AccessToken: response.AccessToken, user: response.user }));
 
-        if (redirect) {
-          const redirectPath = getRoleDashboardPath(response.user.userType);
+        if (redirect &&  result) {
+          const redirectPath = getRoleDashboardPath(result.data?.user?.userType);
+          console.log(redirectPath)
           navigate(redirectPath, { replace: true });
         }
 
-        return response;
+        return result;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Failed to log in. Please check credentials.";
-        dispatch(loginFailure(msg));
         throw err;
       }
     },
@@ -106,49 +92,39 @@ export function useAuth() {
    * Register a new user
    */
   const register = useCallback(
-    async (payload: RegisterPayload, autoLogin = true) => {
-      dispatch(loginStart());
+    async (payload: RegisterPayload) => {
       try {
         const response = await authApi.register(payload);
         if (!response) {
           throw new Error("No response received from the server.");
         }
-        if (autoLogin) {
-          // dispatch(loginAction({ token: response.token, user: response.user }));
-          // const redirectPath = getRoleDashboardPath(response.user.userType );
-          
-          // navigate(redirectPath, { replace: true });
-        }
         return response;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Registration failed. Please try again.";
-        dispatch(loginFailure(msg));
         throw err;
       }
     },
-    [dispatch, navigate]
+    []
   );
 
   /**
-   * Verify OTP
+   * Verify OTP (MFA)
    */
   const verifyOtp = useCallback(
     async (payload: VerifyOtpPayload, redirect = true) => {
-      dispatch(loginStart());
       try {
         const response = await authApi.verifyOtp(payload);
         if (!response) {
           throw new Error("No response received from the server.");
         }
+
         dispatch(loginAction({ AccessToken: response.AccessToken, user: response.user }));
+
         if (redirect) {
           const redirectPath = getRoleDashboardPath(response.user.userType);
           navigate(redirectPath, { replace: true });
         }
         return response;
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Invalid or expired OTP.";
-        dispatch(loginFailure(msg));
         throw err;
       }
     },
@@ -158,8 +134,8 @@ export function useAuth() {
   /**
    * Resend OTP
    */
-  const resendEmail = useCallback(async (emailOrPhone: string) => {
-    return authApi.resendOtp(emailOrPhone);
+  const resendEmail = useCallback(async (email: string) => {
+    return authApi.resendEmail(email);
   }, []);
 
   /**
@@ -181,9 +157,9 @@ export function useAuth() {
    */
   const logout = useCallback(async () => {
     try {
-      await authApi.logout();
+      await dispatch(logoutUser()).unwrap();
     } finally {
-      dispatch(logoutAction());
+      dispatch(resetAuthState());
       navigate(ROUTES.AUTH.LOGIN, { replace: true });
     }
   }, [dispatch, navigate]);

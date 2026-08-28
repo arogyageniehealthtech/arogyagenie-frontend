@@ -1,11 +1,26 @@
 import type { Pharmacy } from '../types/pharmacy';
 
 export const DUMMY_PHARMACIES: Pharmacy[] = [
-  { id: 'p1', name: 'Sanjivani Medico', address: 'Station Road, Khardaha', distance: 1.2, status: 'Open', verified: true, lat: 22.738, lng: 88.375, category: 'pharmacy' },
-  { id: 'p2', name: 'Apollo Pharmacy', address: 'Sodepur Barasat Road', distance: 2.5, status: 'Open', verified: true, lat: 22.715, lng: 88.382, category: 'pharmacy' },
-  { id: 'p3', name: 'Frank Ross Pharmacy', address: 'BT Road, Titagarh', distance: 3.8, status: 'Open', verified: true, lat: 22.749, lng: 88.370, category: 'pharmacy' },
-  { id: 'p4', name: 'Wellness 24/7 Care', address: 'Panihati Crossing', distance: 6.2, status: 'Open', verified: false, lat: 22.705, lng: 88.365, category: 'pharmacy' },
-  { id: 'p5', name: 'MedPlus Pharmacy', address: 'Barrackpore', distance: 12.5, status: 'Open', verified: true, lat: 22.765, lng: 88.378, category: 'pharmacy' },
+  {
+    id: 'p1', name: 'Sanjivani Medico', address: 'Station Road, Khardaha', distance: 1.2, status: 'Open', verified: true, lat: 22.738, lng: 88.375, category: 'pharmacy',
+    image: ''
+  },
+  {
+    id: 'p2', name: 'Apollo Pharmacy', address: 'Sodepur Barasat Road', distance: 2.5, status: 'Open', verified: true, lat: 22.715, lng: 88.382, category: 'pharmacy',
+    image: ''
+  },
+  {
+    id: 'p3', name: 'Frank Ross Pharmacy', address: 'BT Road, Titagarh', distance: 3.8, status: 'Open', verified: true, lat: 22.749, lng: 88.370, category: 'pharmacy',
+    image: ''
+  },
+  {
+    id: 'p4', name: 'Wellness 24/7 Care', address: 'Panihati Crossing', distance: 6.2, status: 'Open', verified: false, lat: 22.705, lng: 88.365, category: 'pharmacy',
+    image: ''
+  },
+  {
+    id: 'p5', name: 'MedPlus Pharmacy', address: 'Barrackpore', distance: 12.5, status: 'Open', verified: true, lat: 22.765, lng: 88.378, category: 'pharmacy',
+    image: ''
+  },
 ];
 
 export const QUICK_MEDICINES = [

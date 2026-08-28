@@ -5,7 +5,6 @@ interface Coordinates {
   lat: number;
   lng: number;
 }
-
 interface SearchParams<T> {
   data: T[];
   query: string;

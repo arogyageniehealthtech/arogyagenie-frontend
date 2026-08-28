@@ -1,12 +1,27 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { UserProfile } from "../../../patient/types/profile.types";
+import type { AuthUser } from "../../../../types/auth.types";
 
 interface ProfileHeaderProps {
-  profile: UserProfile;
+  profile: AuthUser & {
+    firstName?: string;
+    lastName?: string;
+    memberships?: string | string[] | number;
+  };
 }
 
 export function ProfileHeader({ profile }: ProfileHeaderProps) {
+  // Determine display name safely across variations of AuthUser
+  const fullName =
+    profile.name ||
+    [profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
+    "User";
+
+  // Safely format membership display value
+  const membershipText = Array.isArray(profile.memberships)
+    ? `${profile.memberships.length} Active`
+    : profile.memberships ?? "Standard Member";
+
   return (
     <Link
       to="/profile/personal-information"
@@ -15,18 +30,23 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <img
-            src={profile.avatarUrl}
-            alt={`${profile.firstName} ${profile.lastName}`}
-            className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
-          />
+          {profile.profilePicture ? (
+            <img
+              src={profile.profilePicture}
+              alt={fullName}
+              className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-white/20 text-white flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">
+              {fullName.slice(0, 2).toUpperCase()}
+            </div>
+          )}
+
           <div className="flex flex-col text-white">
-            <h1 className="text-xl font-semibold">
-              {profile.firstName} {profile.lastName}
-            </h1>
+            <h1 className="text-xl font-semibold">{fullName}</h1>
             <p className="text-sm text-purple-100 mb-1">{profile.email}</p>
             <span className="inline-block bg-white/20 text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full backdrop-blur-sm w-fit">
-              {profile.membership}
+              {membershipText}
             </span>
           </div>
         </div>

@@ -1,12 +1,10 @@
 import React from 'react';
 import {
   BarChart3,
-  TrendingUp,
   Clock,
   CheckCircle2,
   IndianRupee,
   Activity,
-  Calendar,
 } from 'lucide-react';
 import { usePartner } from '../context/PartnerContext';
 import { StatCard } from '../components/common/StatCard';

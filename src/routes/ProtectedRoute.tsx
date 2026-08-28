@@ -1,40 +1,40 @@
-import { Navigate, Outlet, useLocation } from 'react-router';
-import { useAppSelector } from '../store/hooks';
-import type { UserRole } from '../store/slices/authSlice';
+// import { Navigate, Outlet, useLocation } from 'react-router';
+// import { useAppSelector } from '../store/hooks';
+// import type { UserRole } from '../store/slices/authSlice';
 
-interface ProtectedRouteProps {
+// interface ProtectedRouteProps {
 
-  allowedRoles?: UserRole[];
-}
+//   allowedRoles?: UserRole[];
+// }
 
 
-export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, userRole } = useAppSelector((state) => state.auth);
-  const location = useLocation();
+// export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+//   const { isAuthenticated, userRole } = useAppSelector((state) => state.auth);
+//   const location = useLocation();
 
  
-  if (!isAuthenticated) {
+//   if (!isAuthenticated) {
    
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+//     return <Navigate to="/login" state={{ from: location }} replace />;
+//   }
 
  
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+//   if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
     
 
-    let fallbackPath = '/dashboard';
+//     let fallbackPath = '/dashboard';
     
-    if (userRole === 'DOCTOR') {
-      fallbackPath = '/doctor-dashboard';
-    } else if (userRole === 'SYSTEM_ADMIN') {
-      fallbackPath = '/admin-dashboard';
-    } else if (userRole !== 'PATIENT') {
-      fallbackPath = `/${userRole.toLowerCase().replace('_', '-')}-dashboard`;
-    }
+//     if (userRole === 'DOCTOR') {
+//       fallbackPath = '/doctor-dashboard';
+//     } else if (userRole === 'SYSTEM_ADMIN') {
+//       fallbackPath = '/admin-dashboard';
+//     } else if (userRole !== 'PATIENT') {
+//       fallbackPath = `/${userRole.toLowerCase().replace('_', '-')}-dashboard`;
+//     }
 
-    return <Navigate to={fallbackPath} replace />;
-  }
+//     return <Navigate to={fallbackPath} replace />;
+//   }
 
 
-  return <Outlet />;
-};
+//   return <Outlet />;
+// };

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Store, Activity, Clock, CheckCircle, AlertTriangle, Check, Pill, MapPin, FileText } from 'lucide-react';
+import  { useState } from 'react';
+import { Store,   CheckCircle, Check, MapPin } from 'lucide-react';
 import type { MedicineRequest } from '../types/pharmacy';
 
 export default function PharmacyDashboardPage() {
