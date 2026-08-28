@@ -29,9 +29,9 @@
 //       },
 //     });
 
-//     const target = getRoleDashboardPath(user?.role);
-//     navigate(target, { replace: true });
-//   };
+  //   const target = getRoleDashboardPath(user?.userType);
+  //   navigate(target, { replace: true });
+  // };
 
 //   return (
 //     <AuthCard

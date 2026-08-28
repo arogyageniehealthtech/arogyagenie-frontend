@@ -145,7 +145,7 @@ export default function RegisterPage() {
                 >
                   {isSelected && (
                     <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full bg-indigo-500 flex items-center justify-center text-white">
-                      <Check className="h-2.5 w-2.5 stroke-[3]" />
+                      <Check className="h-2.5 w-2.5 stroke-3" />
                     </span>
                   )}
                   <Icon className={`h-5 w-5 sm:h-6 sm:w-6 mb-1.5 ${isSelected ? "text-indigo-400" : "text-slate-400"}`} />
@@ -165,7 +165,7 @@ export default function RegisterPage() {
         {(error || validationError) && (
           <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2 text-red-300 text-xs sm:text-sm animate-fadeIn">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
-            <span className="flex-1 leading-snug break-words">{error || validationError}</span>
+            <span className="flex-1 leading-snug wrap-break-word">{error || validationError}</span>
           </div>
         )}
 
@@ -178,11 +178,11 @@ export default function RegisterPage() {
 
         {/* Visual Divider */}
         <div className="flex items-center gap-3 my-2">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+          <div className="h-px flex-1 bg-linear-to-r from-transparent via-white/15 to-transparent" />
           <span className="text-[10px] sm:text-xs uppercase tracking-widest text-slate-400 font-medium whitespace-nowrap">
             Or email
           </span>
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+          <div className="h-px flex-1 bg-linear-to-r from-transparent via-white/15 to-transparent" />
         </div>
 
         {/* Registration Form */}
@@ -266,7 +266,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg shadow-indigo-600/30 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-[0.99] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg shadow-indigo-600/30 bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-[0.99] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           >
             {isLoading ? (
               <span className="inline-flex items-center gap-2 text-center">

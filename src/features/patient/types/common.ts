@@ -11,7 +11,7 @@ export interface PatientInfo {
 export interface BaseFacility {
   id: string;
   name: string;
-  image:string;
+  image?: string;
   rating: number;
   reviewCount: number;
   distanceKm: number;

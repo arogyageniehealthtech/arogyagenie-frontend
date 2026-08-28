@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '../constants/routes.constants';
 import { useAppSelector,useAppDispatch } from '../store/hooks';
+import { useAuth } from '../features/auth/hooks/useAuth';
 import type { NotificationItem } from '../types/Notification.types';
 import {INITIAL_NOTIFICATIONS} from '../data/notification.data'
 import { logoutUser } from "../store/slices/authSlice";
@@ -81,6 +82,7 @@ const getBottomNavItems = () => [
 
 export default function PatientLayout() {
   const { user } = useAppSelector((state) => state.auth);
+  const { logout } = useAuth();
 
   // Hooks for routing
   const location = useLocation();
@@ -371,10 +373,10 @@ const dispatch = useAppDispatch();
 
                     {/* Medicine Order Sub-item — stays in the hamburger menu on every device */}
                     <NavLink
-                      to="/patient/medicine-orders"
+                      to={ROUTES.PATIENT.MEDICINE_ORDERS}
                       onClick={() => setIsSidebarOpen(false)}
                       className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
-                        isRouteActive('/patient/medicine-orders')
+                        isRouteActive(ROUTES.PATIENT.MEDICINE_ORDERS)
                           ? 'text-indigo-400 bg-indigo-500/10'
                           : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                       }`}
@@ -428,13 +430,13 @@ const dispatch = useAppDispatch();
                   />
                 ) : (
                   <div className="h-7 sm:h-9 w-7 sm:w-9 rounded-full shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-inner">
-                    {getInitials(user?.name)}
+                    {getInitials(user ? `${user.firstName} ${user.lastName}` : undefined)}
                   </div>
                 )}
 
                 <div className="flex flex-col min-w-0">
                   <h2 className="text-[10px] sm:text-xs font-bold text-white leading-tight truncate">
-                    Hi, {user?.name ? user.name.split(" ")[0] : "Guest"}
+                    Hi, {user ? (user.firstName || user.email.split('@')[0]) : "Guest"}
                   </h2>
                 </div>
               </div>
@@ -493,11 +495,11 @@ const dispatch = useAppDispatch();
             {/* RIGHT SIDE: Quick Actions */}
             <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0 z-10">
               <button 
-                onClick={() => navigate(ROUTES.PATIENT.ASSISTANT)}
+                onClick={() => window.dispatchEvent(new Event('open-ai-assistant'))}
                 className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-lg sm:rounded-full transition-colors flex items-center gap-2 px-2 sm:px-3 lg:px-4 min-h-11 min-w-11 justify-center sm:justify-start shrink-0"
                 title="Chat with AI Health Assistant"
               >
-                <Bot size={18} className="shrink-0" />
+                <Bot size={20} className="shrink-0" />
                 <span className="text-xs sm:text-sm font-bold hidden sm:block text-white lg:text-indigo-600">AI Assistant</span>
               </button>
 

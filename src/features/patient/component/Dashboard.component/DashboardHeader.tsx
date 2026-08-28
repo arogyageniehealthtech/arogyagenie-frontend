@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, User, LogOut } from 'lucide-react';
 import { useAppSelector } from '../../../../store/hooks';
+import { useAuth } from '../../../../features/auth/hooks/useAuth';
 
 export const DashboardHeader: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
+  const { logout } = useAuth();
   
   
   // const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -117,7 +119,7 @@ export const DashboardHeader: React.FC = () => {
               <button 
                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors mt-1"
                 onClick={() => {
-                  console.log("Trigger Logout");
+                  logout();
                   setIsProfileOpen(false);
                 }}
               >

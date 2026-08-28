@@ -6,11 +6,26 @@ export interface MedicineItem {
   name: string;
   quantity: number;
   dosage: string;
+<<<<<<< HEAD
+=======
+  price: number;
+  composition: string;
+  packSize: string;
+>>>>>>> bf712cdfb9b971cae5afc9a392adcfd638f5cdf2
   form: string;
   requiresPrescription: boolean;
   price?: number;        // Optional
   composition?: string;  // Optional
   packSize?: string;
+}
+
+export type Medicine = MedicineItem;
+
+export interface OrderPayload {
+  items: Array<{ medicineId: string; quantity: number }>;
+  pharmacyId?: string;
+  deliveryAddress?: string;
+  prescriptionUrl?: string;
 }
 
 export interface PharmacyOffer {
@@ -37,7 +52,7 @@ export interface MedicineRequest {
 export interface Pharmacy {
   id: string;
   name: string;
-  image: string;
+  image?: string;
   address: string;
   distance: number;
   status: string;      // e.g., 'OPEN' or 'CLOSED'

@@ -15,6 +15,7 @@ import {
   Building,
   Shield,
   MapPin,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useGetMe } from "../hooks/useAdminData";
@@ -35,7 +36,7 @@ function getRoleLabel(role?: string | null): string {
   return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export function Sidebar() {
+export function Sidebar({ onClose }: { onClose?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: user } = useGetMe();
@@ -100,35 +101,45 @@ export function Sidebar() {
 
   return (
     <aside
-      className="w-64 flex flex-col h-full shrink-0 overflow-hidden select-none"
+      className="w-64 flex flex-col h-full shrink-0 overflow-hidden select-none relative z-50"
       style={{
         background: "linear-gradient(180deg, #18103A 0%, #120A2D 50%, #0E0724 100%)",
         borderRight: "1px solid rgba(255,255,255,0.06)",
       }}
     >
       {/* Logo Area */}
-      <div className="px-5 py-5 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md bg-white p-2">
-          <img
-            src="/LOGO.png"
-            alt="ArogyaGenie"
-            className="h-6 w-6 object-contain"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
+      <div className="px-4 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md bg-white p-2">
+            <img
+              src="/LOGO.png"
+              alt="ArogyaGenie"
+              className="h-6 w-6 object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </div>
+          <div>
+            <span
+              className="font-extrabold text-lg tracking-tight"
+              style={{ color: "rgba(255,255,255,0.97)" }}
+            >
+              ArogyaGenie
+            </span>
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-violet-300/60">
+              Admin Portal
+            </p>
+          </div>
         </div>
-        <div>
-          <span
-            className="font-extrabold text-lg tracking-tight"
-            style={{ color: "rgba(255,255,255,0.97)" }}
+        {onClose && (
+          <button 
+            onClick={onClose} 
+            className="lg:hidden p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg"
           >
-            ArogyaGenie
-          </span>
-          <p className="text-[10px] font-semibold tracking-widest uppercase text-violet-300/60">
-            Admin Portal
-          </p>
-        </div>
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* Divider */}

@@ -50,6 +50,7 @@ export default function HospitalDiscoveryPage() {
           lat: activeCoordinates?.lat,
           lng: activeCoordinates?.lng,
         });
+        
 
         if (isMounted) {
           setHospitals(data || []);
@@ -205,7 +206,7 @@ export default function HospitalDiscoveryPage() {
             
             <div className="w-full lg:flex-1 lg:sticky lg:top-20 z-10 rounded-2xl overflow-hidden shadow-sm border border-slate-200 h-64 sm:h-80 lg:h-[calc(100vh-140px)] lg:max-h-150">
               <MapContainer 
-                locations={mapLocations} 
+                locations={mapLocations.map(h => ({ ...h, category: 'hospital' }))} 
                 radiusKm={radiusKm} 
                 centerCoordinates={activeCoordinates} 
               />

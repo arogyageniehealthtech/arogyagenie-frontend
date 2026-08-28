@@ -28,7 +28,7 @@ export default function DiagnosticDiscoveryPage() {
 
   // Modals & Selected Centre
   const [bookingCentre, setBookingCentre] = useState<DiagnosticCentre | null>(null);
-  const [, setViewingCentre] = useState<DiagnosticCentre | null>(null);
+  const [viewingCentre, setViewingCentre] = useState<DiagnosticCentre | null>(null);
   const [showInitialPrompt, setShowInitialPrompt] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
   
@@ -420,11 +420,56 @@ export default function DiagnosticDiscoveryPage() {
         </main>
       </div>
 
-      {bookingCentre && (
-        <BookLabModal 
-          centre={bookingCentre} 
-          onClose={() => setBookingCentre(null)} 
-        />
+      {/* Booking Modal */}
+      {bookingCentre && <BookLabModal centre={bookingCentre} onClose={() => setBookingCentre(null)} />}
+
+      {/* Details Popup Modal */}
+      {viewingCentre && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setViewingCentre(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full bg-slate-100 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-xl font-black text-slate-900 mb-1">{viewingCentre.name}</h2>
+            <p className="text-sm font-bold text-purple-600 mb-4">Diagnostic & Testing Centre</p>
+
+            <div className="space-y-3 text-sm text-slate-600 mb-6">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="font-semibold text-slate-500">Distance:</span>
+                <span className="font-bold text-slate-800">{viewingCentre.distanceKm} km away</span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <span className="font-semibold text-slate-500">Rating:</span>
+                <span className="font-bold text-slate-800">⭐ {viewingCentre.rating} ({viewingCentre.reviewCount} reviews)</span>
+              </div>
+              <div>
+                <span className="font-semibold text-slate-500 block mb-1">Available Tests:</span>
+                <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                  {viewingCentre.availableTests?.map((test, idx) => (
+                    <span key={idx} className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-purple-100">
+                      {test.name} (₹{test.rate})
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                const target = viewingCentre;
+                setViewingCentre(null);
+                setBookingCentre(target);
+              }}
+              className="w-full py-3 text-sm font-bold text-white bg-[#5B21B6] hover:bg-[#4c1d95] rounded-xl shadow-md transition-all cursor-pointer"
+            >
+              Book Test Now
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

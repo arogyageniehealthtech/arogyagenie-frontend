@@ -305,11 +305,11 @@ export default function ProfilePage() {
         </div>
 
         {/* Bottom Save Bar */}
-        <div className="bg-indigo-500/20p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[11px] font-semibold text-slate-500">Ensure all medical details are accurate for AI clinical insights.</p>
           <button 
             type="submit"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-indigo-500/20 hover:bg-indigo-500/20 text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md shadow-purple-900/20 transition-all active:scale-95 shrink-0"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#5B21B6] hover:bg-[#4c1d95] text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md shadow-purple-900/20 transition-all active:scale-95 shrink-0"
           >
             <Save className="w-4 h-4" /> Save Changes
           </button>

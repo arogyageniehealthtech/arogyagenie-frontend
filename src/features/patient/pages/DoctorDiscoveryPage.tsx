@@ -34,8 +34,8 @@ export default function DoctorDiscoveryPage() {
     const fetchDoctorsFromApi = async () => {
       try {
         const queryParams = {
-          // query: searchQuery || undefined,
-          // specialty: selectedSpecialty || undefined,
+          query: searchQuery || undefined,
+          specialty: selectedSpecialty || undefined,
           radius,
          location:{
            lat: activeCoordinates?.lat,

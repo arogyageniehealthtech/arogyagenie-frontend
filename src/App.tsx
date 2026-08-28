@@ -6,6 +6,7 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { router } from './routes/router.tsx';
 import { ErrorBoundary } from './ErrorBoundary';
 import { store } from './store/index.ts';
+import { FloatingHealthAssistant } from './components/health/FloatingHealthAssistant';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +29,7 @@ export  default function App() {
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />
           
-          <Toaster 
+            <Toaster 
             position="top-right" 
             toastOptions={{
               duration: 4000,
@@ -44,6 +45,7 @@ export  default function App() {
               error: { iconTheme: { primary: '#FF4D4F', secondary: '#FFFFFF' } },
             }} 
           />
+          <FloatingHealthAssistant />
         </QueryClientProvider>
       </ReduxProvider>
     </ErrorBoundary>

@@ -23,7 +23,8 @@ const PrescriptionsPage = lazy(() => import("../features/patient/pages/Prescript
 const AppointmentsPage = lazy(() => import("../features/patient/pages/AppointmentsPage.tsx"));
 const LabReportsPage = lazy(() => import("../features/patient/pages/LabReportsPage.tsx"));
 const DoctorDiscoveryPage = lazy(() => import("../features/patient/pages/DoctorDiscoveryPage.tsx"));
-// const PharmacyModule1 = lazy(() => import("../features/user/pages/PharmacyModule1.tsx"));
+const PharmacyModule = lazy(() => import("../features/patient/pages/PharmacyModule.tsx"));
+// const MedicineOderPage = lazy(() => import("../features/patient/pages/MedicineOderPage.tsx"));
 const DiagnosticDiscoveryPage = lazy(() => import("../features/patient/pages/DiagnosticDiscoveryPage.tsx"));
 const HospitalDiscoveryPage = lazy(() => import("../features/patient/pages/HospitalDiscoveryPage.tsx"));
 // =====================================ADMIN===========================================================
@@ -104,7 +105,8 @@ export const router = createBrowserRouter([
               { path: ROUTES.PATIENT.LAB, element: withSuspense(<DiagnosticDiscoveryPage />) },
               { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage />) },
               { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage />) },
-              // { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule1 />) },
+              { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
+              // { path: ROUTES.PATIENT.MEDICINE_ORDERS, element: withSuspense(<MedicineOderPage />) },
               { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
             ],
           },
