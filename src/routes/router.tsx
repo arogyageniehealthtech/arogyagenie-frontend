@@ -1,13 +1,12 @@
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes.constants.ts";
-// import { GuestRoute } from "../routes/GuestRoute.tsx";
 import { PageLoader } from "../components/ui/PageLoader.tsx";
-// import Test from"../Test.tsx"
-// ================================LAYOUT============================================================
+
+// ================================LAYOUTS============================================================
 const PatientLayout = lazy(() => import("../layouts/PatientLayout.tsx"));
-// const AdminLayout = lazy(() => import("../layouts/AdminLayout.tsx"));
 const PartnerLayout = lazy(() => import("../layouts/PartnerLayout.tsx"));
+const DoctorLayout = lazy(() => import("../features/doctor/component/DoctorLayout.tsx"));
 
 // ====================================AUTH===========================================================
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage.tsx"));
@@ -16,7 +15,7 @@ const ForgotPasswordPage = lazy(() => import("../features/auth/pages/ForgotPassw
 const ResetPasswordPage = lazy(() => import("../features/auth/pages/ResetPasswordPage.tsx"));
 const VerifyEmailPage = lazy(() => import("../features/auth/pages/VerifyEmailPage.tsx"));
 
-// =====================================user=========================================================
+// =====================================PATIENT=======================================================
 const DashboardPage = lazy(() => import("../features/patient/pages/DashboardPage.tsx"));
 const ProfilePage = lazy(() => import("../features/patient/pages/ProfilePage.tsx"));
 const PrescriptionsPage = lazy(() => import("../features/patient/pages/PrescriptionsPage.tsx"));
@@ -24,9 +23,19 @@ const AppointmentsPage = lazy(() => import("../features/patient/pages/Appointmen
 const LabReportsPage = lazy(() => import("../features/patient/pages/LabReportsPage.tsx"));
 const DoctorDiscoveryPage = lazy(() => import("../features/patient/pages/DoctorDiscoveryPage.tsx"));
 const PharmacyModule = lazy(() => import("../features/patient/pages/PharmacyModule.tsx"));
-// const MedicineOderPage = lazy(() => import("../features/patient/pages/MedicineOderPage.tsx"));
 const DiagnosticDiscoveryPage = lazy(() => import("../features/patient/pages/DiagnosticDiscoveryPage.tsx"));
 const HospitalDiscoveryPage = lazy(() => import("../features/patient/pages/HospitalDiscoveryPage.tsx"));
+const PatientVideoConsultationPage = lazy(() => import("../features/patient/pages/PatientVideoConsultationPage.tsx"));
+
+// =====================================DOCTOR========================================================
+const DoctorDashboardPage = lazy(() => import("../features/doctor/pages/DoctorDashboardPage.tsx"));
+const DoctorAppointmentsPage = lazy(() => import("../features/doctor/pages/AppoinmentPage.tsx").then(m => ({ default: m.DoctorAppointments })));
+const DoctorPatientsPage = lazy(() => import("../features/doctor/pages/Patientpage.tsx").then(m => ({ default: m.DoctorPatients })));
+const DoctorPrescriptionsPage = lazy(() => import("../features/doctor/pages/PrescriptionsPage.tsx").then(m => ({ default: m.DoctorPrescriptions })));
+const DoctorProfilePage = lazy(() => import("../features/doctor/pages/Profilepage.tsx").then(m => ({ default: m.DoctorProfile })));
+const DoctorSchedulePage = lazy(() => import("../features/doctor/pages/DoctorSchedulePage.tsx"));
+const DoctorVideoConsultationPage = lazy(() => import("../features/doctor/pages/DoctorVideoConsultationPage.tsx"));
+
 // =====================================ADMIN===========================================================
 const AdminDashboardPage = lazy(() => import("../features/admin/pages/AdminDashboardPage.tsx"));
 const PendingApplicationPage = lazy(() => import("../features/admin/pages/PendingApplicationPage.tsx"));
@@ -47,7 +56,6 @@ const PartnerRequestsPage = lazy(() => import("../features/partner/pages/Partner
 const PharmacyOrdersPage = lazy(() => import("../features/partner/pages/PharmacyOrdersPage.tsx"));
 const PharmacyInventoryPage = lazy(() => import("../features/partner/pages/PharmacyInventoryPage.tsx"));
 const LabBookingsPage = lazy(() => import("../features/partner/pages/LabBookingsPage.tsx"));
-// const LabReportsPage = lazy(() => import("../features/partner/pages/LabReportsPage.tsx"));
 const HospitalAppointmentsPage = lazy(() => import("../features/partner/pages/HospitalAppointmentsPage.tsx"));
 const HospitalCheckInsPage = lazy(() => import("../features/partner/pages/HospitalCheckInsPage.tsx"));
 const PartnerPatientsPage = lazy(() => import("../features/partner/pages/PartnerPatientsPage.tsx"));
@@ -59,10 +67,6 @@ const PartnerSettingsPage = lazy(() => import("../features/partner/pages/Partner
 // ==============================OTHERS=================================================================
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage.tsx"));
 const UnauthorizedPage = lazy(() => import("../pages/UnauthorizedPage.tsx"));
-// ----------------------------------
-
-
-
 
 function withSuspense(element: React.ReactNode) {
   return <Suspense fallback={<PageLoader />}>{element}</Suspense>;
@@ -71,10 +75,7 @@ function withSuspense(element: React.ReactNode) {
 export const router = createBrowserRouter([
   // --- Guest-only ----------------------------------------------------
   {
-    // path:'/auth',
-    // element: <GuestRoute />,
     children: [
-      // { path: "/", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
       { path: "/login", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
       { path: ROUTES.AUTH.LOGIN, element: withSuspense(<LoginPage />) },
       { path: ROUTES.AUTH.REGISTER, element: withSuspense(<RegisterPage />) },
@@ -84,41 +85,60 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // --- Authenticated, but outside the dashboard chrome ----------------
-  {
-    // children: [{ path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) }],
-  },
-
-  // --- Authenticated + user role, inside the dashboard shell -------
+  // --- Patient Portal Routes ------------------------------------------
   {
     children: [
       {
+        element: <PatientLayout />,
         children: [
-          {
-            element: <PatientLayout />,
-            children: [
-              { path: ROUTES.PATIENT.DASHBOARD, element: withSuspense(<DashboardPage />) },
-              { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
-              { path: ROUTES.PATIENT.PRESCRIBTION, element: withSuspense(<PrescriptionsPage />) },
-              { path: ROUTES.PATIENT.APPOINTMENTS, element: withSuspense(<AppointmentsPage />) },
-              { path: ROUTES.PATIENT.LAB_REPORTS, element: withSuspense(<LabReportsPage />) },
-              { path: ROUTES.PATIENT.LAB, element: withSuspense(<DiagnosticDiscoveryPage />) },
-              { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage />) },
-              { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage />) },
-              { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
-              // { path: ROUTES.PATIENT.MEDICINE_ORDERS, element: withSuspense(<MedicineOderPage />) },
-              { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
-            ],
-          },
+          { path: ROUTES.PATIENT.DASHBOARD, element: withSuspense(<DashboardPage />) },
+          { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
+          { path: ROUTES.PATIENT.PRESCRIBTION, element: withSuspense(<PrescriptionsPage />) },
+          { path: ROUTES.PATIENT.APPOINTMENTS, element: withSuspense(<AppointmentsPage />) },
+          { path: ROUTES.PATIENT.LAB_REPORTS, element: withSuspense(<LabReportsPage />) },
+          { path: ROUTES.PATIENT.LAB, element: withSuspense(<DiagnosticDiscoveryPage />) },
+          { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage />) },
+          { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage />) },
+          { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
         ],
       },
     ],
   },
 
+  // --- Patient Video Calling Route (Full-Screen Room) ------------------
+  {
+    path: "/video-call/:appointmentId",
+    element: withSuspense(<PatientVideoConsultationPage />),
+  },
+
+  // --- Doctor Portal Routes -------------------------------------------
+  {
+    path: "/doctor-dashboard",
+    element: withSuspense(<DoctorDashboardPage />),
+  },
+  {
+    path: "/doctor",
+    element: <DoctorLayout />,
+    children: [
+      { index: true, element: <Navigate to={ROUTES.DOCTOR.DASHBOARD} replace /> },
+      { path: "dashboard", element: withSuspense(<DoctorDashboardPage />) },
+      { path: "appointments", element: withSuspense(<DoctorAppointmentsPage />) },
+      { path: "patients", element: withSuspense(<DoctorPatientsPage />) },
+      { path: "prescriptions", element: withSuspense(<DoctorPrescriptionsPage />) },
+      { path: "profile", element: withSuspense(<DoctorProfilePage />) },
+      { path: "schedule", element: withSuspense(<DoctorSchedulePage />) },
+    ],
+  },
+
+  // --- Doctor Video Calling Route (Full-Screen Room) ------------------
+  {
+    path: "/doctor/video-call/:appointmentId",
+    element: withSuspense(<DoctorVideoConsultationPage />),
+  },
+
   // --- ADMIN PORTAL ROUTES --------------------------------------------
   {
     path: "/admin",
-    // element: <AdminLayout />,
     children: [
       { index: true, element: <Navigate to={ROUTES.ADMIN.DASHBOARD} replace /> },
       { path: ROUTES.ADMIN.DASHBOARD, element: withSuspense(<AdminDashboardPage />) },
@@ -160,5 +180,4 @@ export const router = createBrowserRouter([
 
   { path: ROUTES.COMMON.UNAUTHORIZED, element: withSuspense(<UnauthorizedPage />) },
   { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<NotFoundPage />) },
-  // { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<Test />) },
 ]);

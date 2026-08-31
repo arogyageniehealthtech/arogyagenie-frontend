@@ -444,7 +444,7 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                dashboard.recentAppointments.map((apt) => {
+                dashboard.recentAppointments.map((apt: any) => {
                   const initials = apt.doctorName
                     ? apt.doctorName.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()
                     : "DR";
@@ -516,7 +516,7 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                dashboard.activeMedicineReminders.map((med) => (
+                dashboard.activeMedicineReminders.map((med: any) => (
                   <div
                     key={med.id}
                     className="flex items-center gap-3 p-3 rounded-xl transition-colors hover:bg-emerald-50/40"

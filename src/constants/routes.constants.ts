@@ -38,6 +38,12 @@ export const ROUTES = {
 
   DOCTOR: {
     DASHBOARD: '/doctor-dashboard',
+    APPOINTMENTS: '/doctor/appointments',
+    PATIENTS: '/doctor/patients',
+    PRESCRIPTIONS: '/doctor/prescriptions',
+    PROFILE: '/doctor/profile',
+    SCHEDULE: '/doctor/schedule',
+    VIDEO_CALL: '/doctor/video-call/:appointmentId',
   },
 
   ADMIN: {

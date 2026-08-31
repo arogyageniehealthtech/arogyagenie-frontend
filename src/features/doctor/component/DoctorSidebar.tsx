@@ -7,6 +7,7 @@ import {
   Calendar,
   Clipboard,
   Users,
+  Clock,
   type LucideIcon,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes.constants";
@@ -40,6 +41,7 @@ export function DoctorSidebar() {
   const navItems: NavItem[] = [
     { href: ROUTES.DOCTOR.DASHBOARD, label: "Dashboard", icon: Home },
     { href: "/doctor/appointments", label: "Appointments", icon: Calendar },
+    { href: "/doctor/schedule", label: "Schedule", icon: Clock },
     { href: "/doctor/patients", label: "My Patients", icon: Users },
     { href: "/doctor/prescriptions", label: "Prescriptions", icon: Clipboard },
     { href: "/doctor/profile", label: "Profile", icon: User },
