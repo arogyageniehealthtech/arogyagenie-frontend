@@ -20,6 +20,11 @@ export function HealthSummaryCard() {
 
   if (!summary) return null;
 
+  const recentHealthEvents = Array.isArray(summary.recentHealthEvents) ? summary.recentHealthEvents : [];
+  const currentMedicines = Array.isArray(summary.currentMedicines) ? summary.currentMedicines : [];
+  const activeConcerns = Array.isArray(summary.activeConcerns) ? summary.activeConcerns : [];
+  const followUpRequirements = Array.isArray(summary.followUpRequirements) ? summary.followUpRequirements : [];
+
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-white via-blue-50/20 to-slate-50 shadow-sm overflow-hidden">
       <CardHeader className="pb-3 border-b border-slate-100 bg-white/60">
@@ -65,9 +70,9 @@ export function HealthSummaryCard() {
             <h4 className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
               <Calendar className="h-4 w-4 text-blue-600" /> Recent Medical Events
             </h4>
-            {summary.recentHealthEvents.length > 0 ? (
+            {recentHealthEvents.length > 0 ? (
               <ul className="text-xs space-y-1 text-slate-700">
-                {summary.recentHealthEvents.map((ev, i) => (
+                {recentHealthEvents.map((ev, i) => (
                   <li key={i} className="flex items-start gap-1.5">
                     <span className="text-primary font-bold">•</span>
                     <span>{ev}</span>
@@ -84,9 +89,9 @@ export function HealthSummaryCard() {
             <h4 className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
               <Pill className="h-4 w-4 text-teal-600" /> Current Prescribed Medicines
             </h4>
-            {summary.currentMedicines.length > 0 ? (
+            {currentMedicines.length > 0 ? (
               <ul className="text-xs space-y-1 text-slate-700">
-                {summary.currentMedicines.map((m, i) => (
+                {currentMedicines.map((m, i) => (
                   <li key={i} className="flex items-start gap-1.5">
                     <span className="text-teal-600 font-bold">•</span>
                     <span>{m}</span>
@@ -103,9 +108,9 @@ export function HealthSummaryCard() {
             <h4 className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
               <AlertCircle className="h-4 w-4 text-amber-600" /> Active Health Concerns
             </h4>
-            {summary.activeConcerns.length > 0 ? (
+            {activeConcerns.length > 0 ? (
               <ul className="text-xs space-y-1 text-slate-700">
-                {summary.activeConcerns.map((c, i) => (
+                {activeConcerns.map((c, i) => (
                   <li key={i} className="flex items-start gap-1.5">
                     <span className="text-amber-600 font-bold">•</span>
                     <span>{c}</span>
@@ -122,9 +127,9 @@ export function HealthSummaryCard() {
             <h4 className="text-xs font-bold text-slate-600 uppercase flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Follow-Up Guidance
             </h4>
-            {summary.followUpRequirements.length > 0 ? (
+            {followUpRequirements.length > 0 ? (
               <ul className="text-xs space-y-1 text-slate-700">
-                {summary.followUpRequirements.map((f, i) => (
+                {followUpRequirements.map((f, i) => (
                   <li key={i} className="flex items-start gap-1.5">
                     <span className="text-emerald-600 font-bold">•</span>
                     <span>{f}</span>

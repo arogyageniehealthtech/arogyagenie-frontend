@@ -191,14 +191,17 @@ export default function DashboardPage() {
   const today = new Date();
   const dateStr = today.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  const activeOrAcceptedOrders = orders.filter((o) =>
-    ["accepted", "delivery_confirmed", "packing", "out_for_delivery"].includes(o.status)
+  const activeOrAcceptedOrders = (orders || []).filter((o) =>
+    ["accepted", "delivery_confirmed", "packing", "out_for_delivery"].includes(o?.status)
   );
+
+  const recentAppointments = Array.isArray(dashboard.recentAppointments) ? dashboard.recentAppointments : [];
+  const activeMedicineReminders = Array.isArray(dashboard.activeMedicineReminders) ? dashboard.activeMedicineReminders : [];
 
   const statCards: StatCardProps[] = [
     {
       label: "Upcoming Appointments",
-      value: dashboard.upcomingAppointments,
+      value: dashboard.upcomingAppointments ?? 0,
       icon: Calendar,
       gradient: "linear-gradient(135deg, hsl(238,60%,56%), hsl(238,50%,48%))",
       iconColor: "hsl(238,60%,52%)",
@@ -207,7 +210,7 @@ export default function DashboardPage() {
     },
     {
       label: "Active Medicines",
-      value: dashboard.activeMedicines,
+      value: dashboard.activeMedicines ?? 0,
       icon: Pill,
       gradient: "linear-gradient(135deg, hsl(158,60%,38%), hsl(158,55%,32%))",
       iconColor: "hsl(158,60%,36%)",
@@ -216,7 +219,7 @@ export default function DashboardPage() {
     },
     {
       label: "Lab Reports",
-      value: dashboard.totalLabReports,
+      value: dashboard.totalLabReports ?? 0,
       icon: FileText,
       gradient: "linear-gradient(135deg, hsl(260,60%,56%), hsl(260,50%,48%))",
       iconColor: "hsl(260,60%,52%)",
@@ -225,7 +228,7 @@ export default function DashboardPage() {
     },
     {
       label: "Order Medicine",
-      value: dashboard.totalPrescriptions,
+      value: dashboard.totalPrescriptions ?? 0,
       icon: Clipboard,
       gradient: "linear-gradient(135deg, hsl(26,80%,52%), hsl(26,75%,44%))",
       iconColor: "hsl(26,80%,48%)",
@@ -433,7 +436,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="p-4 space-y-3">
-              {dashboard.recentAppointments.length === 0 ? (
+              {recentAppointments.length === 0 ? (
                 <div className="text-center py-8">
                   <Calendar className="h-8 w-8 mx-auto mb-2 text-slate-300" />
                   <p className="text-sm text-slate-400">No recent appointments.</p>
@@ -444,7 +447,7 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                dashboard.recentAppointments.map((apt: any) => {
+                recentAppointments.map((apt: any) => {
                   const initials = apt.doctorName
                     ? apt.doctorName.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()
                     : "DR";
@@ -505,7 +508,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="p-4 space-y-3">
-              {dashboard.activeMedicineReminders.length === 0 ? (
+              {activeMedicineReminders.length === 0 ? (
                 <div className="text-center py-8">
                   <Pill className="h-8 w-8 mx-auto mb-2 text-slate-300" />
                   <p className="text-sm text-slate-400">No active reminders.</p>
@@ -516,7 +519,7 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                dashboard.activeMedicineReminders.map((med: any) => (
+                activeMedicineReminders.map((med: any) => (
                   <div
                     key={med.id}
                     className="flex items-center gap-3 p-3 rounded-xl transition-colors hover:bg-emerald-50/40"

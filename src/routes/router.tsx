@@ -64,6 +64,8 @@ const PartnerAnalyticsPage = lazy(() => import("../features/partner/pages/Partne
 const PartnerNotificationsPage = lazy(() => import("../features/partner/pages/PartnerNotificationsPage.tsx"));
 const PartnerSettingsPage = lazy(() => import("../features/partner/pages/PartnerSettingsPage.tsx"));
 
+import { RouteErrorElement } from "../components/RouteErrorElement.tsx";
+
 // ==============================OTHERS=================================================================
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage.tsx"));
 const UnauthorizedPage = lazy(() => import("../pages/UnauthorizedPage.tsx"));
@@ -75,6 +77,7 @@ function withSuspense(element: React.ReactNode) {
 export const router = createBrowserRouter([
   // --- Guest-only ----------------------------------------------------
   {
+    errorElement: <RouteErrorElement />,
     children: [
       { path: "/login", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
       { path: ROUTES.AUTH.LOGIN, element: withSuspense(<LoginPage />) },
@@ -87,6 +90,7 @@ export const router = createBrowserRouter([
 
   // --- Patient Portal Routes ------------------------------------------
   {
+    errorElement: <RouteErrorElement />,
     children: [
       {
         element: <PatientLayout />,
@@ -114,10 +118,12 @@ export const router = createBrowserRouter([
   // --- Doctor Portal Routes -------------------------------------------
   {
     path: "/doctor-dashboard",
+    errorElement: <RouteErrorElement />,
     element: withSuspense(<DoctorDashboardPage />),
   },
   {
     path: "/doctor",
+    errorElement: <RouteErrorElement />,
     element: <DoctorLayout />,
     children: [
       { index: true, element: <Navigate to={ROUTES.DOCTOR.DASHBOARD} replace /> },
@@ -133,12 +139,14 @@ export const router = createBrowserRouter([
   // --- Doctor Video Calling Route (Full-Screen Room) ------------------
   {
     path: "/doctor/video-call/:appointmentId",
+    errorElement: <RouteErrorElement />,
     element: withSuspense(<DoctorVideoConsultationPage />),
   },
 
   // --- ADMIN PORTAL ROUTES --------------------------------------------
   {
     path: "/admin",
+    errorElement: <RouteErrorElement />,
     children: [
       { index: true, element: <Navigate to={ROUTES.ADMIN.DASHBOARD} replace /> },
       { path: ROUTES.ADMIN.DASHBOARD, element: withSuspense(<AdminDashboardPage />) },
@@ -159,6 +167,7 @@ export const router = createBrowserRouter([
   // --- PARTNER / PROVIDER PORTAL ROUTES --------------------------------
   {
     path: "/partner",
+    errorElement: <RouteErrorElement />,
     element: <PartnerLayout />,
     children: [
       { index: true, element: <Navigate to={ROUTES.PARTNER.DASHBOARD} replace /> },

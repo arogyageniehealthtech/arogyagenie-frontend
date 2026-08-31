@@ -492,15 +492,28 @@ export const useGetPatientDashboard = () => {
     queryFn: async () => {
       try {
         const res = await axiosInstance.get("/dashboard/patient");
-        return res.data.data;
+        const data = res.data?.data || res.data || {};
+        return {
+          firstName: data.firstName || "Patient",
+          userName: data.userName || data.name || "Patient",
+          upcomingAppointments: data.upcomingAppointments ?? 0,
+          activeMedicines: data.activeMedicines ?? 0,
+          totalLabReports: data.totalLabReports ?? 0,
+          totalPrescriptions: data.totalPrescriptions ?? 0,
+          recentAppointments: Array.isArray(data.recentAppointments) ? data.recentAppointments : [],
+          activeMedicineReminders: Array.isArray(data.activeMedicineReminders) ? data.activeMedicineReminders : [],
+          ...data,
+        };
       } catch (e) {
         return {
           firstName: "Patient",
+          userName: "Patient",
           upcomingAppointments: 0,
           activeMedicines: 0,
           totalLabReports: 0,
           totalPrescriptions: 0,
           recentAppointments: [],
+          activeMedicineReminders: [],
         };
       }
     },
