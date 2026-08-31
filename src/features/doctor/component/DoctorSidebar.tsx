@@ -1,5 +1,5 @@
 import type React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   LogOut,
   Home,
@@ -10,8 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes.constants";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { logout } from "@/store/slices/authSlice";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 function getInitials(name?: string | null, email?: string | null): string {
   if (name && name.trim()) {
@@ -36,9 +35,7 @@ interface NavItem {
 
 export function DoctorSidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, logout } = useAuth();
 
   const navItems: NavItem[] = [
     { href: ROUTES.DOCTOR.DASHBOARD, label: "Dashboard", icon: Home },
@@ -57,9 +54,8 @@ export function DoctorSidebar() {
   const role = user?.userType || "DOCTOR";
   const initials = getInitials(displayName, user?.email);
 
-  const handleSignOut = () => {
-    dispatch(logout());
-    navigate(ROUTES.AUTH.LOGIN);
+  const handleSignOut = async () => {
+    await logout();
   };
 
   return (
