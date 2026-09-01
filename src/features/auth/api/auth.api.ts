@@ -1,10 +1,13 @@
-// import { userType } from './../../../types/auth.types';
 import axiosInstance from "@/lib/axios";
 import type {
+  ApiResponse,
   AuthResponse,
   AuthUser,
   ForgotPasswordPayload,
+  IdentityDTO,
+  LoginApiResponseData,
   LoginCredentials,
+  MfaLoginPayload,
   RegisterPayload,
   ResetPasswordPayload,
   VerifyOtpPayload,
@@ -13,20 +16,82 @@ import { ROUTES } from "../../../constants/routes.constants";
 
 export const authApi = {
   /**
-   * Login with email/phone & password
+   * Login with email & password (supports MFA challenge token response)
    */
-  async login(credentials: LoginCredentials): Promise<AuthResponse | undefined> {
-    // Strip userType — backend loginSchema only accepts: email, password, deviceId
-    const { email, password, deviceId } = credentials as any;
-    const payload: Record<string, unknown> = { email, password };
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    const { email, password, deviceId } = credentials;
+    const payload: Record<string, unknown> = {
+      email: email.trim().toLowerCase(),
+      password,
+    };
     if (deviceId) payload.deviceId = deviceId;
 
     try {
-      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.LOGIN, payload);
-      return response.data;
-    } catch(err: any) {
-      // Re-throw so Redux thunk & UI can display the real server error
-      console.error('[authApi.login] error:', err?.response?.data ?? err);
+      const response = await axiosInstance.post<ApiResponse<LoginApiResponseData> | AuthResponse>(
+        ROUTES.AUTH.LOGIN,
+        payload
+      );
+
+      const resBody: any = response.data;
+      const data = resBody?.data ?? resBody;
+
+      if (data?.mfaRequired) {
+        return {
+          requiresMfa: true,
+          mfaRequired: true,
+          challengeToken: data.challengeToken,
+          user: undefined as any,
+          AccessToken: "",
+        };
+      }
+
+      const accessToken = data?.accessToken || data?.AccessToken || "";
+      const user = data?.user || (data as AuthUser);
+
+      return {
+        requiresMfa: false,
+        mfaRequired: false,
+        accessToken,
+        AccessToken: accessToken,
+        refreshToken: data?.refreshToken,
+        accessTokenExpiresIn: data?.accessTokenExpiresIn,
+        user,
+      };
+    } catch (err: any) {
+      console.error("[authApi.login] error:", err?.response?.data ?? err);
+      throw err;
+    }
+  },
+
+  /**
+   * Verify MFA login challenge code (TOTP / recovery code)
+   */
+  async verifyMfaLogin(payload: MfaLoginPayload): Promise<AuthResponse> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<any> | any>(
+        ROUTES.AUTH.VERIFY_OTP,
+        {
+          challengeToken: payload.challengeToken,
+          code: payload.code.trim(),
+        }
+      );
+
+      const resBody: any = response.data;
+      const data = resBody?.data ?? resBody;
+      const accessToken = data?.accessToken || data?.AccessToken || "";
+      const user = data?.user || (data as AuthUser);
+
+      return {
+        requiresMfa: false,
+        mfaRequired: false,
+        accessToken,
+        AccessToken: accessToken,
+        refreshToken: data?.refreshToken,
+        accessTokenExpiresIn: data?.accessTokenExpiresIn,
+        user,
+      };
+    } catch (err: any) {
+      console.error("[authApi.verifyMfaLogin] error:", err?.response?.data ?? err);
       throw err;
     }
   },
@@ -34,76 +99,120 @@ export const authApi = {
   /**
    * Register a new account
    */
-  async register(payload: RegisterPayload): Promise<AuthResponse | undefined | string> {
+  async register(payload: RegisterPayload): Promise<{ message: string }> {
     try {
-      const response = await axiosInstance.post<any>(ROUTES.AUTH.REGISTER, payload);
-      console.log(response.data?.data?.message || response.data?.message);
-      return response.data?.data?.message || response.data?.message;
-    } catch (err) {
-      console.log(err);
+      const formattedPayload = {
+        email: payload.email.trim().toLowerCase(),
+        password: payload.password,
+        userType: payload.userType,
+      };
+
+      const response = await axiosInstance.post<ApiResponse<{ message: string }> | any>(
+        ROUTES.AUTH.REGISTER,
+        formattedPayload
+      );
+
+      const resBody: any = response.data;
+      const message =
+        resBody?.data?.message ||
+        resBody?.message ||
+        "Registration successful. Please verify your email.";
+
+      return { message };
+    } catch (err: any) {
+      console.error("[authApi.register] error:", err?.response?.data ?? err);
       throw err;
     }
   },
 
   /**
-   * Verify email via token (Supports both path param and request body)
+   * Verify email via token query parameter
    */
-  async verifyEmail(token: string): Promise<{ success: boolean; message: string; user?: AuthUser; error?:{message?: string} }> {
+  async verifyEmail(token: string): Promise<{ success: boolean; message: string; user?: AuthUser; error?: { message?: string } }> {
     try {
       const cleanToken = encodeURIComponent(token.trim());
-      // Try posting to path parameter route first: /verify-email/:token
-      const response = await axiosInstance.post<{ success: boolean; message: string; user?: AuthUser }>(
+      const response = await axiosInstance.post<ApiResponse<{ message: string }> | any>(
         `${ROUTES.AUTH.VERIFY_EMAIL}?token=${cleanToken}`
       );
-      return response.data;
-      // Fallback: If 404/400 path param fails, attempt sending token in JSON body
-      } catch (fallbackErr: any) {
-        console.error("Email verification failed:", fallbackErr.response?.data);
-        throw fallbackErr;
-      }
-    },
 
-  /**
-   * Verify OTP for email/phone verification, password reset, or MFA
-   */
-  async verifyOtp(payload: VerifyOtpPayload): Promise<AuthResponse | undefined> {
-    try {
-      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.VERIFY_OTP, payload);
-      return response.data;
-    } catch {
-      // Ignored for offline/mock
-    }
-  },
+      const resBody: any = response.data;
+      const message = resBody?.data?.message || resBody?.message || "Email verified successfully.";
 
-  /**
-   * Resend verification OTP / Link
-   */
-  async resendEmail(email: string): Promise<{ success: boolean; message: string }> {
-    try {
-      const response = await axiosInstance.post<{ success: boolean; message: string }>(
-        ROUTES.AUTH.RESEND_VERIFICATION,
-        { email}
-      );
-      return response.data;
-    } catch {
       return {
         success: true,
-        message: "A fresh verification code has been sent.",
+        message,
+      };
+    } catch (err: any) {
+      console.error("Email verification failed:", err.response?.data ?? err);
+      const message = err?.response?.data?.error?.message || err?.response?.data?.message || "Email verification failed or link expired.";
+      return {
+        success: false,
+        message,
+        error: { message },
       };
     }
   },
 
   /**
-   * Request password reset token / OTP
+   * Legacy verifyOtp helper (for backward compatibility)
+   */
+  async verifyOtp(payload: VerifyOtpPayload): Promise<AuthResponse | undefined> {
+    if (payload.challengeToken || payload.tempToken) {
+      return this.verifyMfaLogin({
+        challengeToken: (payload.challengeToken || payload.tempToken) as string,
+        code: (payload.code || payload.otp || "") as string,
+      });
+    }
+    return undefined;
+  },
+
+  /**
+   * Resend verification email
+   */
+  async resendEmail(email: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axiosInstance.post<ApiResponse<{ message: string }> | any>(
+        ROUTES.AUTH.RESEND_VERIFICATION,
+        { email: email.trim().toLowerCase() }
+      );
+
+      const resBody: any = response.data;
+      const message =
+        resBody?.data?.message ||
+        resBody?.message ||
+        "A fresh verification link has been sent.";
+
+      return { success: true, message };
+    } catch (err: any) {
+      console.error("[authApi.resendEmail] error:", err?.response?.data ?? err);
+      const message =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        "Failed to resend verification email.";
+      return { success: false, message };
+    }
+  },
+
+  /**
+   * Request password reset token via email
    */
   async forgotPassword(payload: ForgotPasswordPayload): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await axiosInstance.post<{ success: boolean; message: string }>(
+      const email = (payload.email || payload.emailOrPhone || "").trim().toLowerCase();
+      const response = await axiosInstance.post<ApiResponse<{ message: string }> | any>(
         ROUTES.AUTH.FORGOT_PASSWORD,
-        payload
+        { email }
       );
-      return response.data;
-    } catch {
+
+      const resBody: any = response.data;
+      const message =
+        resBody?.data?.message ||
+        resBody?.message ||
+        "If an account exists, password recovery instructions have been sent.";
+
+      return { success: true, message };
+    } catch (err: any) {
+      console.error("[authApi.forgotPassword] error:", err?.response?.data ?? err);
       return {
         success: true,
         message: "If an account exists, password recovery instructions have been sent.",
@@ -112,32 +221,45 @@ export const authApi = {
   },
 
   /**
-   * Reset password with token/otp
+   * Reset password with token
    */
   async resetPassword(payload: ResetPasswordPayload): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await axiosInstance.post<{ success: boolean; message: string }>(
+      const token = (payload.token || payload.tokenOrOtp || "").trim();
+      const response = await axiosInstance.post<ApiResponse<{ message: string }> | any>(
         ROUTES.AUTH.RESET_PASSWORD,
-        payload
+        {
+          token,
+          newPassword: payload.newPassword,
+        }
       );
-      return response.data;
-    } catch {
-      return {
-        success: true,
-        message: "Your password has been successfully reset. You can now login.",
-      };
+
+      const resBody: any = response.data;
+      const message =
+        resBody?.data?.message ||
+        resBody?.message ||
+        "Your password has been successfully reset. You can now login.";
+
+      return { success: true, message };
+    } catch (err: any) {
+      console.error("[authApi.resetPassword] error:", err?.response?.data ?? err);
+      throw err;
     }
   },
 
   /**
-   * Fetch currently authenticated user profile
+   * Fetch currently authenticated user identity (GET /auth/me)
    */
-  async getMe(): Promise<AuthUser | undefined> {
+  async getMe(): Promise<IdentityDTO | undefined> {
     try {
-      const response = await axiosInstance.get<AuthUser>(ROUTES.AUTH.RELOAD);
-      return response.data;
-    } catch {
-      // Ignored for offline/mock
+      const response = await axiosInstance.get<ApiResponse<IdentityDTO> | any>(ROUTES.AUTH.RELOAD);
+      const resBody: any = response.data;
+      const identity: IdentityDTO = resBody?.data ?? resBody;
+
+      return identity;
+    } catch (err: any) {
+      console.error("[authApi.getMe] error:", err?.response?.data ?? err);
+      throw err;
     }
   },
 
@@ -147,24 +269,35 @@ export const authApi = {
   async logout(): Promise<void> {
     try {
       await axiosInstance.post(ROUTES.AUTH.LOGOUT);
-    } catch {
-      // Ignored for offline/mock
+    } catch (err) {
+      console.warn("[authApi.logout] notice:", err);
     }
   },
 
   /**
    * Google OAuth login / registration
-   * Sends the Google ID token (from @react-oauth/google) to the backend for verification.
    */
-  async googleAuth(idToken: string): Promise<AuthResponse | undefined> {
+  async googleAuth(idToken: string): Promise<AuthResponse> {
     try {
-      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.GOOGLE, { idToken });
-      return response.data;
-    } catch(err: any) {
-      console.error('[authApi.googleAuth] error:', err?.response?.data ?? err);
+      const response = await axiosInstance.post<ApiResponse<any> | any>(ROUTES.AUTH.GOOGLE, { idToken });
+      const resBody: any = response.data;
+      const data = resBody?.data ?? resBody;
+      const accessToken = data?.accessToken || data?.AccessToken || "";
+      const user = data?.user || (data as AuthUser);
+
+      return {
+        user,
+        AccessToken: accessToken,
+        accessToken,
+        refreshToken: data?.refreshToken,
+        accessTokenExpiresIn: data?.accessTokenExpiresIn,
+      };
+    } catch (err: any) {
+      console.error("[authApi.googleAuth] error:", err?.response?.data ?? err);
       throw err;
     }
   },
 };
 
 export default authApi;
+

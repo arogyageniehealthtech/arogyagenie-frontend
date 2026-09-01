@@ -1,5 +1,5 @@
 // =============================================================================
-// ArogyaGenie Auth Types (Prisma-Aligned)
+// ArogyaGenie Auth Types (Prisma & Backend-Aligned)
 // =============================================================================
 
 export type AccountStatus =
@@ -27,24 +27,31 @@ export type FacilityType = 'HOSPITAL' | 'CLINIC' | 'PHARMACY' | 'LAB';
 
 export type AuthProviderType = 'GOOGLE';
 
-export type UserRole =
-  | 'PATIENT'
-  | 'DOCTOR'
-  | 'EMPLOYEE'
-  | 'LAB'
-  | 'PHARMACY'
-  | 'ADMIN'
-  | 'SYSTEM_ADMIN'
-  | 'DELIVERY_PARTNER';
+// Top-level account type for an AuthUser (from backend Prisma UserType)
 export type BackendUserType =
   | 'PATIENT'
   | 'DOCTOR'
   | 'EMPLOYEE'
-  | 'LAB'
-  | 'PHARMACY'
+  | 'DELIVERY_PARTNER'
+  | 'ORG_MEMBER'
+  | 'PLATFORM_ADMIN'
+  // Legacy aliases for backward compatibility with UI components
   | 'ADMIN'
   | 'SYSTEM_ADMIN'
-  | 'DELIVERY_PARTNER';
+  | 'PHARMACY'
+  | 'LAB';
+
+export type UserRole = BackendUserType;
+
+export type OrgRole =
+  | 'ORG_OWNER'
+  | 'ORG_ADMIN'
+  | 'DOCTOR'
+  | 'EMPLOYEE';
+
+export type PlatformAdminRole =
+  | 'SUPER_ADMIN'
+  | 'SUPPORT';
 
 export interface PatientProfile {
   id: string;
@@ -79,65 +86,85 @@ export interface EmployeeProfile {
 
 export interface DeliveryPartnerProfile {
   id: string;
+  firstName?: string;
+  lastName?: string;
   vehicleType?: string;
   status?: string;
+  verificationStatus?: VerificationStatus;
 }
 
-export interface OrganizationMembershipSummary {
+export interface AdminProfile {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  role?: PlatformAdminRole;
+}
+
+export interface UserMembershipDTO {
   organizationId: string;
-  organizationName?: string;
-  facilityId?: string;
-  facilityName?: string;
-  facilityType?: FacilityType;
+  organizationName: string;
+  facilityId: string | null;
+  status: string;
   role: string;
-  permissions?: string[];
+  joinedAt: string;
+}
+
+export type IdentityProfile =
+  | { type: 'PATIENT'; id: string; firstName: string; lastName: string }
+  | { type: 'DOCTOR'; id: string; firstName: string; lastName: string; verificationStatus: VerificationStatus }
+  | { type: 'DELIVERY_PARTNER'; id: string; firstName: string; lastName: string; verificationStatus: VerificationStatus }
+  | { type: 'EMPLOYEE'; id: string }
+  | { type: 'ADMIN'; id: string; firstName: string; lastName: string; role: PlatformAdminRole }
+  | { type: null };
+
+export interface IdentityDTO {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  phone: string | null;
+  status: AccountStatus;
+  userType: BackendUserType;
+  mfaEnabled: boolean;
+  profile: IdentityProfile;
+  memberships: UserMembershipDTO[];
+  activeOrganizationId: string | null;
+  activeOrgRole: OrgRole | null;
+}
+
+export interface PublicUser {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  mfaEnabled: boolean;
+  userType: BackendUserType;
 }
 
 export interface AuthUser {
   id: string;
-  name:string,
+  name?: string;
   email: string;
   phone?: string | null;
-  status: AccountStatus;
+  status?: AccountStatus;
+  emailVerified?: boolean;
   emailVerifiedAt?: string | null;
   phoneVerifiedAt?: string | null;
   mfaEnabled: boolean;
   userType: BackendUserType;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   profilePicture?: string;
+  profile?: IdentityProfile;
   patient?: PatientProfile | null;
   doctor?: DoctorProfile | null;
   employee?: EmployeeProfile | null;
   deliveryPartner?: DeliveryPartnerProfile | null;
-  memberships?: OrganizationMembershipSummary[];
+  adminProfile?: AdminProfile | null;
+  memberships?: UserMembershipDTO[];
+  activeOrganizationId?: string | null;
+  activeOrgRole?: OrgRole | null;
   createdAt?: string;
 }
 
-
-// export interface Response  {
-//  user: {
-//  id: string;
-//  email: string;
-//  phone?: string | null | undefined;
-//  status: AccountStatus;
-//  emailVerifiedAt?: string | null;
-//  phoneVerifiedAt?: string | null;
-//  mfaEnabled: boolean;
-//  userType: BackendUserType;
-//  firstName: string;
-//  lastName: string;
-//  profilePicture?: string;
-//  patient?: PatientProfile | null;
-//  doctor?: DoctorProfile | null;
-//  employee?: EmployeeProfile | null;
-//  deliveryPartner?: DeliveryPartnerProfile | null;
-//  memberships?: OrganizationMembershipSummary[];
-//  createdAt?: string;
-//  };
-//  refreshToken?: string | undefined;
-//  message?: string | undefined;
-// } 
 // -----------------------------------------------------------------------------
 // Auth Request & Response DTOs
 // -----------------------------------------------------------------------------
@@ -145,14 +172,14 @@ export interface AuthUser {
 export interface LoginCredentials {
   email: string;
   password?: string;
+  deviceId?: string;
   userType?: BackendUserType;
-  // rememberMe?: boolean;
 }
 
 export interface RegisterPayload {
   email: string;
   password?: string;
-  userType?: BackendUserType;
+  userType: BackendUserType;
 }
 
 export type OtpVerificationType =
@@ -162,54 +189,69 @@ export type OtpVerificationType =
   | 'MFA_LOGIN';
 
 export interface VerifyOtpPayload {
-  emailOrPhone: string;
-  otp: string;
-  type?: OtpVerificationType;
+  emailOrPhone?: string;
+  otp?: string;
+  code?: string;
+  challengeToken?: string;
   tempToken?: string;
+  type?: OtpVerificationType;
+}
+
+export interface MfaLoginPayload {
+  challengeToken: string;
+  code: string;
 }
 
 export interface ForgotPasswordPayload {
-  emailOrPhone: string;
+  email: string;
+  emailOrPhone?: string;
 }
 
 export interface ResetPasswordPayload {
-  emailOrPhone: string;
-  tokenOrOtp: string;
+  token: string;
   newPassword: string;
+  emailOrPhone?: string;
+  tokenOrOtp?: string;
 }
+
+export interface AuthSuccessData {
+  mfaRequired: false;
+  accessToken: string;
+  refreshToken?: string;
+  accessTokenExpiresIn?: string;
+  user: PublicUser;
+}
+
+export interface MfaChallengeData {
+  mfaRequired: true;
+  challengeToken: string;
+}
+
+export type LoginApiResponseData = AuthSuccessData | MfaChallengeData;
 
 export interface AuthResponse {
   [x: string]: any;
   user: AuthUser;
   AccessToken: string;
+  accessToken?: string;
+  refreshToken?: string;
+  accessTokenExpiresIn?: string;
+  mfaRequired?: boolean;
+  challengeToken?: string;
   requiresMfa?: boolean;
   mfaType?: 'TOTP' | 'SMS_OTP' | 'EMAIL_OTP';
   tempToken?: string;
   message?: string;
 }
 
-export interface MfaVerifyPayload {
-  tempToken: string;
-  code: string;
-  mfaType: 'TOTP' | 'SMS_OTP' | 'EMAIL_OTP';
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  meta?: Record<string, unknown>;
+  error?: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+  requestId?: string;
 }
-
-
-// export interface MfaRequiredResponse {
-//   requiresMfa: true;
-//   mfaToken: string;
-//   data?: {
-//     userId: string;
-//     email: string;
-//   };
-// }
-
-// export interface DirectLoginSuccess {
-//   requiresMfa: false;
-//   data: {
-//     user: AuthUser;
-//     token: string;
-//   };
-// }
-
-// export type LoginResult = DirectLoginSuccess | MfaRequiredResponse;

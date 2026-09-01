@@ -2,6 +2,9 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes.constants.ts";
 import { PageLoader } from "../components/ui/PageLoader.tsx";
+import { ProtectedRoute } from "./ProtectedRoute.tsx";
+import { RoleBasedRoute } from "./RoleBasedRoute.tsx";
+import { GuestRoute } from "./GuestRoute.tsx";
 
 // ================================LAYOUTS============================================================
 const PatientLayout = lazy(() => import("../layouts/PatientLayout.tsx"));
@@ -77,6 +80,7 @@ function withSuspense(element: React.ReactNode) {
 export const router = createBrowserRouter([
   // --- Guest-only ----------------------------------------------------
   {
+    element: <GuestRoute />,
     errorElement: <RouteErrorElement />,
     children: [
       { path: "/login", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
@@ -85,11 +89,17 @@ export const router = createBrowserRouter([
       { path: ROUTES.AUTH.FORGOT_PASSWORD, element: withSuspense(<ForgotPasswordPage />) },
       { path: ROUTES.AUTH.RESET_PASSWORD, element: withSuspense(<ResetPasswordPage />) },
       { path: `${ROUTES.AUTH.VERIFY_EMAIL}/:token`, element: withSuspense(<VerifyEmailPage />) },
+      { path: ROUTES.AUTH.VERIFY_EMAIL, element: withSuspense(<VerifyEmailPage />) },
     ],
   },
 
   // --- Patient Portal Routes ------------------------------------------
   {
+    element: (
+      <ProtectedRoute>
+        <RoleBasedRoute allowedRoles={["PATIENT"]} />
+      </ProtectedRoute>
+    ),
     errorElement: <RouteErrorElement />,
     children: [
       {
@@ -106,84 +116,101 @@ export const router = createBrowserRouter([
           { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
         ],
       },
+      {
+        path: "/video-call/:appointmentId",
+        element: withSuspense(<PatientVideoConsultationPage />),
+      },
     ],
-  },
-
-  // --- Patient Video Calling Route (Full-Screen Room) ------------------
-  {
-    path: "/video-call/:appointmentId",
-    element: withSuspense(<PatientVideoConsultationPage />),
   },
 
   // --- Doctor Portal Routes -------------------------------------------
   {
-    path: "/doctor-dashboard",
+    element: (
+      <ProtectedRoute>
+        <RoleBasedRoute allowedRoles={["DOCTOR"]} />
+      </ProtectedRoute>
+    ),
     errorElement: <RouteErrorElement />,
-    element: withSuspense(<DoctorDashboardPage />),
-  },
-  {
-    path: "/doctor",
-    errorElement: <RouteErrorElement />,
-    element: <DoctorLayout />,
     children: [
-      { index: true, element: <Navigate to={ROUTES.DOCTOR.DASHBOARD} replace /> },
-      { path: "dashboard", element: withSuspense(<DoctorDashboardPage />) },
-      { path: "appointments", element: withSuspense(<DoctorAppointmentsPage />) },
-      { path: "patients", element: withSuspense(<DoctorPatientsPage />) },
-      { path: "prescriptions", element: withSuspense(<DoctorPrescriptionsPage />) },
-      { path: "profile", element: withSuspense(<DoctorProfilePage />) },
-      { path: "schedule", element: withSuspense(<DoctorSchedulePage />) },
+      {
+        path: "/doctor-dashboard",
+        element: withSuspense(<DoctorDashboardPage />),
+      },
+      {
+        path: "/doctor",
+        element: <DoctorLayout />,
+        children: [
+          { index: true, element: <Navigate to={ROUTES.DOCTOR.DASHBOARD} replace /> },
+          { path: "dashboard", element: withSuspense(<DoctorDashboardPage />) },
+          { path: "appointments", element: withSuspense(<DoctorAppointmentsPage />) },
+          { path: "patients", element: withSuspense(<DoctorPatientsPage />) },
+          { path: "prescriptions", element: withSuspense(<DoctorPrescriptionsPage />) },
+          { path: "profile", element: withSuspense(<DoctorProfilePage />) },
+          { path: "schedule", element: withSuspense(<DoctorSchedulePage />) },
+        ],
+      },
+      {
+        path: "/doctor/video-call/:appointmentId",
+        element: withSuspense(<DoctorVideoConsultationPage />),
+      },
     ],
-  },
-
-  // --- Doctor Video Calling Route (Full-Screen Room) ------------------
-  {
-    path: "/doctor/video-call/:appointmentId",
-    errorElement: <RouteErrorElement />,
-    element: withSuspense(<DoctorVideoConsultationPage />),
   },
 
   // --- ADMIN PORTAL ROUTES --------------------------------------------
   {
     path: "/admin",
+    element: (
+      <ProtectedRoute>
+        <RoleBasedRoute allowedRoles={["PLATFORM_ADMIN", "SYSTEM_ADMIN", "ADMIN"]} />
+      </ProtectedRoute>
+    ),
     errorElement: <RouteErrorElement />,
     children: [
       { index: true, element: <Navigate to={ROUTES.ADMIN.DASHBOARD} replace /> },
-      { path: ROUTES.ADMIN.DASHBOARD, element: withSuspense(<AdminDashboardPage />) },
-      { path: ROUTES.ADMIN.PENDING_APPLICATIONS, element: withSuspense(<PendingApplicationPage />) },
-      { path: ROUTES.ADMIN.USERS, element: withSuspense(<UsersPage />) },
-      { path: ROUTES.ADMIN.PATIENTS, element: withSuspense(<PatientPage />) },
-      { path: ROUTES.ADMIN.DOCTORS, element: withSuspense(<DoctorsPage />) },
-      { path: ROUTES.ADMIN.DIAGNOSTIC_CENTERS, element: withSuspense(<DiagnosticCenterPage />) },
-      { path: ROUTES.ADMIN.PHARMACIES, element: withSuspense(<PharmaciesPage />) },
-      { path: ROUTES.ADMIN.APPOINTMENTS, element: withSuspense(<AdminAppointmentsPage />) },
-      { path: ROUTES.ADMIN.SETTINGS, element: withSuspense(<SettingsPage />) },
-      { path: ROUTES.ADMIN.AI_MONITORING, element: withSuspense(<AiMonitoringPage />) },
-      { path: ROUTES.ADMIN.HEALTH_REPORTS, element: withSuspense(<HealthReportsPage />) },
-      { path: ROUTES.ADMIN.NOTIFICATIONS, element: withSuspense(<NotificationsPage />) },
+      { path: "dashboard", element: withSuspense(<AdminDashboardPage />) },
+      { path: "pending-applications", element: withSuspense(<PendingApplicationPage />) },
+      { path: "users", element: withSuspense(<UsersPage />) },
+      { path: "patients", element: withSuspense(<PatientPage />) },
+      { path: "doctors", element: withSuspense(<DoctorsPage />) },
+      { path: "diagnostic-centers", element: withSuspense(<DiagnosticCenterPage />) },
+      { path: "pharmacies", element: withSuspense(<PharmaciesPage />) },
+      { path: "appointments", element: withSuspense(<AdminAppointmentsPage />) },
+      { path: "settings", element: withSuspense(<SettingsPage />) },
+      { path: "ai-monitoring", element: withSuspense(<AiMonitoringPage />) },
+      { path: "health-reports", element: withSuspense(<HealthReportsPage />) },
+      { path: "notifications", element: withSuspense(<NotificationsPage />) },
     ],
   },
 
   // --- PARTNER / PROVIDER PORTAL ROUTES --------------------------------
   {
     path: "/partner",
+    element: (
+      <ProtectedRoute>
+        <RoleBasedRoute allowedRoles={["ORG_MEMBER", "EMPLOYEE", "DELIVERY_PARTNER", "PHARMACY", "LAB"]} />
+      </ProtectedRoute>
+    ),
     errorElement: <RouteErrorElement />,
-    element: <PartnerLayout />,
     children: [
-      { index: true, element: <Navigate to={ROUTES.PARTNER.DASHBOARD} replace /> },
-      { path: ROUTES.PARTNER.DASHBOARD, element: withSuspense(<PartnerDashboardPage />) },
-      { path: ROUTES.PARTNER.REQUESTS, element: withSuspense(<PartnerRequestsPage />) },
-      { path: ROUTES.PARTNER.ORDERS, element: withSuspense(<PharmacyOrdersPage />) },
-      { path: ROUTES.PARTNER.INVENTORY, element: withSuspense(<PharmacyInventoryPage />) },
-      { path: ROUTES.PARTNER.TEST_BOOKINGS, element: withSuspense(<LabBookingsPage />) },
-      { path: ROUTES.PARTNER.LAB_REPORTS, element: withSuspense(<LabReportsPage />) },
-      { path: ROUTES.PARTNER.APPOINTMENTS, element: withSuspense(<HospitalAppointmentsPage />) },
-      { path: ROUTES.PARTNER.CHECK_INS, element: withSuspense(<HospitalCheckInsPage />) },
-      { path: ROUTES.PARTNER.PATIENTS, element: withSuspense(<PartnerPatientsPage />) },
-      { path: ROUTES.PARTNER.SERVICES, element: withSuspense(<PartnerServicesPage />) },
-      { path: ROUTES.PARTNER.ANALYTICS, element: withSuspense(<PartnerAnalyticsPage />) },
-      { path: ROUTES.PARTNER.NOTIFICATIONS, element: withSuspense(<PartnerNotificationsPage />) },
-      { path: ROUTES.PARTNER.SETTINGS, element: withSuspense(<PartnerSettingsPage />) },
+      {
+        element: <PartnerLayout />,
+        children: [
+          { index: true, element: <Navigate to={ROUTES.PARTNER.DASHBOARD} replace /> },
+          { path: "dashboard", element: withSuspense(<PartnerDashboardPage />) },
+          { path: "requests", element: withSuspense(<PartnerRequestsPage />) },
+          { path: "orders", element: withSuspense(<PharmacyOrdersPage />) },
+          { path: "inventory", element: withSuspense(<PharmacyInventoryPage />) },
+          { path: "test-bookings", element: withSuspense(<LabBookingsPage />) },
+          { path: "lab-reports", element: withSuspense(<LabReportsPage />) },
+          { path: "appointments", element: withSuspense(<HospitalAppointmentsPage />) },
+          { path: "check-ins", element: withSuspense(<HospitalCheckInsPage />) },
+          { path: "patients", element: withSuspense(<PartnerPatientsPage />) },
+          { path: "services", element: withSuspense(<PartnerServicesPage />) },
+          { path: "analytics", element: withSuspense(<PartnerAnalyticsPage />) },
+          { path: "notifications", element: withSuspense(<PartnerNotificationsPage />) },
+          { path: "settings", element: withSuspense(<PartnerSettingsPage />) },
+        ],
+      },
     ],
   },
 
