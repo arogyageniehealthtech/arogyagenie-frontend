@@ -1,10 +1,11 @@
 
+import { ROUTES } from '@/constants/routes.constants';
 import axiosClient from '../../../lib/axios';
 import type { Doctor } from '../types/doctor';
 
 export interface DoctorSearchParams {
-  query?: string;
-  specialty?: string | null;
+  search?: string;
+  specializationId?: string | null;
   radius?: number;
   location?: {
     lat?: number;
@@ -24,7 +25,8 @@ export interface AppointmentPayload {
 export const doctorApi = {
   // Get list of doctors with optional filters
   getDoctors: async (params: DoctorSearchParams): Promise<Doctor[]> => {
-    const response = await axiosClient.get('/doctors', { params });
+    console.log(params)
+    const response = await axiosClient.get(ROUTES.PATIENT.DOCTOR,{params});
     return response.data;
   },
 

@@ -1,4 +1,4 @@
-import  { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF, CircleF, InfoWindowF } from '@react-google-maps/api';
 
 export interface MapLocation {
@@ -9,14 +9,15 @@ export interface MapLocation {
   specialty?: string;
   category: 'doctor' | 'clinic' | 'lab' | 'hospital';
 }
+
 interface MapContainerProps {
- locations: MapLocation[];
+  locations: MapLocation[];
   radiusKm: number;
   centerCoordinates?: { lat: number; lng: number };
 }
 
 const containerStyle = { width: '100%', height: '100%' };
-const DEFAULT_CENTER = { lat: 22.7230, lng: 88.3780 };
+const FALLBACK_CENTER = { lat: 22.5726, lng: 88.3639 }; // Fallback only if geolocation fails
 
 const DOCTOR_ICON = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
   <svg width="44" height="52" viewBox="0 0 44 52" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -54,8 +55,27 @@ export default function MapContainer({ locations, radiusKm, centerCoordinates }:
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [isUserMarkerOpen, setIsUserMarkerOpen] = useState(false);
+  const [browserCoords, setBrowserCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  const currentCenter = centerCoordinates || DEFAULT_CENTER;
+  // Automatically request browser GPS coordinates on mount if no centerCoordinates prop is supplied yet
+  useEffect(() => {
+    if (!centerCoordinates && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setBrowserCoords({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.warn("Browser geolocation denied or unavailable:", error.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+  }, [centerCoordinates]);
+
+  const currentCenter = centerCoordinates || browserCoords || FALLBACK_CENTER;
 
   const onLoad = useCallback(function callback(mapInstance: google.maps.Map) { 
     setMap(mapInstance); 
@@ -67,7 +87,7 @@ export default function MapContainer({ locations, radiusKm, centerCoordinates }:
 
   // Force map to re-center immediately when coordinates or radius change
   useEffect(() => {
-    if (map) {
+    if (map && currentCenter) {
       map.setCenter(currentCenter);
       map.panTo(currentCenter);
 
@@ -103,8 +123,8 @@ export default function MapContainer({ locations, radiusKm, centerCoordinates }:
         options={{
           mapTypeControl: false, 
           streetViewControl: false, 
-          fullscreenControl: false, // Removed fullscreen button
-          zoomControl: false,       // Removed zoom controls (+ / - buttons)
+          fullscreenControl: false, 
+          zoomControl: false, 
           styles: MAP_STYLES
         }}
       >

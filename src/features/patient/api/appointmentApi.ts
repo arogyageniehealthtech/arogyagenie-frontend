@@ -1,12 +1,24 @@
 // src/api/appointmentApi.ts
 import axiosClient from '../../../lib/axios';
 import type { Appointment, AppointmentStatus } from '../types/appointment.type';
+import { ROUTES } from '@/constants/routes.constants';
+
+export interface CreateAppointmentPayload {
+  doctorId: string;
+  facilityId?: string;
+  type: 'IN_PERSON' | 'VIDEO';
+  scheduledStart: string;
+  scheduledEnd: string;
+}
 
 export interface AppointmentListParams {
-  status?: AppointmentStatus | 'all';
-  query?: string;
   page?: number;
   limit?: number;
+  status?: string;
+  type?: string;
+  from?: string;
+  to?: string;
+  query?: string;
 }
 
 export interface AppointmentListResponse {
@@ -20,14 +32,20 @@ export interface AppointmentListResponse {
 }
 
 export const appointmentApi = {
-  // Get list of the current user's appointments with optional filters
+  // [POST] Create an appointment
+  createAppointment: async (payload: CreateAppointmentPayload): Promise<{ data: Appointment }> => {
+    const response = await axiosClient.post<{ data: Appointment }>(ROUTES.APPOINTMENT.CREATE_APPOINTMENT, payload);
+    return response.data;
+  },
+
+  // [GET] List own appointments with query filters
   getAppointments: async (params: AppointmentListParams): Promise<AppointmentListResponse> => {
-    const response = await axiosClient.get<AppointmentListResponse>('/appointments', { params });
+    const response = await axiosClient.get<AppointmentListResponse>(ROUTES.APPOINTMENT.ALL_APPOINTMENT, { params });
     return response.data;
   },
 
   cancelAppointment: async (id: string): Promise<{ success: boolean }> => {
-    const response = await axiosClient.post<{ success: boolean }>(`/appointments/${id}/cancel`);
+    const response = await axiosClient.post<{ success: boolean }>(ROUTES.APPOINTMENT.CANCEL_APPOINTMMENT(id));
     return response.data;
   },
 
@@ -36,7 +54,7 @@ export const appointmentApi = {
     payload: { date: string; time: string }
   ): Promise<{ success: boolean }> => {
     const response = await axiosClient.post<{ success: boolean }>(
-      `/appointments/${id}/reschedule`,
+      ROUTES.APPOINTMENT.RESCHEDULE_APPOINTMENT(id),
       payload
     );
     return response.data;

@@ -24,9 +24,12 @@ const AppointmentsPage = lazy(() => import("../features/patient/pages/Appointmen
 const LabReportsPage = lazy(() => import("../features/patient/pages/LabReportsPage.tsx"));
 const DoctorDiscoveryPage = lazy(() => import("../features/patient/pages/DoctorDiscoveryPage.tsx"));
 const PharmacyModule = lazy(() => import("../features/patient/pages/PharmacyModule.tsx"));
-// const MedicineOderPage = lazy(() => import("../features/patient/pages/MedicineOderPage.tsx"));
+const MedicineOderPage = lazy(() => import("../features/patient/pages/MedicineOderPage.tsx"));
 const DiagnosticDiscoveryPage = lazy(() => import("../features/patient/pages/DiagnosticDiscoveryPage.tsx"));
 const HospitalDiscoveryPage = lazy(() => import("../features/patient/pages/HospitalDiscoveryPage.tsx"));
+const CheckoutPage = lazy(() => import("../features/patient/pages/CheckoutPage.tsx"));
+const PharmacySelectionPage = lazy(() => import("../features/patient/pages/PharmacySelectionPage.tsx"));
+
 // =====================================ADMIN===========================================================
 const AdminDashboardPage = lazy(() => import("../features/admin/pages/AdminDashboardPage.tsx"));
 const PendingApplicationPage = lazy(() => import("../features/admin/pages/PendingApplicationPage.tsx"));
@@ -106,7 +109,9 @@ export const router = createBrowserRouter([
               { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage />) },
               { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage />) },
               { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
-              // { path: ROUTES.PATIENT.MEDICINE_ORDERS, element: withSuspense(<MedicineOderPage />) },
+              { path: ROUTES.PATIENT.MEDICINE_ORDERS, element: withSuspense(<MedicineOderPage />) },
+              { path: ROUTES.PATIENT.PHARMACY_SELECT, element: withSuspense(<PharmacySelectionPage />) },
+              { path: ROUTES.PATIENT.CHECKOUT, element: withSuspense(<CheckoutPage />) },
               { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
             ],
           },

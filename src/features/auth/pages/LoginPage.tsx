@@ -120,7 +120,7 @@ export function LoginPage() {
       }
     >
       {/* Quick Role Selector */}
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <label className="text-xs font-semibold text-slate-300 block mb-2">
           Select Portal Role:
         </label>
@@ -145,7 +145,7 @@ export function LoginPage() {
             );
           })}
         </div>
-      </div>
+      </div> */}
 
       {/* Error Alert */}
       {(error || validationError) && (
@@ -235,8 +235,8 @@ export function LoginPage() {
             </span>
           ) : (
             <>
-              <LogIn className="h-4 w-4" />
-              <span>Sign In as {ROLE_OPTIONS.find((r) => r.userType === selectedRole)?.label}</span>
+              {/* <LogIn className="h-4 w-4" /> */}
+              <span>Sign In </span>
             </>
           )}
         </button>

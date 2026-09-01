@@ -36,3 +36,5 @@ export const hospitalApi = {
     return axiosClient.post('/hospitals/book-bed', payload);
   }
 };
+
+// organizations/{{organizationId}}/hospitals

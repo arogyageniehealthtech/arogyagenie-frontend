@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { User, Phone, FileText, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Phone, FileText, Save, Edit2, X, Loader2 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface ProfileFormData {
   firstName: string;
@@ -20,71 +21,146 @@ interface ProfileFormData {
 }
 
 export default function ProfilePage() {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  
   const [formData, setFormData] = useState<ProfileFormData>({
-    firstName: 'RAJAT',
-    lastName: 'Mondal',
-    dob: '2026-08-11',
-    age: '28',
-    gender: '',
-    phone: '+9174788971622',
-    emergencyContact: '',
-    city: '',
-    state: '',
-    address: '',
-    bloodGroup: '',
-    allergies: '',
-    existingConditions: '',
-    currentMedications: '',
-    previousSurgeries: ''
+    firstName: '', lastName: '', dob: '', age: '', gender: '',
+    phone: '', emergencyContact: '', city: '', state: '', address: '',
+    bloodGroup: '', allergies: '', existingConditions: '', currentMedications: '', previousSurgeries: ''
   });
+
+  // Fetch Profile Data on Mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/profile'); // Replace with your GET endpoint
+        if (!response.ok) throw new Error('Failed to fetch profile data');
+        
+        const data = await response.json();
+        setFormData(data);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'An error occurred while loading.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+  // Save Profile Data
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert('Profile saved successfully!');
+    setIsSaving(true);
+
+    const toastId = toast.loading('Saving profile...');
+
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error('Failed to update profile');
+
+      setIsEditing(false);
+      toast.success('Profile saved successfully!', { id: toastId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save changes.', { id: toastId });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-transparent">
+        <Loader2 className="w-8 h-8 text-[#5B21B6] animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-5 px-3 sm:px-6 py-6 font-sans bg-[#F8FAFC] min-h-screen text-slate-900">
+    <div className="max-w-4xl mx-auto space-y-5 px-3 sm:px-6 py-6 font-sans bg-transparent min-h-screen text-slate-900">
       
-      {/* Page Title & Subtitle */}
-      {/* <div>
-        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">My Profile</h1>
-        <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Manage your personal details, contact preferences, and medical background.</p>
-      </div> */}
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          style: {
+            borderRadius: '16px',
+            background: '#333',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: '500'
+          },
+        }} 
+      />
 
-      <form onSubmit={handleSave} className="space-y-5">
+      <form onSubmit={handleSave} className="space-y-6">
         
-        {/* Top Profile Card */}
-        {/* <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4"> */}
-          {/* <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#5B21B6] text-white flex items-center justify-center font-black text-lg shadow-md shadow-purple-900/20">
-              RM
-            </div> */}
-            {/* <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-black text-base sm:text-lg text-slate-900">RAJAT Mondal</h2>
-                <span className="bg-purple-100 text-purple-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-purple-200">
-                  👑 Premium Member
-                </span>
-              </div>
-              <p className="text-xs font-medium text-slate-500 mt-0.5">userrajat@gmail.com</p>
+        {/* Top Header & Smooth Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 sm:gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">My Profile</h1>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">Manage your personal details and medical background.</p>
+          </div>
+
+          {/* Action Buttons Animation Wrapper */}
+          <div className="relative h-[42px] w-full sm:w-[240px] flex-shrink-0">
+            
+            {/* Edit Button */}
+            <div
+              className={`absolute top-0 right-0 w-full sm:w-auto transition-all duration-400 ease-[cubic-bezier(0.23,1,0.32,1)] sm:origin-right origin-center ${
+                isEditing ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
+              }`}
+            >
+              <button 
+                type="button"
+                onClick={(e) => { e.preventDefault(); setIsEditing(true); }}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-slate-200 hover:border-purple-300 hover:bg-purple-50 text-slate-700 hover:text-purple-700 rounded-2xl font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0"
+              >
+                <Edit2 className="w-4 h-4" /> Edit Profile
+              </button>
             </div>
-          </div> */}
 
-          {/* <button 
-            type="submit"
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#5B21B6] hover:bg-[#4c1d95] text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md shadow-purple-900/20 transition-all active:scale-95"
-          >
-            <Save className="w-4 h-4" /> Save Profile
-          </button>
-        </div> */}
-
+            {/* Cancel & Save Buttons */}
+            <div
+              className={`absolute top-0 right-0 w-full sm:w-auto flex items-center gap-2 transition-all duration-400 ease-[cubic-bezier(0.23,1,0.32,1)] sm:origin-right origin-center ${
+                !isEditing ? 'opacity-0 scale-90 pointer-events-none' : 'opacity-100 scale-100'
+              }`}
+            >
+              <button 
+                type="button"
+                onClick={() => setIsEditing(false)}
+                disabled={isSaving}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-2xl font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 shrink-0 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit"
+                disabled={isSaving}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-[#5B21B6] hover:bg-[#4c1d95] text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md shadow-purple-900/20 transition-all active:scale-95 shrink-0 disabled:opacity-70"
+              >
+                {isSaving ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Saving</>
+                ) : (
+                  <><Save className="w-4 h-4" /> Save</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+        
         {/* Section 1: Personal Information */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="bg-transparent p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
             <div className="p-2 bg-purple-50 text-[#5B21B6] rounded-xl border border-purple-100">
               <User className="w-4 h-4" />
@@ -103,7 +179,8 @@ export default function ProfilePage() {
                 name="firstName" 
                 value={formData.firstName} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -114,7 +191,8 @@ export default function ProfilePage() {
                 name="lastName" 
                 value={formData.lastName} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -125,7 +203,8 @@ export default function ProfilePage() {
                 name="dob" 
                 value={formData.dob} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -137,7 +216,8 @@ export default function ProfilePage() {
                 placeholder="e.g. 28"
                 value={formData.age} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -149,14 +229,15 @@ export default function ProfilePage() {
                 placeholder="e.g. Male, Female, Other"
                 value={formData.gender} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: Contact & Address Details */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="bg-transparent p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
             <div className="p-2 bg-purple-50 text-[#5B21B6] rounded-xl border border-purple-100">
               <Phone className="w-4 h-4" />
@@ -175,7 +256,8 @@ export default function ProfilePage() {
                 name="phone" 
                 value={formData.phone} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -187,7 +269,8 @@ export default function ProfilePage() {
                 placeholder="e.g. Spouse: +91 98765 43211"
                 value={formData.emergencyContact} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -199,7 +282,8 @@ export default function ProfilePage() {
                 placeholder="e.g. New Delhi"
                 value={formData.city} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -211,7 +295,8 @@ export default function ProfilePage() {
                 placeholder="e.g. Delhi"
                 value={formData.state} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -223,14 +308,15 @@ export default function ProfilePage() {
                 placeholder="Full home address..."
                 value={formData.address} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
           </div>
         </div>
 
         {/* Section 3: Medical Background & History */}
-        <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="bg-transparent p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 bg-emerald-50/50 p-3 rounded-2xl border">
             <div className="p-2 bg-emerald-600 text-white rounded-xl shadow-xs">
               <FileText className="w-4 h-4" />
@@ -250,7 +336,8 @@ export default function ProfilePage() {
                 placeholder="e.g. O+, A-, AB+"
                 value={formData.bloodGroup} 
                 onChange={handleChange}
-                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full px-3.5 py-2.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -262,7 +349,8 @@ export default function ProfilePage() {
                 placeholder="List any known drug, food, or environmental allergies..."
                 value={formData.allergies} 
                 onChange={handleChange}
-                className="w-full p-3.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full p-3.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -274,7 +362,8 @@ export default function ProfilePage() {
                 placeholder="List chronic or existing conditions (e.g. Asthma, Hypertension, Type 2 Diabetes)..."
                 value={formData.existingConditions} 
                 onChange={handleChange}
-                className="w-full p-3.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full p-3.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -286,7 +375,8 @@ export default function ProfilePage() {
                 placeholder="List prescription or over-the-counter medications..."
                 value={formData.currentMedications} 
                 onChange={handleChange}
-                className="w-full p-3.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full p-3.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -298,21 +388,11 @@ export default function ProfilePage() {
                 placeholder="List past major illnesses, hospitalizations, or surgeries..."
                 value={formData.previousSurgeries} 
                 onChange={handleChange}
-                className="w-full p-3.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all"
+                disabled={!isEditing || isSaving}
+                className="w-full p-3.5 bg-slate-50/60 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
           </div>
-        </div>
-
-        {/* Bottom Save Bar */}
-        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] font-semibold text-slate-500">Ensure all medical details are accurate for AI clinical insights.</p>
-          <button 
-            type="submit"
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#5B21B6] hover:bg-[#4c1d95] text-white rounded-2xl font-bold text-xs sm:text-sm shadow-md shadow-purple-900/20 transition-all active:scale-95 shrink-0"
-          >
-            <Save className="w-4 h-4" /> Save Changes
-          </button>
         </div>
 
       </form>

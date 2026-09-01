@@ -1,4 +1,6 @@
-// import type { Doctor } from '../types/doctor';
+// // import type { Doctor } from '../types/doctor';
+
+import type { Doctor } from "../types/doctor";
 
 export const DOCTOR_SPECIALTIES = [
   "General Physician", 

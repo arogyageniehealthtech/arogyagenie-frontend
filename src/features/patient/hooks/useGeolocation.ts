@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import { useAppDispatch } from '../../../store/hooks';
+import { setCustomLocation } from '@/store/slices/locationSlice';
 
 interface Coordinates {
   lat: number;
@@ -9,6 +11,7 @@ export function useGeolocation(initialCoords: Coordinates) {
   const [coords, setCoords] = useState<Coordinates>(initialCoords);
   const [isLocating, setIsLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
 
   const fetchLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -21,10 +24,12 @@ export function useGeolocation(initialCoords: Coordinates) {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setCoords({
+        const newCoords = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+        };
+        setCoords(newCoords);
+        dispatch(setCustomLocation({ ...newCoords, address: "Current Live Location" }));
         setIsLocating(false);
       },
       (err) => {
@@ -33,12 +38,11 @@ export function useGeolocation(initialCoords: Coordinates) {
         setIsLocating(false);
       },
       { 
-        enableHighAccuracy: true, // Forces device GPS/Wi-Fi triangulation instead of IP lookup
-        // timeout: 15000,           // Allows up to 15 seconds to fetch a precise lock
-        maximumAge: 0             // Disables cached positions to ensure fresh data
+        enableHighAccuracy: true,
+        maximumAge: 0
       }
     );
-  }, []);
+  }, [dispatch]);
 
   return { coords, isLocating, error, fetchLocation };
 }
