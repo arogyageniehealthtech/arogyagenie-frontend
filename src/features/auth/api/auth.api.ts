@@ -16,12 +16,18 @@ export const authApi = {
    * Login with email/phone & password
    */
   async login(credentials: LoginCredentials): Promise<AuthResponse | undefined> {
+    // Strip userType — backend loginSchema only accepts: email, password, deviceId
+    const { email, password, deviceId } = credentials as any;
+    const payload: Record<string, unknown> = { email, password };
+    if (deviceId) payload.deviceId = deviceId;
+
     try {
-      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.LOGIN, credentials);
+      const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.LOGIN, payload);
       return response.data;
-    } catch(err : any) {
-      // Ignored for offline/mock
-      console.log(err)
+    } catch(err: any) {
+      // Re-throw so Redux thunk & UI can display the real server error
+      console.error('[authApi.login] error:', err?.response?.data ?? err);
+      throw err;
     }
   },
 

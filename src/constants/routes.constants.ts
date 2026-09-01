@@ -4,15 +4,14 @@ export const ROUTES = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
-    VERIFY_OTP: '/auth/verify-otp',
+    VERIFY_OTP: '/auth/login/mfa',
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
-    GOOGLE: '/auth/google',
+    GOOGLE: '/auth/oauth/google',
     VERIFY_EMAIL: '/auth/verify-email',
     RELOAD:'/auth/me',
     LOGOUT: '/auth/logout',
    RESEND_VERIFICATION: '/auth/resend-verification'
-    // GOOGLE: '/auth/google',
   },
 
   PATIENT: {
