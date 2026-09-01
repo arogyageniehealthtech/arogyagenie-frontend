@@ -105,11 +105,14 @@ export default function RegisterPage() {
       );
     } catch (err: any) {
       console.error("Registration error:", err);
-      const msg =
+      let msg =
         err?.response?.data?.error?.message ||
         err?.response?.data?.message ||
         err?.message ||
         "Registration failed. Please try again.";
+      if (err.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+        msg = "The server took too long to respond (timeout). If the backend is waking up from idle or processing, please wait a moment and try again.";
+      }
       setValidationError(msg);
     }
   };

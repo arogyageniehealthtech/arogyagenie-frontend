@@ -4,7 +4,7 @@ import type { InternalAxiosRequestConfig, AxiosInstance, AxiosError } from "axio
 // Create central Axios instance with credentials enabled for cookies
 export const axiosInstance: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "https://arogyagenie-backend-1.onrender.com/api/v1/",
-  timeout: 15000,
+  timeout: 60000, // 60s to accommodate Render cold-starts and queue processing
   withCredentials: true, // <-- CRITICAL: Allows cookies to be sent and received cross-origin
   headers: {
     "Content-Type": "application/json",
