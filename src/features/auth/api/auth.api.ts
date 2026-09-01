@@ -154,13 +154,15 @@ export const authApi = {
 
   /**
    * Google OAuth login / registration
+   * Sends the Google ID token (from @react-oauth/google) to the backend for verification.
    */
   async googleAuth(idToken: string): Promise<AuthResponse | undefined> {
     try {
       const response = await axiosInstance.post<AuthResponse>(ROUTES.AUTH.GOOGLE, { idToken });
       return response.data;
-    } catch {
-      // Ignored for offline/mock
+    } catch(err: any) {
+      console.error('[authApi.googleAuth] error:', err?.response?.data ?? err);
+      throw err;
     }
   },
 };

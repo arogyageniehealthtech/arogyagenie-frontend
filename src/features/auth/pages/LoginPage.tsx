@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, LogIn, AlertCircle, ArrowRight, UserCheck, Stethoscope, Shield, Pill, Building2 } from "lucide-react";
 import { AuthCard } from "../components/AuthCard";
-import { GoogleLoginButton } from "../components/GoogleLoginButton";
+import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../hooks/useAuth";
+import { authApi } from "../api/auth.api";
 import { ROUTES } from "@/constants/routes.constants";
 import type { BackendUserType } from "@/types/auth.types";
 
@@ -54,25 +55,50 @@ export function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+  // Real Google OAuth flow — sends the Google id_token to the backend
+  const handleGoogleCredential = async (idToken: string) => {
     try {
+      setIsGoogleLoading(true);
       clearError();
       setValidationError(null);
-      const googleEmail = "google.user@gmail.com";
-      setEmailOrPhone(googleEmail);
-      
-      await login({
-        email : googleEmail,
-        password: "GoogleAuthPass123",
-        userType: selectedRole,
-        // rememberMe: true,
-      });
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setValidationError(err.message);
+
+      const response = await authApi.googleAuth(idToken);
+      if (!response) {
+        setValidationError("No response from server. Please try again.");
+        return;
       }
+
+      // Extract token from various possible response shapes
+      const accessToken =
+        (response as any).accessToken ||
+        (response as any).AccessToken ||
+        (response as any).data?.accessToken;
+      const user = (response as any).user || (response as any).data?.user;
+
+      if (accessToken) {
+        localStorage.setItem("AccessToken", accessToken);
+      }
+
+      const { getRoleDashboardPath } = await import("../hooks/useAuth");
+      const path = getRoleDashboardPath(user?.userType ?? "PATIENT");
+      window.location.href = path;
+    } catch (err: any) {
+      const serverMsg = err?.response?.data?.message ?? err?.message;
+      if (err?.response?.status === 409) {
+        setValidationError(
+          "An account with this Google email already exists. Please sign in with your password instead."
+        );
+      } else {
+        setValidationError(serverMsg ?? "Google sign-in failed. Please try again.");
+      }
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
+
+  // useGoogleLogin opens the Google account picker popup — kept for potential future use.
 
   const handleQuickDemoFill = (userType: BackendUserType) => {
     setSelectedRole(userType);
@@ -249,11 +275,39 @@ export function LoginPage() {
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
-      {/* Google Sign In */}
-      <GoogleLoginButton
-        onClick={handleGoogleLogin}
-        isLoading={isLoading}
-      />
+      {/* Google Sign In — renders Google's native button */}
+      {/* Note: Google OAuth only creates PATIENT accounts. Doctors/Admins must use email login. */}
+      <div className="flex justify-center">
+        {isGoogleLoading ? (
+          <div className="flex items-center gap-2 text-sm text-slate-400">
+            <span className="h-4 w-4 border-2 border-slate-400/30 border-t-slate-400 rounded-full animate-spin" />
+            Connecting to Google...
+          </div>
+        ) : (
+          <GoogleLogin
+            onSuccess={(credentialResponse) => {
+              if (credentialResponse.credential) {
+                handleGoogleCredential(credentialResponse.credential);
+              } else {
+                setValidationError("Google sign-in failed: no credential received.");
+              }
+            }}
+            onError={() => {
+              setValidationError("Google sign-in failed. Please try again.");
+            }}
+            theme="filled_black"
+            shape="pill"
+            text="continue_with"
+            size="large"
+            width="100%"
+          />
+        )}
+      </div>
+      {selectedRole !== "PATIENT" && (
+        <p className="text-center text-xs text-slate-500 mt-2">
+          ⚠️ Google sign-in creates <strong>Patient</strong> accounts only. Use email login for {ROLE_OPTIONS.find(r => r.userType === selectedRole)?.label} access.
+        </p>
+      )}
     </AuthCard>
   );
 }
