@@ -100,11 +100,16 @@ export default function RegisterPage() {
       console.error("Registration error:", err);
       let msg =
         err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Registration failed. Please try again.";
-      if (err.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
-        msg = "The server took too long to respond (timeout). If the backend is waking up from idle or processing, please wait a moment and try again.";
+        err?.response?.data?.message;
+
+      if (!msg) {
+        if (err.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+          msg = "The server took too long to respond (timeout). The backend may be waking up from idle on Render. Please wait a moment and try again.";
+        } else if (err.message === "Network Error" || err.code === "ERR_NETWORK") {
+          msg = "Unable to connect to the backend server. Please check your internet connection or backend service status.";
+        } else {
+          msg = err?.message || "Registration failed. Please try again.";
+        }
       }
       setValidationError(msg);
     }

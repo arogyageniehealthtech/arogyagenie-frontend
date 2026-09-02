@@ -63,11 +63,19 @@ export function LoginPage() {
         userType: selectedRole,
       });
     } catch (err: any) {
-      const msg =
+      let msg =
         err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Invalid email or password.";
+        err?.response?.data?.message;
+
+      if (!msg) {
+        if (err.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+          msg = "The server took too long to respond (timeout). The backend may be waking up from idle on Render. Please wait a moment and try again.";
+        } else if (err.message === "Network Error" || err.code === "ERR_NETWORK") {
+          msg = "Unable to connect to the backend server. Please check your connection or backend service status.";
+        } else {
+          msg = err?.message || "Invalid email or password.";
+        }
+      }
       setValidationError(msg);
     }
   };
@@ -391,7 +399,7 @@ export function LoginPage() {
                 shape="pill"
                 text="continue_with"
                 size="medium"
-                width="100%"
+                width="320"
               />
             )}
           </div>
