@@ -6,8 +6,24 @@ import { HealthAssistantChat } from "./HealthAssistantChat";
 export function FloatingHealthAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [currentPath, setCurrentPath] = useState(() => (typeof window !== "undefined" ? window.location.pathname : ""));
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
+
+  // Track location changes to hide chatbot on auth pages
+  useEffect(() => {
+    const checkPath = () => {
+      if (typeof window !== "undefined" && window.location.pathname !== currentPath) {
+        setCurrentPath(window.location.pathname);
+      }
+    };
+    window.addEventListener("popstate", checkPath);
+    const interval = setInterval(checkPath, 200);
+    return () => {
+      window.removeEventListener("popstate", checkPath);
+      clearInterval(interval);
+    };
+  }, [currentPath]);
 
   // Close on Escape key press, and open on custom trigger event
   useEffect(() => {
@@ -26,6 +42,18 @@ export function FloatingHealthAssistant() {
       window.removeEventListener("open-ai-assistant", handleOpen);
     };
   }, [isOpen]);
+
+  const isAuthPage =
+    currentPath.startsWith("/login") ||
+    currentPath.startsWith("/register") ||
+    currentPath.startsWith("/forgot-password") ||
+    currentPath.startsWith("/reset-password") ||
+    currentPath.startsWith("/verify-email") ||
+    currentPath.startsWith("/auth");
+
+  if (isAuthPage) {
+    return null;
+  }
 
   return (
     <>
