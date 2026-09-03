@@ -7,7 +7,16 @@ const rawBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   "https://arogyagenie-backend-1.onrender.com/api/v1";
 
-export const API_BASE_URL = rawBaseUrl.trim().replace(/\/+$/, "");
+let cleanedBaseUrl = rawBaseUrl.trim().replace(/\/+$/, "");
+if (!cleanedBaseUrl.endsWith("/api/v1")) {
+  if (cleanedBaseUrl.endsWith("/api")) {
+    cleanedBaseUrl = `${cleanedBaseUrl}/v1`;
+  } else {
+    cleanedBaseUrl = `${cleanedBaseUrl}/api/v1`;
+  }
+}
+
+export const API_BASE_URL = cleanedBaseUrl;
 
 // Create central Axios instance with credentials enabled for cookies
 export const axiosInstance: AxiosInstance = axios.create({
