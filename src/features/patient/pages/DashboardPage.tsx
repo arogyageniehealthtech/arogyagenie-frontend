@@ -168,7 +168,7 @@ export default function DashboardPage() {
   // -----------------------------------
   const fetchOrders = async () => {
     try {
-      const data = await customFetch<MedicineOrderItem[]>("/api/medicine-orders");
+      const data = await customFetch<MedicineOrderItem[]>("/medicine-orders");
       if (Array.isArray(data)) {
         setOrders(data);
       }

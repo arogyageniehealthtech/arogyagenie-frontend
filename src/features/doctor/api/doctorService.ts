@@ -167,7 +167,7 @@ export interface PrescriptionResponse {
 export const doctorService = {
   // Doctor Dashboard
   getDashboard: async (): Promise<DoctorDashboardResponse> => {
-    const res = await axiosInstance.get('/dashboard/doctor');
+    const res = await axiosInstance.get('/doctor/dashboard');
     return res.data.data;
   },
 

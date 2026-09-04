@@ -199,7 +199,7 @@ export default function RegisterPage() {
             {(error || validationError) && (
               <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-1.5 text-red-300 text-xs animate-fadeIn">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-red-400" />
-                <span className="flex-1 leading-snug break-words">{error || validationError}</span>
+                <span className="flex-1 leading-snug wrap-break-word">{error || validationError}</span>
               </div>
             )}
 

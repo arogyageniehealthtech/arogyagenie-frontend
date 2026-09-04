@@ -168,10 +168,10 @@ export function DoctorAppointments() {
               {/* Filters */}
               <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
                 {/* Status */}
-                <div className="flex items-center gap-1.5 flex-1 sm:flex-initial min-w-[130px]">
-                  <Filter className="h-4 w-4 text-slate-400 shrink-0 hidden sm:block" />
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-full sm:w-[140px] text-xs rounded-xl">
+                <div className="flex items-center gap-1.5">
+                  <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+                  <Select value={selectedStatus} onValueChange={(val) => setSelectedStatus(val || "")}>
+                    <SelectTrigger className="w-35 text-xs rounded-xl">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -186,18 +186,16 @@ export function DoctorAppointments() {
                 </div>
 
                 {/* Consultation Type */}
-                <div className="flex-1 sm:flex-initial min-w-[120px]">
-                  <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger className="w-full sm:w-[130px] text-xs rounded-xl">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="VIDEO">Video Call</SelectItem>
-                      <SelectItem value="IN_PERSON">In-Person</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Select value={selectedType} onValueChange={(val)=>setSelectedType(val ||"")}>
+                  <SelectTrigger className="w-32.5 text-xs rounded-xl">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="VIDEO">Video Call</SelectItem>
+                    <SelectItem value="IN_PERSON">In-Person</SelectItem>
+                  </SelectContent>
+                </Select>
 
                 {/* Date Picker */}
                 <div className="flex items-center gap-1.5 w-full sm:w-auto">
@@ -206,7 +204,7 @@ export function DoctorAppointments() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full sm:w-[145px] text-xs rounded-xl border-slate-200"
+                    className="w-full sm:w-36.25 text-xs rounded-xl border-slate-200"
                   />
                   {selectedDate && (
                     <Button variant="ghost" size="sm" onClick={() => setSelectedDate("")} className="text-xs h-8 px-2 shrink-0">

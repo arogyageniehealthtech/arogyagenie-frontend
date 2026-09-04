@@ -69,6 +69,8 @@ export default function VerifyEmailPage() {
     try {
       const response = await authApi.resendEmail(email);
       if (response.success) {
+        console.log(response);
+        
         setResendSuccess(true);
       } else {
         setErrorMessage(response.message || "Failed to resend verification email.");
@@ -171,4 +173,4 @@ export default function VerifyEmailPage() {
       </div>
     </div>
   );
-}
+}

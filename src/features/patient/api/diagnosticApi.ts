@@ -1,4 +1,3 @@
-// src/api/diagnosticApi.ts
 import axiosClient from '../../../lib/axios';
 import type { DiagnosticCentre } from '../../patient/types/diagnostic';
 
@@ -11,6 +10,7 @@ export interface DiagnosticSearchParams {
 }
 
 export interface LabBookingPayload {
+<<<<<<< HEAD
   labId: string;
   labTestIds: string[];
   orderedByDoctorId?: string;
@@ -90,6 +90,30 @@ export const diagnosticApi = {
       console.warn('Failed to fetch from /locations/nearby-facilities?type=LAB:', e);
       return [];
     }
+=======
+  centreId: string;
+  testId: string;
+  collectionMethod: 'centre' | 'home';
+  date: string;
+  time: string;
+  patientDetails: any;
+  prescriptionUrl?: string;
+}
+
+export const diagnosticApi = {
+  // Fetch labs/diagnostic centres mapped precisely to backend Swagger /locations/nearby-facilities
+  getCentres: async (params?: DiagnosticSearchParams): Promise<DiagnosticCentre[]> => {
+    const response = await axiosClient.get('/locations/nearby-facilities', {
+      params: {
+        // latitude: params?.lat,
+        // longitude: params?.lng,
+        radiusKm: params?.radiusKm ?? 100,
+        type: 'LAB',
+        limit: 50
+      }
+    });
+    return response.data;
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
   },
 
   // Fetch a specific lab's details and test catalog

@@ -1,29 +1,29 @@
 // src/store/locationSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit'
+import type { PayloadAction } from '@reduxjs/toolkit';
+
 export interface Coordinates {
   lat: number;
   lng: number;
 }
 
 interface LocationState {
-  coordinates: Coordinates;
+  coordinates: Coordinates | null;
   addressString: string;
   isUsingCustom: boolean;
   isLoading: boolean;
   error: string | null;
-}
+} 
 
-// Default to Khardaha, West Bengal
+// Initial state starts with null coordinates until fetched from the browser
 const initialState: LocationState = {
-  coordinates: { lat: 22.7281, lng: 88.3752 },
-  addressString: "Khardaha, West Bengal",
+  coordinates: null,
+  addressString: "Fetching location...",
   isUsingCustom: false,
   isLoading: false,
   error: null,
-};
+} ;
 
-// Async Thunk for Geolocation API
 export const fetchCurrentLocation = createAsyncThunk(
   'location/fetchCurrentLocation',
   async (_, { rejectWithValue }) => {
@@ -31,7 +31,7 @@ export const fetchCurrentLocation = createAsyncThunk(
       return rejectWithValue("Geolocation is not supported by your browser");
     }
 
-    return new Promise<{ lat: number; lng: number }>((resolve) => {
+    return new Promise<{ lat: number; lng: number }>((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           resolve({
@@ -40,11 +40,11 @@ export const fetchCurrentLocation = createAsyncThunk(
           });
         },
         () => {
-          rejectWithValue("Unable to retrieve your location. Please check permissions.");
+          reject("Unable to retrieve your location. Please check permissions.");
         },
-        { enableHighAccuracy: true }
+        { enableHighAccuracy: true, maximumAge: 0 }
       );
-    });
+    }).catch((err) => rejectWithValue(err));
   }
 );
 

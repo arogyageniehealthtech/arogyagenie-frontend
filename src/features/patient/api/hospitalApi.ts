@@ -56,6 +56,7 @@ function mapFacilityToHospital(f: any): Hospital {
 }
 
 export const hospitalApi = {
+<<<<<<< HEAD
   // Fetch hospitals based on coordinates and radius, with search query support
   getHospitals: async (params?: HospitalSearchParams): Promise<Hospital[]> => {
     try {
@@ -94,6 +95,18 @@ export const hospitalApi = {
       console.warn('Failed to fetch from /locations/nearby-facilities:', err);
       return [];
     }
+=======
+  // Fetch hospitals based on search criteria
+  getHospitals: async(params?: HospitalSearchParams): Promise<Hospital[]> => {
+    const response = await axiosClient('/locations/nearby-facilities',{params:{
+        // latitude: params?.lat,
+        // longitude: params?.lng,
+        radiusKm: params?.radiusKm ?? 100,
+        type: 'HOSPITAL',
+        limit: 50
+      }})
+    return response.data;
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
   },
 
   // Fetch detailed hospital info
@@ -109,6 +122,7 @@ export const hospitalApi = {
   },
 
   // Book a hospital bed
+<<<<<<< HEAD
   bookBed: async (payload: BedBookingPayload): Promise<{ success: boolean; admissionId: string }> => {
     return {
       success: true,
@@ -118,3 +132,11 @@ export const hospitalApi = {
 };
 
 export default hospitalApi;
+=======
+  bookBed: (payload: BedBookingPayload): Promise<{ success: boolean; admissionId: string }> => {
+    return axiosClient.post('/hospitals/book-bed', payload);
+  }
+};
+
+// organizations/{{organizationId}}/hospitals
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23

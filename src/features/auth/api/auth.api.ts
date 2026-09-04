@@ -27,10 +27,7 @@ export const authApi = {
     if (deviceId) payload.deviceId = deviceId;
 
     try {
-      const response = await axiosInstance.post<ApiResponse<LoginApiResponseData> | AuthResponse>(
-        ROUTES.AUTH.LOGIN,
-        payload
-      );
+      const response = await axiosInstance.post<ApiResponse<LoginApiResponseData> | AuthResponse>(ROUTES.AUTH.LOGIN, payload);
 
       const resBody: any = response.data;
       const data = resBody?.data ?? resBody;

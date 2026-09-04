@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState, useEffect } from 'react';
 import { 
   FileText, Search, Calendar, Stethoscope, 
@@ -5,17 +6,23 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../../lib/axios';
+=======
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { 
+  FileText, Search, Calendar, Stethoscope, 
+  Download, Eye, Pill, X, Loader2, AlertTriangle, RefreshCcw,
+  ChevronDown, Check
+} from 'lucide-react';
+import prescriptionApi from '../api/presciptionApi';
+import { type Prescription, type PrescriptionQueryParams } from '../api/presciptionApi';
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
 
-// ==========================================
-// Types
-// ==========================================
-interface Medication {
-  name: string;
-  dosage: string;
-  frequency: string;
-  duration: string;
+function parseDate(dateStr: string): number {
+  const parsed = Date.parse(dateStr);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+<<<<<<< HEAD
 interface Prescription {
   id: string;
   doctorName: string;
@@ -77,9 +84,21 @@ export default function PrescriptionsPage() {
   const navigate = useNavigate();
   const [prescriptions, setPrescriptions] = useState<Prescription[]>(MOCK_PRESCRIPTIONS);
   const [loading, setLoading] = useState(false);
+=======
+type SortOrder = 'newest' | 'oldest';
+
+export default function PrescriptionsPage() {
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
 
+<<<<<<< HEAD
   useEffect(() => {
     let mounted = true;
     const fetchPrescriptions = async () => {
@@ -132,209 +151,220 @@ export default function PrescriptionsPage() {
     rx.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
     rx.hospitalName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+=======
+  const fetchPrescriptions = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const params: PrescriptionQueryParams = { page: 1, limit: 50 };
+      const response = await prescriptionApi.getPrescriptions(params);
+      setPrescriptions(Array.isArray(response?.data) ? response.data : []);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err instanceof Error ? err.message : 'An unexpected error occurred.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchPrescriptions(); }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setIsSortOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredPrescriptions = useMemo(() => {
+    return prescriptions
+      .filter(rx => 
+        rx.doctorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        rx.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        rx.hospitalName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .sort((a, b) => {
+        const diff = parseDate(a.date) - parseDate(b.date);
+        return sortOrder === 'newest' ? -diff : diff;
+      });
+  }, [prescriptions, searchQuery, sortOrder]);
+
+  const handleDownloadPdf = async (id: string) => {
+    try {
+      const blob = await prescriptionApi.downloadPrescriptionPdf(id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `prescription_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to download prescription PDF.');
+    }
+  };
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16 px-4 sm:px-6">
+    <div className="w-full max-w-5xl mx-auto space-y-2.5 pb-12 px-2 sm:px-4 pt-2 sm:pt-4 font-sans">
       
-      {/* --- HEADER BAR --- */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_2px_20px_rgba(0,0,0,0.03)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate(-1)}
-            className="p-2.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded-2xl transition-all border border-slate-200"
-            title="Go back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">My Prescriptions</h2>
-              <span className="bg-indigo-50 text-indigo-700 font-bold text-xs px-2.5 py-0.5 rounded-full border border-indigo-100">
-                {MOCK_PRESCRIPTIONS.length} Total
-              </span>
-            </div>
-            <p className="text-sm font-medium text-slate-500 mt-0.5">Access and download digital prescriptions issued by your doctors.</p>
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Control Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-white p-2 sm:p-2.5 rounded-xl border border-slate-200/80 shadow-xs relative z-10">
+        <div className="relative w-full sm:w-64 shrink-0 order-1 sm:order-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input 
             type="text"
             placeholder="Search doctor, diagnosis..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all"
+            disabled={isLoading || !!error}
+            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:opacity-60 shadow-inner"
           />
+        </div>
+
+        <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 shrink-0 order-2 sm:order-2" ref={sortRef}>
+          <span className="text-[11px] font-semibold text-slate-500">Sort by:</span>
+          <div className="relative flex-1 sm:flex-initial">
+            <button
+              onClick={() => !isLoading && !error && setIsSortOpen(!isSortOpen)}
+              disabled={isLoading || !!error}
+              className={`flex items-center justify-between gap-2 bg-slate-50 hover:bg-slate-100 border transition-all rounded-lg px-2.5 py-1.5 text-xs font-bold w-full sm:w-[125px] disabled:opacity-60 ${
+                isSortOpen ? 'border-indigo-600 ring-2 ring-indigo-600/20 text-indigo-600' : 'border-slate-200 text-slate-700'
+              }`}
+            >
+              {sortOrder === 'newest' ? 'Date: Newest' : 'Date: Oldest'}
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isSortOpen ? 'rotate-180 text-indigo-600' : ''}`} />
+            </button>
+
+            {isSortOpen && (
+              <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1 w-full sm:w-36 bg-white border border-slate-200 rounded-xl shadow-lg z-20">
+                <div className="p-1 space-y-0.5">
+                  <button onClick={() => { setSortOrder('newest'); setIsSortOpen(false); }} className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-bold rounded-lg ${sortOrder === 'newest' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    Date: Newest {sortOrder === 'newest' && <Check className="w-3 h-3" />}
+                  </button>
+                  <button onClick={() => { setSortOrder('oldest'); setIsSortOpen(false); }} className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-bold rounded-lg ${sortOrder === 'oldest' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}>
+                    Date: Oldest {sortOrder === 'oldest' && <Check className="w-3 h-3" />}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* --- PRESCRIPTIONS LIST --- */}
-      <div className="space-y-4">
-        {filteredPrescriptions.length === 0 ? (
-          <div className="bg-white border border-slate-200/80 border-dashed rounded-3xl p-16 text-center shadow-sm flex flex-col items-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
-              <FileText className="w-8 h-8 text-slate-300" />
-            </div>
-            <h3 className="font-bold text-lg text-slate-900">No prescriptions found</h3>
-            <p className="text-sm font-medium text-slate-500 mt-1 max-w-sm">We couldn't find any prescriptions matching your search query.</p>
+      {/* Content Area */}
+      <div className="relative z-0">
+        {isLoading ? (
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center min-h-[240px]">
+            <Loader2 className="w-7 h-7 text-indigo-600 animate-spin mb-2.5" />
+            <h3 className="font-extrabold text-sm text-slate-900">Fetching Prescriptions</h3>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">Please wait while we load your records...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-white border border-rose-100 rounded-2xl p-6 text-center shadow-xs flex flex-col items-center min-h-[240px] justify-center">
+            <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center mb-3 border border-rose-100"><AlertTriangle className="w-6 h-6" /></div>
+            <h3 className="font-extrabold text-sm text-slate-900">Failed to Load</h3>
+            <p className="text-xs font-medium text-slate-500 mt-1 max-w-sm">{error}</p>
+            <button onClick={fetchPrescriptions} className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs"><RefreshCcw className="w-3.5 h-3.5" /> Try Again</button>
+          </div>
+        ) : filteredPrescriptions.length === 0 ? (
+          <div className="bg-white border border-slate-200/80 border-dashed rounded-2xl p-8 text-center shadow-xs flex flex-col items-center min-h-[240px] justify-center">
+            <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 border border-slate-100"><FileText className="w-6 h-6" /></div>
+            <h3 className="font-extrabold text-sm text-slate-900">No Prescriptions Found</h3>
+            <p className="text-xs font-medium text-slate-500 mt-1">{searchQuery ? `No matches for "${searchQuery}".` : "No prescriptions issued yet."}</p>
+            {searchQuery && <button onClick={() => setSearchQuery('')} className="mt-3 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg font-bold text-xs">Clear Search</button>}
           </div>
         ) : (
-          filteredPrescriptions.map(rx => (
-            <div 
-              key={rx.id}
-              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all flex flex-col gap-5 group"
-            >
-              {/* Card Top Info */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center border border-indigo-100 shadow-sm shrink-0">
-                    <Stethoscope className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-base text-slate-900">{rx.doctorName}</h3>
-                    <p className="text-xs font-semibold text-indigo-600">{rx.specialization} • <span className="text-slate-500 font-medium">{rx.hospitalName}</span></p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 self-end sm:self-auto">
-                  <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" /> {rx.date}
-                  </span>
-                  <span className="text-xs font-bold text-purple-700 bg-purple-50 border border-purple-100 px-3 py-1.5 rounded-xl">
-                    {rx.id}
-                  </span>
-                </div>
-              </div>
-
-              {/* Diagnosis & Medicines */}
-              <div className="space-y-3">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Diagnosis</span>
-                  <p className="text-sm font-bold text-slate-800 bg-slate-50 px-3.5 py-2 rounded-xl inline-block border border-slate-100">
-                    {rx.diagnosis}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Prescribed Medicines</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {rx.medicines.map((med, idx) => (
-                      <div key={idx} className="bg-slate-50/70 border border-slate-100 p-3 rounded-2xl flex items-start gap-3">
-                        <div className="p-2 bg-white text-indigo-600 rounded-xl shadow-sm border border-slate-100 shrink-0 mt-0.5">
-                          <Pill className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900 text-sm">{med.name} <span className="text-indigo-600 font-semibold">({med.dosage})</span></p>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5">{med.frequency} • {med.duration}</p>
-                        </div>
-                      </div>
-                    ))}
+          <div className="space-y-2.5">
+            {filteredPrescriptions.map(rx => (
+              <div key={rx.id} className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center border border-indigo-100 shrink-0"><Stethoscope className="w-4 h-4" /></div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">{rx.doctorName}</h3>
+                      <span className="text-[10px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded uppercase">{rx.diagnosis}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 mt-0.5 flex-wrap">
+                      <span className="text-indigo-600 font-bold">{rx.specialization}</span><span>•</span>
+                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-slate-400" /> {rx.date}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 mt-1">
+                      <Pill className="w-3 h-3 text-indigo-500 shrink-0" />
+                      <span>{rx.medicines?.length || 0} Medicines</span><span>•</span>
+                      <span className="truncate text-slate-400">{rx.medicines?.map(m => m.name).join(', ')}</span>
+                    </div>
                   </div>
                 </div>
 
-                {rx.notes && (
-                  <p className="text-xs font-medium text-slate-500 italic bg-amber-50/50 border border-amber-100 p-3 rounded-xl">
-                    <strong className="text-amber-800 font-semibold">Doctor's Note:</strong> {rx.notes}
-                  </p>
-                )}
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-slate-100 pt-2.5 sm:pt-0">
+                  <button onClick={() => setSelectedPrescription(rx)} className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs"><Eye className="w-3.5 h-3.5" /> View</button>
+                  <button onClick={() => handleDownloadPdf(rx.id)} className="flex-1 sm:flex-none flex items-center justify-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs"><Download className="w-3.5 h-3.5" /> PDF</button>
+                </div>
               </div>
-
-              {/* Card Footer Actions */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <button 
-                  onClick={() => setSelectedPrescription(rx)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-colors"
-                >
-                  <Eye className="w-4 h-4" /> View Full Preview
-                </button>
-                <button 
-                  onClick={() => alert(`Downloading prescription ${rx.id}...`)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-600/20 transition-all"
-                >
-                  <Download className="w-4 h-4" /> Download PDF
-                </button>
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
 
-      {/* --- VIEW FULL PREVIEW MODAL --- */}
+      {/* Modal */}
       {selectedPrescription && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-2 sm:p-3">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-3.5 sm:p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
               <div>
-                <h3 className="font-bold text-lg text-slate-900">Prescription Details</h3>
-                <p className="text-xs text-slate-500 font-medium">{selectedPrescription.id}</p>
+                <h3 className="font-extrabold text-sm sm:text-base text-slate-900">Prescription Details</h3>
+                <p className="text-[10px] uppercase font-bold text-slate-400">{selectedPrescription.id}</p>
               </div>
-              <button 
-                onClick={() => setSelectedPrescription(null)}
-                className="p-2 bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-full border border-slate-200 shadow-sm transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setSelectedPrescription(null)} className="p-1.5 bg-white hover:bg-slate-100 text-slate-400 rounded-full border border-slate-200"><X className="w-4 h-4" /></button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-5">
-              <div className="flex items-center gap-4 bg-indigo-50/50 border border-indigo-100 p-4 rounded-2xl">
-                <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm">
-                  Rx
-                </div>
+            <div className="p-3.5 sm:p-4 overflow-y-auto space-y-3">
+              <div className="flex items-center gap-3 bg-indigo-50/60 border border-indigo-100 p-3 rounded-xl">
+                <div className="w-9 h-9 bg-indigo-600 text-white rounded-lg flex items-center justify-center font-black text-xs">Rx</div>
                 <div>
-                  <h4 className="font-bold text-slate-900">{selectedPrescription.doctorName}</h4>
-                  <p className="text-xs text-indigo-700 font-semibold">{selectedPrescription.specialization}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{selectedPrescription.hospitalName}</p>
+                  <h4 className="font-extrabold text-xs sm:text-sm text-slate-900">{selectedPrescription.doctorName}</h4>
+                  <p className="text-[11px] text-indigo-700 font-bold">{selectedPrescription.specialization}</p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between text-xs text-slate-500 font-medium pb-2 border-b border-slate-100">
-                  <span>Date Issued: <strong className="text-slate-800">{selectedPrescription.date}</strong></span>
-                  <span>Diagnosis: <strong className="text-slate-800">{selectedPrescription.diagnosis}</strong></span>
-                </div>
-
-                <h5 className="font-bold text-slate-900 text-sm">Medicines List</h5>
-                <ul className="space-y-2">
-                  {selectedPrescription.medicines.map((m, i) => (
-                    <li key={i} className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center text-sm">
-                      <div>
-                        <span className="font-bold text-slate-900 block">{m.name} ({m.dosage})</span>
-                        <span className="text-xs text-slate-500">{m.frequency}</span>
-                      </div>
-                      <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">{m.duration}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {selectedPrescription.notes && (
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Instructions</span>
-                    <p className="text-sm font-medium text-slate-700">{selectedPrescription.notes}</p>
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-2.5 bg-slate-50 border border-slate-100 p-3 rounded-xl text-xs">
+                <div><span className="text-[10px] uppercase font-bold text-slate-400 block">Date</span><span className="font-bold text-slate-900">{selectedPrescription.date}</span></div>
+                <div><span className="text-[10px] uppercase font-bold text-slate-400 block">Diagnosis</span><span className="font-bold text-slate-900 truncate block">{selectedPrescription.diagnosis}</span></div>
               </div>
+
+              <div>
+                <h5 className="font-bold text-slate-900 text-xs mb-1.5 flex items-center gap-1.5"><Pill className="w-3.5 h-3.5 text-indigo-500" /> Prescribed Medicines</h5>
+                <div className="border border-slate-200/80 rounded-xl overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {selectedPrescription.medicines?.map((m, i) => (
+                        <tr key={i} className="bg-white">
+                          <td className="p-2.5"><span className="font-bold text-slate-900 block">{m.name}</span><span className="text-[10px] text-slate-500">{m.frequency}</span></td>
+                          <td className="p-2.5 text-right"><span className="font-semibold text-slate-700 block">{m.dosage}</span><span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md">{m.duration}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {selectedPrescription.notes && (
+                <div className="bg-amber-50/60 border border-amber-200/60 p-3 rounded-xl">
+                  <span className="text-[10px] font-extrabold text-amber-700 uppercase block mb-0.5">Doctor's Note</span>
+                  <p className="text-xs font-medium text-slate-700">{selectedPrescription.notes}</p>
+                </div>
+              )}
             </div>
 
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex gap-3">
-              <button 
-                onClick={() => setSelectedPrescription(null)}
-                className="flex-1 py-3 bg-white hover:bg-slate-100 text-slate-700 rounded-xl font-bold border border-slate-200 text-sm transition-colors"
-              >
-                Close
-              </button>
-              <button 
-                onClick={() => alert(`Downloading prescription ${selectedPrescription.id}...`)}
-                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md shadow-indigo-600/20 text-sm transition-all flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" /> Download PDF
-              </button>
+            <div className="p-3 border-t border-slate-100 bg-slate-50/70 flex gap-2">
+              <button onClick={() => setSelectedPrescription(null)} className="flex-1 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-lg font-bold border border-slate-200 text-xs">Close</button>
+              <button onClick={() => handleDownloadPdf(selectedPrescription.id)} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-1"><Download className="w-3.5 h-3.5" /> Full PDF</button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

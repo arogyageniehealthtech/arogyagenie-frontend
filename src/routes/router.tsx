@@ -1,11 +1,11 @@
-import { lazy, Suspense } from "react";
+import { Children, lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes.constants.ts";
 import { PageLoader } from "../components/ui/PageLoader.tsx";
 import { ProtectedRoute } from "./ProtectedRoute.tsx";
 import { RoleBasedRoute } from "./RoleBasedRoute.tsx";
 import { GuestRoute } from "./GuestRoute.tsx";
-
+// import Test from '@/features/organisation-admin/pages/OrganizationDashboardPage.tsx'
 // ================================LAYOUTS============================================================
 const PatientLayout = lazy(() => import("../layouts/PatientLayout.tsx"));
 const PartnerLayout = lazy(() => import("../layouts/PartnerLayout.tsx"));
@@ -26,10 +26,14 @@ const AppointmentsPage = lazy(() => import("../features/patient/pages/Appointmen
 const LabReportsPage = lazy(() => import("../features/patient/pages/LabReportsPage.tsx"));
 const DoctorDiscoveryPage = lazy(() => import("../features/patient/pages/DoctorDiscoveryPage.tsx"));
 const PharmacyModule = lazy(() => import("../features/patient/pages/PharmacyModule.tsx"));
+const MedicineOderPage = lazy(() => import("../features/patient/pages/MedicineOderPage.tsx"));
 const DiagnosticDiscoveryPage = lazy(() => import("../features/patient/pages/DiagnosticDiscoveryPage.tsx"));
 const HospitalDiscoveryPage = lazy(() => import("../features/patient/pages/HospitalDiscoveryPage.tsx"));
+const CheckoutPage = lazy(() => import("../features/patient/pages/CheckoutPage.tsx"));
+const PharmacySelectionPage = lazy(() => import("../features/patient/pages/PharmacySelectionPage.tsx"));
 const PatientVideoConsultationPage = lazy(() => import("../features/patient/pages/PatientVideoConsultationPage.tsx"));
-
+// ==========================================INVITATION===================================================
+// const AcceptInvitationPage = lazy(() => import("../features/organisation-admin/pages/AcceptInvitationPage.tsx"));
 // =====================================DOCTOR========================================================
 const DoctorDashboardPage = lazy(() => import("../features/doctor/pages/DoctorDashboardPage.tsx"));
 const DoctorAppointmentsPage = lazy(() => import("../features/doctor/pages/AppoinmentPage.tsx").then(m => ({ default: m.DoctorAppointments })));
@@ -66,12 +70,26 @@ const PartnerServicesPage = lazy(() => import("../features/partner/pages/Partner
 const PartnerAnalyticsPage = lazy(() => import("../features/partner/pages/PartnerAnalyticsPage.tsx"));
 const PartnerNotificationsPage = lazy(() => import("../features/partner/pages/PartnerNotificationsPage.tsx"));
 const PartnerSettingsPage = lazy(() => import("../features/partner/pages/PartnerSettingsPage.tsx"));
+// ===================================DELIVERY-PARTNER=================================================
+const DeliveryDashboard = lazy(() => import("@/features/delivery-partner/pages/DeliveryDashboard.tsx"));
+const ActiveDelivery = lazy(() => import("@/features/delivery-partner/pages/ActiveDelivery.tsx"));
+const DeliveryRequests = lazy(() => import("@/features/delivery-partner/pages/DeliveryRequests.tsx"));
+const DeliveryHistory = lazy(() => import("@/features/delivery-partner/pages/DeliveryHistory.tsx"));
+const DeliveryNotifications = lazy(() => import("@/features/delivery-partner/pages/DeliveryNotifications.tsx"));
+const DeliveryProfile = lazy(() => import("@/features/delivery-partner/pages/DeliveryProfile.tsx"));
+const DeliverySettings = lazy(() => import("@/features/delivery-partner/pages/DeliverySettings.tsx"));
+const DeliveryEarnings = lazy(() => import("@/features/delivery-partner/pages/DeliveryEarnings.tsx"));
 
 import { RouteErrorElement } from "../components/RouteErrorElement.tsx";
+import type { element } from "three/src/nodes/tsl/TSLCore.js";
 
 // ==============================OTHERS=================================================================
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage.tsx"));
 const UnauthorizedPage = lazy(() => import("../pages/UnauthorizedPage.tsx"));
+const DeliveryLayout = lazy(() => import("@/layouts/DeliveryLayout.tsx"));
+
+
+
 
 function withSuspense(element: React.ReactNode) {
   return <Suspense fallback={<PageLoader />}>{element}</Suspense>;
@@ -112,15 +130,25 @@ export const router = createBrowserRouter([
       {
         element: <PatientLayout />,
         children: [
-          { path: ROUTES.PATIENT.DASHBOARD, element: withSuspense(<DashboardPage />) },
-          { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
-          { path: ROUTES.PATIENT.PRESCRIBTION, element: withSuspense(<PrescriptionsPage />) },
-          { path: ROUTES.PATIENT.APPOINTMENTS, element: withSuspense(<AppointmentsPage />) },
-          { path: ROUTES.PATIENT.LAB_REPORTS, element: withSuspense(<LabReportsPage />) },
-          { path: ROUTES.PATIENT.LAB, element: withSuspense(<DiagnosticDiscoveryPage />) },
-          { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage />) },
-          { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage />) },
-          { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
+          {
+            // element: <PatientLayout />,
+            children: [
+              { path: ROUTES.PATIENT.DASHBOARD, element: withSuspense(<DashboardPage />) },
+              { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
+              { path: ROUTES.PATIENT.PRESCRIBTION, element: withSuspense(<PrescriptionsPage />) },
+              { path: ROUTES.PATIENT.APPOINTMENTS, element: withSuspense(<AppointmentsPage />) },
+              { path: ROUTES.PATIENT.LAB_REPORTS, element: withSuspense(<LabReportsPage />) },
+              { path: ROUTES.PATIENT.LAB, element: withSuspense(<DiagnosticDiscoveryPage />) },
+              { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage />) },
+              { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage />) },
+              { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
+              { path: ROUTES.PATIENT.MEDICINE_ORDERS, element: withSuspense(<MedicineOderPage />) },
+              { path: ROUTES.PATIENT.PHARMACY_SELECT, element: withSuspense(<PharmacySelectionPage />) },
+              { path: ROUTES.PATIENT.CHECKOUT, element: withSuspense(<CheckoutPage />) },
+              { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
+              { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
+            ],
+          },
         ],
       },
       {
@@ -162,15 +190,57 @@ export const router = createBrowserRouter([
       },
     ],
   },
-
+  {
+     path: "/delivery",
+     element :  <DeliveryLayout/>,
+    children:[
+      {
+        children:[
+          
+             { path: 'dashboard', element:withSuspense(<DeliveryDashboard/>) },
+             { path: 'requests', element:withSuspense(<DeliveryRequests/>) },
+             { path: 'active', element:withSuspense(<ActiveDelivery/>) },
+             { path: 'history', element:withSuspense(<DeliveryHistory/>) },
+             { path: 'history', element:withSuspense(<DeliveryNotifications/>) },
+             { path: 'profile', element:withSuspense(<DeliveryProfile/>) },
+             { path: 'setting', element:withSuspense(<DeliverySettings/>) },
+             { path: 'earnings', element:withSuspense(<DeliveryEarnings/>) }
+  
+  // { path: '/delivery/earnings', icon: IndianRupee, label: 'Earnings' },
+  // { path: '/delivery/profile', icon: User, label: 'Profile' },
+          
+        ]
+      }
+    ]
+  },
+// {
+//         path: 'organization',
+//         element: <OrgGuard />, // Ensures active organization context exists
+//         children: [
+//           { path: 'dashboard', element: <OrgDashboard /> },
+//           { path: 'settings', element: <OrgSettings /> },
+//           { path: 'team', element: <MembersList /> }, // Unified overview
+//           { path: 'members', element: <MembersList /> },
+          
+//           { path: 'facilities', element: <FacilitiesList /> },
+//           { path: 'facilities/create', element: <CreateFacility /> },
+//           { path: 'facilities/:facilityId', element: <FacilityDetails /> },
+          
+//           { path: 'employees', element: <EmployeesList /> },
+//           { path: 'employees/create', element: <OnboardEmployee /> },
+//           { path: 'employees/:employeeId', element: <EmployeeDetails /> },
+          
+//           { path: 'invitations', element: <Invitations /> },
+//         ]
+//       },
   // --- ADMIN PORTAL ROUTES --------------------------------------------
   {
     path: "/admin",
-    element: (
-      <ProtectedRoute>
-        <RoleBasedRoute allowedRoles={["PLATFORM_ADMIN", "SYSTEM_ADMIN", "ADMIN"]} />
-      </ProtectedRoute>
-    ),
+    // element: (
+    //   <ProtectedRoute>
+    //     <RoleBasedRoute allowedRoles={["PLATFORM_ADMIN", "SYSTEM_ADMIN", "ADMIN"]} />
+    //   </ProtectedRoute>
+    // ),
     errorElement: <RouteErrorElement />,
     children: [
       { index: true, element: <Navigate to={ROUTES.ADMIN.DASHBOARD} replace /> },
@@ -192,17 +262,17 @@ export const router = createBrowserRouter([
   // --- PARTNER / PROVIDER PORTAL ROUTES --------------------------------
   {
     path: "/partner",
-    element: (
-      <ProtectedRoute>
-        <RoleBasedRoute allowedRoles={["ORG_MEMBER", "EMPLOYEE", "DELIVERY_PARTNER", "PHARMACY", "LAB"]} />
-      </ProtectedRoute>
-    ),
+    // element: (
+    //   <ProtectedRoute>
+    //     <RoleBasedRoute allowedRoles={["ORG_MEMBER", "EMPLOYEE", "DELIVERY_PARTNER", "PHARMACY", "LAB"]} />
+    //   </ProtectedRoute>
+    // ),
     errorElement: <RouteErrorElement />,
     children: [
       {
         element: <PartnerLayout />,
         children: [
-          { index: true, element: <Navigate to={ROUTES.PARTNER.DASHBOARD} replace /> },
+          // { index: true, element: <Navigate to={ROUTES.PARTNER.DASHBOARD} replace /> },
           { path: "dashboard", element: withSuspense(<PartnerDashboardPage />) },
           { path: "requests", element: withSuspense(<PartnerRequestsPage />) },
           { path: "orders", element: withSuspense(<PharmacyOrdersPage />) },
@@ -216,11 +286,14 @@ export const router = createBrowserRouter([
           { path: "analytics", element: withSuspense(<PartnerAnalyticsPage />) },
           { path: "notifications", element: withSuspense(<PartnerNotificationsPage />) },
           { path: "settings", element: withSuspense(<PartnerSettingsPage />) },
+          
         ],
       },
     ],
   },
 
   { path: ROUTES.COMMON.UNAUTHORIZED, element: withSuspense(<UnauthorizedPage />) },
-  { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<NotFoundPage />) },
+  // { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<NotFoundPage />) },
+  // { path: ROUTES.COMMON.NOT_FOUND, element: withSuspense(<Test />) },
+
 ]);

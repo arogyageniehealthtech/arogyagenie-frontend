@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import { 
-  X, SearchIcon, Home, Building2, TestTube, 
-  ChevronLeft, ChevronRight, Clock, Calendar as CalendarIcon, 
-  User, Phone, Droplet, MapPin, FileText 
+  X, Building2, ChevronLeft, ChevronRight, 
+  Calendar as CalendarIcon, Clock, Loader2, TestTube, Home, User, Phone, MapPin, FileText, SearchIcon
 } from 'lucide-react';
-import CustomSelect from '../common/CustomSelect';
+import { useToast } from '@/features/patient/hooks/use-toast';
 import type { DiagnosticCentre, TestOption, CollectionMethod } from '../../types/diagnostic';
 
 interface BookLabModalProps {
   centre: DiagnosticCentre;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
+export default function BookLabModal({ centre, onClose, onSuccess }: BookLabModalProps) {
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   
   // Form State
@@ -29,23 +30,38 @@ export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
     name: '', age: '', gender: '', mobile: '', address: '', bloodGroup: '', emergencyContact: ''
   });
 
+  // API Booking States
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+
   // Derived Values
   const filteredTests = centre.availableTests.filter(t => 
     t.name.toLowerCase().includes(testSearchQuery.toLowerCase())
   );
 
-  const baseDate = new Date(2026, 7 + monthOffset, 1); 
+  // Calendar Logic Fixes
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); 
+
+  const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1); 
   const viewYear = baseDate.getFullYear();
   const viewMonth = baseDate.getMonth() + 1;
   const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+  
   let startDay = baseDate.getDay() - 1;
-  if (startDay === -1) startDay = 6;
+  if (startDay === -1) startDay = 6; 
+
   const monthLabel = baseDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   const calendarDays = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
     const dateStr = `${viewYear}-${viewMonth.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-    const isAvailable = centre.availableDates?.includes(dateStr) || false;
+    
+    const currentDayDate = new Date(viewYear, viewMonth - 1, day);
+    const isPast = currentDayDate < today;
+    
+    const isAvailable = !isPast && (centre.availableDates ? centre.availableDates.includes(dateStr) : true);
+    
     return { day, dateStr, isAvailable };
   });
 
@@ -58,97 +74,127 @@ export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
     });
   };
 
+  const handleConfirmBooking = async () => {
+    if (!selectedTest || !selectedDate || !selectedTime || !collectionMethod) return;
+
+    setIsSubmitting(true);
+    setBookingError(null);
+
+    try {
+      // Simulate booking API call
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      toast({
+        title: 'Booked',
+        description: 'Lab test confirmed.',
+      });
+
+      if (onSuccess) onSuccess();
+      onClose();
+    } catch (err: any) {
+      const errorMsg = err?.response?.data?.message || "Failed to book lab test.";
+      setBookingError(errorMsg);
+      toast({
+        title: 'Failed',
+        description: errorMsg,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6">
-      <div className="bg-white rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 font-sans overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-sm sm:max-w-md overflow-hidden shadow-2xl flex flex-col my-auto max-h-[85vh] sm:max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="p-5 sm:p-6 border-b relative flex justify-center items-center bg-gray-50/80 shrink-0">
-          <div className="text-center mt-1">
-            <h2 className="font-bold text-2xl text-gray-900 tracking-tight">Book Lab Test</h2>
-            <p className="text-sm font-medium text-gray-600 mt-1">{centre.name}</p>
+        <div className="p-3.5 sm:p-4 border-b border-slate-100 relative flex justify-center items-center bg-[#0F172A] text-white shrink-0">
+          <div className="text-center">
+            <h2 className="font-extrabold text-base sm:text-lg tracking-tight">Book Lab Test</h2>
+            <p className="text-[11px] font-medium text-slate-300 mt-0.5 truncate max-w-65 mx-auto">
+              {centre.name}
+            </p>
           </div>
+          
           <button 
             onClick={onClose} 
-            className="absolute right-5 top-5 p-2 bg-white border border-gray-200 shadow-sm hover:bg-red-50 hover:text-red-500 text-gray-400 rounded-full transition-all focus:outline-none"
+            disabled={isSubmitting}
+            className="absolute right-3 top-3 p-1.5 bg-slate-800 border border-slate-700 shadow-sm hover:bg-rose-500 hover:text-white text-slate-300 rounded-full transition-all focus:outline-none disabled:opacity-50 cursor-pointer"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto custom-scrollbar">
+        <div className="p-3 sm:p-4 overflow-y-auto space-y-3 pb-6 sm:pb-4">
           
           {/* STEP 1: Test Selection */}
           {step === 1 && (
-            <div className="space-y-4 flex flex-col h-full max-h-[60vh]">
+            <div className="space-y-3">
               <div>
-                <h4 className="font-bold text-gray-900 text-lg">Step 1: Select Test or Package</h4>
-                <p className="text-sm text-gray-500 mt-1">Choose the specific diagnostic test required.</p>
+                <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">Select Test or Package</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Choose the specific diagnostic test required.</p>
               </div>
 
               <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input 
                   type="text"
-                  placeholder="Search tests (e.g., Blood, X-Ray)..."
+                  placeholder="Search tests..."
                   value={testSearchQuery}
                   onChange={(e) => setTestSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-100 focus:border-purple-500 transition-all text-sm"
+                  className="w-full pl-8 pr-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-100 focus:border-[#0F172A] text-xs font-medium text-slate-900 shadow-inner"
                 />
               </div>
 
-              <div className="overflow-y-auto pr-2 pb-2 space-y-3 flex-1">
+              <div className="overflow-y-auto max-h-48 space-y-2 pr-1">
                 {filteredTests.length > 0 ? (
                   filteredTests.map(test => (
                     <button
                       key={test.id}
                       onClick={() => {
                         setSelectedTest(test);
-                        // Reset collection method if test changes and doesn't support home
                         if (!test.homeCollectionAvailable && collectionMethod === 'home') {
                           setCollectionMethod(null);
                         }
                       }}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 text-left transition-all cursor-pointer ${
                         selectedTest?.id === test.id 
-                          ? 'border-purple-600 bg-purple-50' 
-                          : 'border-gray-200 hover:border-purple-300'
+                          ? 'border-[#0F172A] bg-slate-50 shadow-sm' 
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
                       }`}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className={`p-2.5 rounded-lg ${selectedTest?.id === test.id ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
-                          <TestTube className="w-5 h-5" />
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`p-2 rounded-lg shrink-0 ${selectedTest?.id === test.id ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                          <TestTube className="w-4 h-4" />
                         </div>
-                        <div>
-                          <p className={`font-bold ${selectedTest?.id === test.id ? 'text-purple-900' : 'text-gray-900'}`}>{test.name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm font-semibold text-gray-700">₹{test.rate}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className={`font-extrabold text-xs sm:text-sm truncate ${selectedTest?.id === test.id ? 'text-slate-900' : 'text-slate-800'}`}>{test.name}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span className="text-xs font-bold text-slate-700">₹{test.rate}</span>
                             {!test.homeCollectionAvailable && (
-                              <>
-                                <span className="text-gray-300">•</span>
-                                <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">Centre Visit Only</span>
-                              </>
+                              <span className="text-[9px] font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">Centre Visit Only</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedTest?.id === test.id ? 'border-purple-600' : 'border-gray-300'}`}>
-                        {selectedTest?.id === test.id && <div className="w-2.5 h-2.5 bg-purple-600 rounded-full" />}
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ml-2 ${selectedTest?.id === test.id ? 'border-[#0F172A]' : 'border-slate-300'}`}>
+                        {selectedTest?.id === test.id && <div className="w-2 h-2 bg-[#0F172A] rounded-full" />}
                       </div>
                     </button>
                   ))
                 ) : (
-                  <div className="text-center py-6 text-gray-500 text-sm">
+                  <div className="text-center py-4 text-slate-400 text-xs">
                     No tests match your search.
                   </div>
                 )}
               </div>
               
-              <div className="pt-2 shrink-0">
+              <div className="pt-2">
                 <button 
                   disabled={!selectedTest}
                   onClick={() => setStep(2)}
-                  className="w-full py-3.5 bg-purple-600 text-white rounded-xl font-medium disabled:opacity-50 hover:bg-purple-700 transition-colors shadow-sm"
+                  className="w-full py-2.5 bg-[#0F172A] text-white rounded-xl font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-colors shadow-sm cursor-pointer"
                 >
                   Continue
                 </button>
@@ -158,67 +204,65 @@ export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
 
           {/* STEP 2: Collection Method */}
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div>
-                <h4 className="font-bold text-gray-900 text-lg">Step 2: Sample Collection Method</h4>
-                <p className="text-sm text-gray-500 mt-1">How would you like to provide your sample?</p>
+                <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">Sample Collection Method</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">How would you like to provide your sample?</p>
               </div>
               
-              <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2 pt-0.5">
                 <button
                   onClick={() => setCollectionMethod('centre')}
-                  className={`w-full p-5 rounded-xl border-2 text-left transition-all flex items-start gap-4 ${
+                  className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 cursor-pointer ${
                     collectionMethod === 'centre' 
-                      ? 'border-purple-600 bg-purple-50 shadow-sm' 
-                      : 'border-gray-200 hover:border-purple-300'
+                      ? 'border-[#0F172A] bg-slate-50 shadow-sm' 
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
                   }`}
                 >
-                  <div className={`p-3 rounded-full shrink-0 ${collectionMethod === 'centre' ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
-                    <Building2 className="w-6 h-6" />
+                  <div className={`p-2 rounded-lg shrink-0 ${collectionMethod === 'centre' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                    <Building2 className="w-4 h-4" />
                   </div>
-                  <div className="flex-1">
-                    <p className={`font-bold text-lg ${collectionMethod === 'centre' ? 'text-purple-900' : 'text-gray-900'}`}>Visit Diagnostic Centre</p>
-                    <p className="text-sm text-gray-500 mt-1">Visit the lab personally for the test/scan.</p>
+                  <div className="min-w-0 flex-1">
+                    <p className={`font-extrabold text-xs sm:text-sm ${collectionMethod === 'centre' ? 'text-slate-900' : 'text-slate-800'}`}>Visit Diagnostic Centre</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Visit the lab personally.</p>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-1 shrink-0 ${collectionMethod === 'centre' ? 'border-purple-600' : 'border-gray-300'}`}>
-                    {collectionMethod === 'centre' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${collectionMethod === 'centre' ? 'border-[#0F172A]' : 'border-slate-300'}`}>
+                    {collectionMethod === 'centre' && <div className="w-2 h-2 rounded-full bg-[#0F172A]" />}
                   </div>
                 </button>
 
                 <button
                   disabled={!selectedTest?.homeCollectionAvailable}
                   onClick={() => setCollectionMethod('home')}
-                  className={`w-full p-5 rounded-xl border-2 text-left transition-all flex items-start gap-4 ${
+                  className={`w-full p-3 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${
                     !selectedTest?.homeCollectionAvailable 
-                      ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                      ? 'border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed'
                       : collectionMethod === 'home' 
-                        ? 'border-purple-600 bg-purple-50 shadow-sm' 
-                        : 'border-gray-200 hover:border-purple-300'
+                        ? 'border-[#0F172A] bg-slate-50 shadow-sm cursor-pointer' 
+                        : 'border-slate-200 hover:border-slate-300 cursor-pointer bg-white'
                   }`}
                 >
-                  <div className={`p-3 rounded-full shrink-0 ${collectionMethod === 'home' ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
-                    <Home className="w-6 h-6" />
+                  <div className={`p-2 rounded-lg shrink-0 ${collectionMethod === 'home' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                    <Home className="w-4 h-4" />
                   </div>
-                  <div className="flex-1">
-                    <p className={`font-bold text-lg ${collectionMethod === 'home' ? 'text-purple-900' : 'text-gray-900'}`}>Home Sample Collection</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {!selectedTest?.homeCollectionAvailable 
-                        ? 'Not available for radiological/imaging tests.' 
-                        : 'A phlebotomist will visit your address.'}
+                  <div className="min-w-0 flex-1">
+                    <p className={`font-extrabold text-xs sm:text-sm ${collectionMethod === 'home' ? 'text-slate-900' : 'text-slate-800'}`}>Home Collection</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      {!selectedTest?.homeCollectionAvailable ? 'Not available for this test.' : 'Phlebotomist visits address.'}
                     </p>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-1 shrink-0 ${collectionMethod === 'home' ? 'border-purple-600' : 'border-gray-300'}`}>
-                    {collectionMethod === 'home' && <div className="w-2.5 h-2.5 rounded-full bg-purple-600" />}
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${collectionMethod === 'home' ? 'border-[#0F172A]' : 'border-slate-300'}`}>
+                    {collectionMethod === 'home' && <div className="w-2 h-2 rounded-full bg-[#0F172A]" />}
                   </div>
                 </button>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setStep(1)} className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">Back</button>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setStep(1)} className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-50 cursor-pointer">Back</button>
                 <button 
                   disabled={!collectionMethod}
                   onClick={() => setStep(3)}
-                  className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-medium disabled:opacity-50 hover:bg-purple-700 transition-colors shadow-sm"
+                  className="flex-1 py-2 bg-[#0F172A] text-white rounded-xl font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 shadow-sm cursor-pointer"
                 >
                   Continue
                 </button>
@@ -228,26 +272,24 @@ export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
 
           {/* STEP 3: Select Date & Time */}
           {step === 3 && (
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div>
-                <h4 className="font-bold text-gray-900 text-lg">Step 3: Schedule</h4>
-                <p className="text-sm text-gray-500 mt-1">
-                  Select a date and time slot for your {collectionMethod === 'home' ? 'home visit' : 'lab visit'}.
-                </p>
+                <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">Step 3: Schedule</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Select a date and time slot.</p>
               </div>
 
-              <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-5">
-                  <h4 className="font-bold text-gray-900 text-lg">{monthLabel}</h4>
-                  <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
-                    <button onClick={() => { setMonthOffset(m => Math.max(0, m - 1)); setSelectedDate(null); setSelectedTime(null); }} disabled={monthOffset === 0} className="p-1.5 rounded-lg text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-30 transition-all"><ChevronLeft className="w-5 h-5" /></button>
-                    <div className="w-px h-4 bg-gray-300 mx-1"></div>
-                    <button onClick={() => { setMonthOffset(m => Math.min(2, m + 1)); setSelectedDate(null); setSelectedTime(null); }} disabled={monthOffset === 2} className="p-1.5 rounded-lg text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-30 transition-all"><ChevronRight className="w-5 h-5" /></button>
+              <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">{monthLabel}</h4>
+                  <div className="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg border border-slate-200/60">
+                    <button onClick={() => { setMonthOffset(m => Math.max(0, m - 1)); setSelectedDate(null); setSelectedTime(null); }} disabled={monthOffset === 0} className="p-1 rounded-md text-slate-700 hover:bg-white disabled:opacity-30 cursor-pointer"><ChevronLeft className="w-3.5 h-3.5" /></button>
+                    <div className="w-px h-3 bg-slate-300"></div>
+                    <button onClick={() => { setMonthOffset(m => Math.min(2, m + 1)); setSelectedDate(null); setSelectedTime(null); }} disabled={monthOffset === 2} className="p-1 rounded-md text-slate-700 hover:bg-white disabled:opacity-30 cursor-pointer"><ChevronRight className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-7 gap-y-3 gap-x-1 text-center">
-                  {['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => <div key={d} className="text-xs font-bold text-gray-400 uppercase tracking-wider pb-2">{d}</div>)}
+                <div className="grid grid-cols-7 gap-1 text-center">
+                  {['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => <div key={d} className="text-[10px] font-extrabold text-slate-400 uppercase pb-1">{d}</div>)}
                   {Array.from({ length: startDay }).map((_, i) => <div key={`empty-${i}`} />)}
                   
                   {calendarDays.map((date) => (
@@ -255,10 +297,10 @@ export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
                       key={date.dateStr}
                       disabled={!date.isAvailable}
                       onClick={() => { setSelectedDate(date.dateStr); setSelectedTime(null); }}
-                      className={`relative w-10 h-10 mx-auto rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200 ${
-                        selectedDate === date.dateStr ? 'bg-purple-600 text-white shadow-lg ring-4 ring-purple-50' 
-                        : date.isAvailable ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-500 hover:text-white' 
-                        : 'text-gray-300 bg-transparent cursor-not-allowed'
+                      className={`relative w-7 h-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-bold transition-all ${
+                        selectedDate === date.dateStr ? 'bg-[#0F172A] text-white shadow-sm cursor-pointer' 
+                        : date.isAvailable ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-[#0F172A] hover:text-white cursor-pointer' 
+                        : 'text-slate-300 bg-transparent cursor-not-allowed opacity-50'
                       }`}
                     >
                       {date.day}
@@ -267,22 +309,19 @@ export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
                 </div>
               </div>
 
-              {/* Time Slots Section */}
-              <div className="min-h-37 bg-gray-50 rounded-2xl p-5 border border-gray-100 flex flex-col justify-center">
+              <div className="min-h-24 bg-slate-50 rounded-xl p-3 border border-slate-200/60 flex flex-col justify-center">
                 {selectedDate ? (
-                  <div className="animate-in fade-in zoom-in-95 duration-200">
-                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-purple-600"/> Available Time Slots
+                  <div>
+                    <h4 className="font-bold text-[11px] text-slate-800 mb-2 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-blue-900"/> Available slots for {selectedDate}
                     </h4>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-1.5">
                       {timeSlots.map(time => (
                         <button
                           key={time}
                           onClick={() => setSelectedTime(time)}
-                          className={`py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                            selectedTime === time 
-                              ? 'bg-purple-600 text-white shadow-md ring-2 ring-purple-100 ring-offset-1' 
-                              : 'bg-white border border-gray-200 text-gray-700 hover:border-purple-300 hover:text-purple-700'
+                          className={`py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                            selectedTime === time ? 'bg-[#0F172A] text-white' : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-400'
                           }`}
                         >
                           {time}
@@ -291,102 +330,70 @@ export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-gray-400 py-6">
-                    <CalendarIcon className="w-8 h-8 mb-3 opacity-20" />
-                    <p className="text-sm font-medium">Select a date above to view slots</p>
+                  <div className="flex items-center justify-center text-slate-400 text-xs font-semibold gap-1 py-1">
+                    <CalendarIcon className="w-3.5 h-3.5 opacity-40" /> Select date to view slots
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setStep(2)} className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50">Back</button>
-                <button disabled={!selectedDate || !selectedTime} onClick={() => setStep(4)} className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-medium disabled:opacity-50 hover:bg-purple-700 shadow-sm">Continue</button>
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setStep(2)} className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-50 cursor-pointer">Back</button>
+                <button disabled={!selectedDate || !selectedTime} onClick={() => setStep(4)} className="flex-1 py-2 bg-[#0F172A] text-white rounded-xl font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 shadow-sm cursor-pointer">Continue</button>
               </div>
             </div>
           )}
 
           {/* STEP 4: Patient Details */}
           {step === 4 && (
-            <div className="space-y-6">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-purple-50/50 p-4 rounded-2xl border border-purple-100/50">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
                 <div>
-                  <h4 className="font-bold text-gray-900 text-lg">Patient Details</h4>
-                  <p className="text-sm text-gray-500">Enter details or auto-fill from your profile.</p>
+                  <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">Patient Details</h4>
+                  <p className="text-[10px] text-slate-500">Auto-fill or enter manually.</p>
                 </div>
-                <button 
-                  onClick={handleAutoFill} 
-                  className="shrink-0 flex items-center justify-center gap-2 text-sm font-bold text-purple-700 bg-white shadow-sm border border-purple-200 px-4 py-2.5 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all"
-                >
-                  <User className="w-4 h-4" /> Auto-fill Info
+                <button onClick={handleAutoFill} className="shrink-0 flex items-center gap-1 text-[11px] font-bold text-[#0F172A] bg-white shadow-sm border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer">
+                  <User className="w-3 h-3" /> Auto-fill
                 </button>
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-sm font-semibold text-gray-700">Full Name *</label>
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type="text" value={patientInfo.name} onChange={e => setPatientInfo({...patientInfo, name: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-500 hover:border-gray-300 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none" placeholder="Patient's legal name" />
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="font-bold text-slate-700 text-[11px]">Full Name *</label>
+                  <input type="text" value={patientInfo.name} onChange={e => setPatientInfo({...patientInfo, name: e.target.value})} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#0F172A] focus:border-[#0F172A] text-xs font-medium text-slate-900 shadow-sm focus:outline-none" placeholder="Legal Name" />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Age *</label>
-                  <div className="relative">
-                    <CalendarIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type="number" value={patientInfo.age} onChange={e => setPatientInfo({...patientInfo, age: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-500 hover:border-gray-300 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none" placeholder="Years" />
-                  </div>
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 text-[11px]">Age *</label>
+                  <input type="number" value={patientInfo.age} onChange={e => setPatientInfo({...patientInfo, age: e.target.value})} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#0F172A] text-xs font-medium text-slate-900 shadow-sm focus:outline-none" placeholder="Years" />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Gender *</label>
-                  <CustomSelect 
-                    value={patientInfo.gender}
-                    onChange={(val: string) => setPatientInfo({...patientInfo, gender: val})}
-                    options={["Male", "Female", "Other"]}
-                    placeholder="Select Gender"
-                  />
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700 text-[11px]">Gender *</label>
+                  <select value={patientInfo.gender} onChange={e => setPatientInfo({...patientInfo, gender: e.target.value})} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#0F172A] text-xs font-medium text-slate-900 shadow-sm focus:outline-none">
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Mobile Number *</label>
-                  <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type="tel" value={patientInfo.mobile} onChange={e => setPatientInfo({...patientInfo, mobile: e.target.value})} className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-500 hover:border-gray-300 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none" placeholder="+91" />
-                  </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="font-bold text-slate-700 text-[11px]">Mobile Number *</label>
+                  <input type="tel" value={patientInfo.mobile} onChange={e => setPatientInfo({...patientInfo, mobile: e.target.value})} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#0F172A] text-xs font-medium text-slate-900 shadow-sm focus:outline-none" placeholder="+91" />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-gray-700">Blood Group</label>
-                  <CustomSelect 
-                    value={patientInfo.bloodGroup}
-                    onChange={(val: string) => setPatientInfo({...patientInfo, bloodGroup: val})}
-                    options={["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]}
-                    placeholder="Select Type"
-                    icon={Droplet}
-                  />
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="font-bold text-slate-700 text-[11px]">Address *</label>
+                  <textarea value={patientInfo.address} onChange={e => setPatientInfo({...patientInfo, address: e.target.value})} rows={2} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-1 focus:ring-[#0F172A] text-xs font-medium text-slate-900 shadow-sm focus:outline-none resize-none" placeholder="Residential Address" />
                 </div>
-
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-sm font-semibold text-gray-700">
-                    {collectionMethod === 'home' ? 'Home Collection Address *' : 'Residential Address *'}
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-                    <textarea value={patientInfo.address} onChange={e => setPatientInfo({...patientInfo, address: e.target.value})} rows={2} className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-100 focus:border-purple-500 hover:border-gray-300 transition-all text-sm font-medium text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none resize-none" placeholder="Full address" />
-                  </div>
-                </div>
-
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <button onClick={() => setStep(3)} className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">Back</button>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setStep(3)} className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-50 cursor-pointer">Back</button>
                 <button 
                   disabled={!patientInfo.name || !patientInfo.age || !patientInfo.mobile || !patientInfo.gender || !patientInfo.address}
                   onClick={() => setStep(5)} 
-                  className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-medium disabled:opacity-50 hover:bg-purple-700 shadow-sm transition-colors"
+                  className="flex-1 py-2 bg-[#0F172A] text-white rounded-xl font-bold text-xs disabled:opacity-50 hover:bg-slate-800 shadow-sm cursor-pointer disabled:cursor-not-allowed"
                 >
                   Continue
                 </button>
@@ -394,90 +401,69 @@ export default function BookLabModal({ centre, onClose }: BookLabModalProps) {
             </div>
           )}
 
-          {/* STEP 5: Upload Prescription */}
+          {/* STEP 5: Review & Confirmation */}
           {step === 5 && (
-            <div className="space-y-6">
-              
-              <div className="space-y-3">
-                <h4 className="font-bold text-gray-900 text-lg">Step 5: Doctor's Prescription</h4>
-                <p className="text-sm text-gray-500">Upload a valid prescription. Required for most radiological and specialized tests.</p>
-                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 bg-gray-50 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition-colors cursor-pointer group mt-4">
-                  <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                    <FileText className="w-6 h-6 text-purple-600" />
+            <div className="space-y-3">
+              {bookingError && (
+                <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold">
+                  {bookingError}
+                </div>
+              )}
+
+              <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200/60 space-y-2.5 text-xs">
+                <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm border-b border-slate-200 pb-2">Booking Summary</h4>
+                
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <p className="text-slate-400 font-bold uppercase text-[9px]">Patient</p>
+                    <p className="font-extrabold text-slate-900 truncate">{patientInfo.name || "N/A"}</p>
                   </div>
-                  <p className="font-bold text-gray-900">Upload Prescription</p>
-                  <p className="text-xs text-gray-500 mt-1.5 max-w-62.5">PDF, JPG, or PNG up to 5MB.</p>
-                  <button className="mt-5 px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-purple-700 shadow-sm hover:border-purple-300">Choose File</button>
+                  <div>
+                    <p className="text-slate-400 font-bold uppercase text-[9px]">Method</p>
+                    <p className="font-extrabold text-slate-900 capitalize">{collectionMethod}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-slate-400 font-bold uppercase text-[9px]">Test / Centre</p>
+                    <p className="font-extrabold text-slate-900 truncate">{selectedTest?.name} @ {centre.name}</p>
+                  </div>
+                  <div className="col-span-2 p-2 rounded-lg border bg-white border-slate-200/80 flex justify-between items-center">
+                    <span className="font-extrabold text-blue-950 text-[11px] truncate">
+                      {selectedDate} @ {selectedTime}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
+                  <span className="text-slate-600 font-bold text-xs">Test Price</span>
+                  <span className="text-base font-black text-emerald-600">₹{selectedTest?.rate}</span>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-gray-100">
-                <button onClick={() => setStep(4)} className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">Back</button>
+              <div className="flex gap-2 pt-1">
                 <button 
-                  onClick={() => setStep(6)} 
-                  className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 shadow-sm transition-colors"
+                  disabled={isSubmitting}
+                  onClick={() => setStep(4)} 
+                  className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs disabled:opacity-50 hover:bg-slate-50 cursor-pointer"
                 >
-                  Skip or Continue
+                  Back
+                </button>
+                <button 
+                  disabled={isSubmitting}
+                  onClick={handleConfirmBooking}
+                  className="flex-1 py-2 bg-[#0F172A] text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Confirming...</span>
+                    </>
+                  ) : (
+                    <span>Confirm Booking</span>
+                  )}
                 </button>
               </div>
             </div>
           )}
-
-          {/* STEP 6: Review & Confirmation */}
-          {step === 6 && (
-            <div className="space-y-6">
-              
-              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 space-y-5">
-                <h4 className="font-bold text-gray-900 text-lg border-b border-gray-200 pb-4">Booking Summary</h4>
-                
-                <div className="grid grid-cols-2 gap-y-6 gap-x-4 text-sm">
-                  <div>
-                    <p className="text-gray-500 font-medium mb-0.5">Patient</p>
-                    <p className="font-bold text-gray-900">{patientInfo.name || "N/A"}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 font-medium mb-0.5">Lab / Diagnostic Centre</p>
-                    <p className="font-bold text-gray-900">{centre.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 font-medium mb-0.5">Test Selected</p>
-                    <p className="font-bold text-gray-900">{selectedTest?.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500 font-medium mb-0.5">Collection Method</p>
-                    <p className="font-bold text-gray-900 capitalize">{collectionMethod === 'home' ? 'Home Sample Collection' : 'Visit Diagnostic Centre'}</p>
-                  </div>
-                  <div className="col-span-2 p-3 rounded-xl border bg-white border-gray-200 flex justify-between items-center shadow-sm">
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Scheduled For</p>
-                      <p className="font-bold text-purple-700">
-                        {selectedDate} at {selectedTime}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="border-t border-gray-200 pt-4 mt-2 flex justify-between items-center">
-                  <span className="text-gray-600 font-medium">Test Price</span>
-                  <span className="text-2xl font-bold text-gray-900">₹{selectedTest?.rate}</span>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button onClick={() => setStep(5)} className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50">Back</button>
-                <button 
-                  onClick={() => {
-                    alert("Lab Test Booking Confirmed!");
-                    onClose();
-                  }}
-                  className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-bold shadow-md hover:bg-purple-700 focus:ring-4 focus:ring-purple-100 transition-all"
-                >
-                  Confirm Booking
-                </button>
-              </div>
-            </div>
-          )}
-
         </div>
       </div>
     </div>

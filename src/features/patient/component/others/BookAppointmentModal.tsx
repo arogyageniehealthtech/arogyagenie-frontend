@@ -3,17 +3,17 @@ import {
   X, Video, Building2, ChevronLeft, ChevronRight, 
   Calendar as CalendarIcon, Clock, Loader2 
 } from 'lucide-react';
-import type { Doctor, ConsultationOption } from '../../types/doctor';
-import { doctorApi } from '../../api/doctorApi'; // Import your API service
+import { doctorApi } from '../../api/doctorApi';
 
 interface BookAppointmentModalProps {
-  doctor: Doctor;
+  doctor: any;
   onClose: () => void;
-  onSuccess?: () => void; // Optional callback on successful booking
+  onSuccess?: () => void;
 }
 
 export default function BookAppointmentModal({ doctor, onClose, onSuccess }: BookAppointmentModalProps) {
   const [step, setStep] = useState(1);
+<<<<<<< HEAD
 
   const defaultFee = Number(doctor.facilityAffiliations?.[0]?.consultationFee || doctor.consultationFee || 500);
 
@@ -30,6 +30,10 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
   }, [doctor, defaultFee]);
 
   const [selectedType, setSelectedType] = useState<ConsultationOption | null>(() => consultationOptions[0] || null);
+=======
+  const [selectedMode, setSelectedMode] = useState<'VIDEO' | 'IN_PERSON' | null>(null);
+  const [selectedAffiliation, setSelectedAffiliation] = useState<any | null>(null);
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
   
   // Calendar State
   const [monthOffset, setMonthOffset] = useState(0); 
@@ -40,7 +44,14 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
 
-  // Dynamic Calendar calculations (anchored relative to current date)
+  const availableModes = Array.from(
+    new Set(doctor.facilityAffiliations?.map((opt: any) => opt.consultationModes) || [])
+  ) as ('VIDEO' | 'IN_PERSON')[];
+
+  const filteredAffiliations = doctor.facilityAffiliations?.filter(
+    (opt: any) => opt.consultationModes === selectedMode
+  ) || [];
+
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
   const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1); 
@@ -56,13 +67,18 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
   const calendarDays = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
     const dateStr = `${viewYear}-${viewMonth.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+<<<<<<< HEAD
     const isPast = dateStr < todayStr;
     const isAvailable = !isPast && (doctor.availableDates && doctor.availableDates.length > 0 ? doctor.availableDates.includes(dateStr) : true);
+=======
+    const isAvailable = doctor.availableDates ? doctor.availableDates.includes(dateStr) : true;
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
     return { day, dateStr, isAvailable };
   });
 
   const timeSlots = ["09:00 AM", "10:30 AM", "12:30 PM", "02:00 PM", "04:30 PM"];
 
+<<<<<<< HEAD
   const doctorSpecialty = doctor.specialization?.name || 
     doctor.specializations?.map(s => s.specialization?.name).filter(Boolean).join(", ") || 
     "General Physician";
@@ -70,13 +86,24 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
   const doctorFullName = `${doctor.firstName || ''} ${doctor.lastName || ''}`.trim() || 'Doctor';
 
   // Backend Booking Handler
+=======
+  const formatScheduledStart = (dateStr: string, timeStr: string) => {
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':');
+    if (modifier === 'PM' && hours !== '12') hours = (parseInt(hours, 10) + 12).toString();
+    if (modifier === 'AM' && hours === '12') hours = '00';
+    return new Date(`${dateStr}T${hours.padStart(2, '0')}:${minutes}:00Z`).toISOString();
+  };
+
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
   const handleConfirmBooking = async () => {
-    if (!selectedType || !selectedDate || !selectedTime) return;
+    if (!selectedAffiliation || !selectedDate || !selectedTime) return;
 
     setIsSubmitting(true);
     setBookingError(null);
 
     try {
+<<<<<<< HEAD
       const facilityId = doctor.facilityAffiliations?.[0]?.facilityId;
       await doctorApi.bookAppointment({
         doctorId: doctor.id,
@@ -85,6 +112,18 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
         date: selectedDate,
         time: selectedTime,
         patientDetails: undefined
+=======
+      const scheduledStart = formatScheduledStart(selectedDate, selectedTime);
+      const startDateObj = new Date(scheduledStart);
+      const scheduledEnd = new Date(startDateObj.getTime() + 30 * 60000).toISOString();
+
+      await doctorApi.bookAppointment({
+        doctorId: doctor.id,
+        facilityId: selectedAffiliation.facilityId,
+        consultationType: selectedAffiliation.consultationModes === 'IN-PERSON' ? 'VIDEO' : 'IN-PERSON',
+        scheduledStart,
+        scheduledEnd,
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
       });
 
       if (onSuccess) {
@@ -99,37 +138,46 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6">
-      <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-3 sm:p-4 font-sans overflow-y-auto">
+      <div className="bg-white rounded-2xl w-full max-w-sm sm:max-w-md overflow-hidden shadow-2xl flex flex-col my-auto max-h-[85vh] sm:max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
+<<<<<<< HEAD
         <div className="p-5 sm:p-6 border-b relative flex justify-center items-center bg-gray-50/80 shrink-0">
           <div className="text-center mt-1">
             <h2 className="font-bold text-xl sm:text-2xl text-gray-900 tracking-tight">Book Appointment</h2>
             <p className="text-sm font-medium text-gray-600 mt-1.5">
               {doctorFullName} • <span className="text-purple-600">{doctorSpecialty}</span>
+=======
+        <div className="p-3.5 sm:p-4 border-b border-slate-100 relative flex justify-center items-center bg-[#0F172A] text-white shrink-0">
+          <div className="text-center">
+            <h2 className="font-extrabold text-base sm:text-lg tracking-tight">Book Appointment</h2>
+            <p className="text-[11px] font-medium text-slate-300 mt-0.5 truncate max-w-65">
+              Dr. {doctor.firstName} {doctor.lastName} • <span className="text-blue-400 font-bold">{doctor.specializations?.[0]?.specialization?.name || doctor.department || 'General Physician'}</span>
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
             </p>
           </div>
           
           <button 
             onClick={onClose} 
             disabled={isSubmitting}
-            className="absolute right-5 top-5 p-2 bg-white border border-gray-200 shadow-sm hover:bg-red-50 hover:text-red-500 text-gray-400 rounded-full transition-all focus:outline-none disabled:opacity-50"
+            className="absolute right-3 top-3 p-1.5 bg-slate-800 border border-slate-700 shadow-2xs hover:bg-rose-500 hover:text-white text-slate-300 rounded-full transition-all focus:outline-none disabled:opacity-50"
           >
-            <X className="w-5 h-5" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto custom-scrollbar">
+        <div className="p-3 sm:p-4 overflow-y-auto space-y-3 pb-6 sm:pb-4">
           
-          {/* Step 1: Consultation Type */}
+          {/* Step 1: Select Consultation Mode */}
           {step === 1 && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h4 className="font-bold text-gray-900 text-lg">Select Consultation Type</h4>
-                <p className="text-sm text-gray-500 mt-1">Choose how you want to consult with the doctor.</p>
+                <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">Select Consultation Option</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Choose your preferred mode of consultation.</p>
               </div>
               
+<<<<<<< HEAD
               <div className="space-y-3 pt-2">
                 {consultationOptions.map((opt, idx) => {
                   const isSelected = selectedType?.mode === opt.mode;
@@ -166,13 +214,44 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
                     </button>
                   );
                 })}
+=======
+              <div className="space-y-2 pt-0.5">
+                {availableModes.map((mode, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => { setSelectedMode(mode); setSelectedAffiliation(null); }}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl border-2 text-left transition-all ${
+                      selectedMode === mode 
+                        ? 'border-blue-900 bg-blue-50/50 shadow-2xs' 
+                        : 'border-slate-200 hover:border-blue-300 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`p-2 rounded-lg shrink-0 ${selectedMode === mode ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                        {mode === "VIDEO" ? <Video className="w-4 h-4" /> : <Building2 className="w-4 h-4" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`font-extrabold text-xs sm:text-sm truncate ${selectedMode === mode ? 'text-blue-950' : 'text-slate-900'}`}>
+                          {mode === "VIDEO" ? "Video Consultation" : "In-Person Visit"}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-0.5">Available via affiliated clinics/hospitals</p>
+                      </div>
+                    </div>
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ml-2 ${
+                      selectedMode === mode ? 'border-blue-900' : 'border-slate-300'
+                    }`}>
+                      {selectedMode === mode && <div className="w-2 h-2 bg-blue-900 rounded-full" />}
+                    </div>
+                  </button>
+                ))}
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
               </div>
 
-              <div className="pt-4">
+              <div className="pt-2">
                 <button 
-                  disabled={!selectedType}
+                  disabled={!selectedMode}
                   onClick={() => setStep(2)}
-                  className="w-full py-3.5 bg-purple-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 transition-colors shadow-sm"
+                  className="w-full py-2.5 bg-[#0F172A] text-white rounded-xl font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-colors shadow-sm"
                 >
                   Continue
                 </button>
@@ -180,41 +259,96 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
             </div>
           )}
 
-          {/* Step 2: Date & Time */}
+          {/* Step 2: Select Facility / Affiliation */}
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-3">
               <div>
-                <h4 className="font-bold text-gray-900 text-lg">Step 2: Schedule</h4>
-                <p className="text-sm text-gray-500 mt-1">Select an available date and time slot.</p>
+                <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">Select Facility</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Choose location for your {selectedMode?.toLowerCase()} session.</p>
               </div>
               
-              <div className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm">
-                <div className="flex items-center justify-between mb-5">
-                  <h4 className="font-bold text-gray-900 text-lg">
+              <div className="space-y-2 pt-0.5 max-h-48 overflow-y-auto">
+                {filteredAffiliations.map((opt: any, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedAffiliation(opt)}
+                    className={`w-full flex items-center justify-between p-3 rounded-xl border-2 text-left transition-all ${
+                      selectedAffiliation?.id === opt.id 
+                        ? 'border-blue-900 bg-blue-50/50 shadow-2xs' 
+                        : 'border-slate-200 hover:border-blue-300 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`p-2 rounded-lg shrink-0 ${selectedAffiliation?.id === opt.id ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                        <Building2 className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`font-extrabold text-xs sm:text-sm truncate ${selectedAffiliation?.id === opt.id ? 'text-blue-950' : 'text-slate-900'}`}>
+                          {opt.facility?.name || opt.consultationModes}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-0.5 truncate">Dept: {opt.department || 'General'} | Pos: {opt.position || 'Consultant'}</p>
+                        <p className="text-[10px] font-black text-emerald-600 mt-0.5">Fee: ₹{opt.consultationFee}</p>
+                      </div>
+                    </div>
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ml-2 ${
+                      selectedAffiliation?.id === opt.id ? 'border-blue-900' : 'border-slate-300'
+                    }`}>
+                      {selectedAffiliation?.id === opt.id && <div className="w-2 h-2 bg-blue-900 rounded-full" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setStep(1)} className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-50 transition-colors">
+                  Back
+                </button>
+                <button 
+                  disabled={!selectedAffiliation}
+                  onClick={() => setStep(3)}
+                  className="flex-1 py-2 bg-[#0F172A] text-white rounded-xl font-bold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-colors shadow-sm"
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Date & Time */}
+          {step === 3 && (
+            <div className="space-y-3">
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">Step 3: Schedule</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Select date and time slot.</p>
+              </div>
+              
+              <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm">
                     {monthLabel}
                   </h4>
-                  <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100">
+                  <div className="flex items-center gap-1 bg-slate-50 p-0.5 rounded-lg border border-slate-200/60">
                     <button 
                       onClick={() => { setMonthOffset(m => Math.max(0, m - 1)); setSelectedDate(null); setSelectedTime(null); }}
                       disabled={monthOffset === 0}
-                      className="p-1.5 rounded-lg text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-30 transition-all"
+                      className="p-1 rounded-md text-slate-700 hover:bg-white disabled:opacity-30 transition-all"
                     >
-                      <ChevronLeft className="w-5 h-5" />
+                      <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
-                    <div className="w-px h-4 bg-gray-300 mx-1"></div>
+                    <div className="w-px h-3 bg-slate-300"></div>
                     <button 
                       onClick={() => { setMonthOffset(m => Math.min(2, m + 1)); setSelectedDate(null); setSelectedTime(null); }}
                       disabled={monthOffset === 2}
-                      className="p-1.5 rounded-lg text-gray-600 hover:bg-white hover:shadow-sm disabled:opacity-30 transition-all"
+                      className="p-1 rounded-md text-slate-700 hover:bg-white disabled:opacity-30 transition-all"
                     >
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-7 gap-y-3 gap-x-1 text-center">
+                <div className="grid grid-cols-7 gap-1 text-center">
                   {['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => (
-                    <div key={d} className="text-xs font-bold text-gray-400 uppercase tracking-wider pb-2">
+                    <div key={d} className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider pb-1">
                       {d}
                     </div>
                   ))}
@@ -227,12 +361,12 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
                       disabled={!date.isAvailable}
                       onClick={() => { setSelectedDate(date.dateStr); setSelectedTime(null); }}
                       className={`
-                        relative w-10 h-10 mx-auto rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200
+                        relative w-7 h-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-bold transition-all
                         ${selectedDate === date.dateStr 
-                          ? 'bg-purple-600 text-white shadow-md transform scale-110 ring-4 ring-purple-50' 
+                          ? 'bg-[#0F172A] text-white shadow-xs' 
                           : date.isAvailable 
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 hover:bg-emerald-500 hover:text-white' 
-                            : 'text-gray-300 bg-transparent cursor-not-allowed'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-[#0F172A] hover:text-white' 
+                            : 'text-slate-300 bg-transparent cursor-not-allowed'
                         }
                       `}
                     >
@@ -242,22 +376,22 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
                 </div>
               </div>
 
-              <div className="min-h-37 bg-gray-50 rounded-2xl p-5 border border-gray-100 flex flex-col justify-center">
+              <div className="min-h-24 bg-slate-50 rounded-xl p-3 border border-slate-200/60 flex flex-col justify-center">
                 {selectedDate ? (
-                  <div className="animate-in fade-in zoom-in-95 duration-200">
-                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-purple-600"/> 
-                      Available times for <span className="font-bold text-purple-700">{selectedDate}</span>
+                  <div>
+                    <h4 className="font-bold text-[11px] text-slate-800 mb-2 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-blue-900"/> 
+                      Slots for <span className="font-extrabold text-blue-950">{selectedDate}</span>
                     </h4>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-1.5">
                       {timeSlots.map(time => (
                         <button
                           key={time}
                           onClick={() => setSelectedTime(time)}
-                          className={`py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                          className={`py-1.5 rounded-lg text-[11px] font-bold transition-all ${
                             selectedTime === time 
-                              ? 'bg-purple-600 text-white shadow-md transform scale-[1.03] ring-2 ring-purple-100 ring-offset-1' 
-                              : 'bg-white border border-gray-200 text-gray-700 hover:border-purple-300 hover:text-purple-700'
+                              ? 'bg-[#0F172A] text-white' 
+                              : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-900'
                           }`}
                         >
                           {time}
@@ -266,42 +400,42 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-gray-400 py-6">
-                    <CalendarIcon className="w-8 h-8 mb-3 opacity-20" />
-                    <p className="text-sm font-medium">Select an available date to see times</p>
+                  <div className="flex items-center justify-center text-slate-400 text-xs font-semibold gap-1 py-1">
+                    <CalendarIcon className="w-3.5 h-3.5 opacity-40" /> Select date to view slots
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setStep(1)} className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setStep(2)} className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-50">
                   Back
                 </button>
                 <button 
                   disabled={!selectedDate || !selectedTime}
-                  onClick={() => setStep(3)}
-                  className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-medium disabled:opacity-50 hover:bg-purple-700 transition-colors shadow-sm"
+                  onClick={() => setStep(4)}
+                  className="flex-1 py-2 bg-[#0F172A] text-white rounded-xl font-bold text-xs disabled:opacity-50 hover:bg-slate-800 shadow-sm"
                 >
-                  Review Booking
+                  Review
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 3: Summary & API Trigger */}
-          {step === 3 && (
-            <div className="space-y-6">
+          {/* Step 4: Summary & API Trigger */}
+          {step === 4 && (
+            <div className="space-y-3">
               {bookingError && (
-                <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
+                <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold">
                   {bookingError}
                 </div>
               )}
 
-              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100 space-y-5">
-                <h4 className="font-bold text-gray-900 text-lg border-b border-gray-200 pb-4">Appointment Summary</h4>
+              <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200/60 space-y-2.5 text-xs">
+                <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm border-b border-slate-200 pb-2">Summary</h4>
                 
-                <div className="grid grid-cols-2 gap-y-6 gap-x-4 text-sm">
+                <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
+<<<<<<< HEAD
                     <p className="text-gray-500 font-medium mb-1">Doctor</p>
                     <p className="font-semibold text-gray-900">{doctorFullName}</p>
                   </div>
@@ -310,35 +444,52 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
                     <p className="font-semibold text-gray-900">
                       {selectedType?.mode === "VIDEO" ? "Video Consultation" : "In-Person Clinic Visit"}
                     </p>
+=======
+                    <p className="text-slate-400 font-bold uppercase text-[9px]">Doctor</p>
+                    <p className="font-extrabold text-slate-900 truncate">Dr. {doctor.firstName}</p>
                   </div>
-                  <div className="col-span-2 p-3 rounded-xl border bg-white border-gray-200 flex justify-between items-center shadow-sm">
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Scheduled For</p>
-                      <p className="font-bold text-purple-700">
-                        {selectedDate} at {selectedTime}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-slate-400 font-bold uppercase text-[9px]">Mode</p>
+                    <p className="font-extrabold text-slate-900">{selectedAffiliation?.consultationModes}</p>
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-slate-400 font-bold uppercase text-[9px]">Facility</p>
+                    <p className="font-extrabold text-slate-900 truncate">{selectedAffiliation?.facility?.name || 'Main Clinic'}</p>
+                  </div>
+                  <div className="col-span-2 p-2 rounded-lg border bg-white border-slate-200/80 flex justify-between items-center">
+                    <span className="font-extrabold text-blue-950 text-[11px] truncate">
+                      {selectedDate} @ {selectedTime}
+                    </span>
                   </div>
                 </div>
+<<<<<<< HEAD
+=======
+                
+                <div className="border-t border-slate-200 pt-2 flex justify-between items-center">
+                  <span className="text-slate-600 font-bold text-xs">Fee</span>
+                  <span className="text-base font-black text-emerald-600">₹{selectedAffiliation?.consultationFee}</span>
+                </div>
+>>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2 pt-1">
                 <button 
                   disabled={isSubmitting}
-                  onClick={() => setStep(2)} 
-                  className="px-6 py-3.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  onClick={() => setStep(3)} 
+                  className="px-4 py-2 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs disabled:opacity-50 hover:bg-slate-50"
                 >
                   Back
                 </button>
                 <button 
                   disabled={isSubmitting}
                   onClick={handleConfirmBooking}
-                  className="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-all shadow-md focus:ring-4 focus:ring-purple-100 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-2 bg-[#0F172A] text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition-all shadow-sm disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Booking...</span>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Confirming...</span>
                     </>
                   ) : (
                     <span>Confirm Booking</span>

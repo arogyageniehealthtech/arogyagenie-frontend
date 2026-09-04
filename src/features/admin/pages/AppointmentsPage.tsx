@@ -24,8 +24,8 @@ export function AdminAppointmentsPage() {
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-[180px]">
+              <Select value={selectedStatus} onValueChange={(val) => setSelectedStatus(val || "")}>
+                <SelectTrigger className="w-45">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>

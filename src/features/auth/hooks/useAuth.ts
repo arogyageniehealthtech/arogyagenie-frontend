@@ -76,6 +76,8 @@ export function useAuth() {
         }
 
         const loggedInUserType = result.user?.userType ?? "PATIENT";
+        console.log(loggedInUserType);
+        
         if (redirect) {
           const redirectPath = getRoleDashboardPath(loggedInUserType);
           navigate(redirectPath, { replace: true });
@@ -228,4 +230,4 @@ export function useAuth() {
   };
 }
 
-export default useAuth;
+export default useAuth;

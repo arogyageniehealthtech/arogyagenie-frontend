@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { 
-  Calendar, Clock, Video, MapPin, Search, CalendarDays, CheckCircle, XCircle, AlertCircle
+  Calendar, Clock, Video, MapPin, Search, CalendarDays, 
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes.constants';
-import axiosClient from '@/lib/axios';
 import { useToast } from '@/features/patient/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import appointmentApi, { type AppointmentListParams } from '../api/appointmentApi';
 
 // ==========================================
 // Types
@@ -46,8 +47,9 @@ export default function AppointmentsPage() {
   const fetchAppointments = async () => {
     try {
       setIsLoading(true);
-      const res = await axiosClient.get('/appointments');
-      const items = Array.isArray(res.data?.data) ? res.data.data : [];
+      const params: AppointmentListParams = { page: 1, limit: 50 };
+      const res = await appointmentApi.getAppointments(params);
+      const items = Array.isArray(res?.data) ? res.data : [];
 
       const formatted: PatientAppointment[] = items.map((apt: any) => {
         const start = new Date(apt.scheduledStart);
@@ -76,7 +78,6 @@ export default function AppointmentsPage() {
       setAppointments(formatted);
     } catch (err) {
       console.warn('Could not load appointments from backend:', err);
-      // Fallback initial list
       setAppointments([
         {
           id: 'apt-sample-1',
@@ -110,9 +111,7 @@ export default function AppointmentsPage() {
   const handleConfirmCancel = async () => {
     if (!targetCancelId) return;
     try {
-      await axiosClient.post(`/appointments/${targetCancelId}/cancel`, {
-        cancelReason: cancelReason || 'Cancelled by patient',
-      });
+      await appointmentApi.cancelAppointment(targetCancelId, cancelReason || 'Cancelled by patient');
       toast({
         title: 'Appointment Cancelled',
         description: 'Your appointment has been cancelled.',
@@ -156,25 +155,7 @@ export default function AppointmentsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 pt-4 sm:pt-6 pb-16 px-3 sm:px-6 font-sans">
-      {/* Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            <Calendar className="w-7 h-7 text-[#5B21B6]" />
-            My Appointments
-          </h1>
-          <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
-            Track your doctor appointments, join live video consultations, and review prescriptions.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate(ROUTES.PATIENT.FINDDOCTOR)}
-          className="px-4 py-2.5 bg-[#5B21B6] hover:bg-[#4c1d95] text-white font-bold text-xs rounded-xl shadow-md transition-all self-start sm:self-auto"
-        >
-          Book New Doctor
-        </button>
-      </div>
-
+      
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
         {/* Tabs with Counts */}
@@ -188,14 +169,15 @@ export default function AppointmentsPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-1.5 ${
+              disabled={isLoading}
+              className={`whitespace-nowrap px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed ${
                 activeTab === tab.id 
                   ? 'bg-[#5B21B6] text-white border-[#5B21B6] shadow-sm' 
                   : 'bg-white text-slate-700 border-slate-200 hover:border-[#5B21B6]/40 hover:text-[#5B21B6]'
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`px-1.5 py-0.2 rounded-md text-[11px] font-extrabold ${
+              <span className={`px-1.5 py-0.5 rounded-md text-[11px] font-extrabold ${
                 activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
               }`}>
                 {tab.count}
@@ -205,7 +187,7 @@ export default function AppointmentsPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full sm:w-64 shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 
             type="text"
@@ -230,7 +212,7 @@ export default function AppointmentsPage() {
               <CalendarDays className="w-7 h-7 text-slate-300" />
             </div>
             <h3 className="font-bold text-slate-900 text-sm">No appointments found</h3>
-            <p className="text-xs font-medium text-slate-500 mt-0.5 max-w-xs">You don't have any appointments matching this category.</p>
+            <p className="text-xs font-medium text-slate-500 mt-0.5 max-w-xs">You don't have any appointments matching this category or search.</p>
           </div>
         ) : (
           filteredAppointments.map(apt => {

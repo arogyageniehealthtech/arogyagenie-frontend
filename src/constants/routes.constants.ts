@@ -1,3 +1,4 @@
+import type { DoctorSearchParams } from "@/features/patient/api/doctorApi";
 
 
 export const ROUTES = {
@@ -27,16 +28,34 @@ export const ROUTES = {
     FINDDOCTOR: '/finddoctor',
     LAB: '/lab',
     MEDICINE: '/medicine',
+    DOCTOR:'/doctors',
     MEDICINE_ORDERS: '/patient/medicine-orders',
     PRESCRIBTION:'/patient/Prescriptions',
     LAB_REPORTS:'/patient/lab_report',
     CART_ITEMS:'/patient/cart_item',
     EMERGENCY: '/ambulance',
     ASSISTANT: '/assistant',
+    CHECKOUT:'/patient/checkout',
+    PHARMACY_SELECT:'/patient/pharmacy-select'
   },
+  APPOINTMENT:{
+    CREATE_APPOINTMENT:'/appointment',
+    ALL_APPOINTMENT:'./appointment',
+    CANCEL_APPOINTMMENT:(id:string) => `/appoointment/${id}/cancel`,
+    RESCHEDULE_APPOINTMENT: (id:string)=>`/appintment/${id}/rescheduleAppointment`
 
+  },
+  PRESCRIPTION:{
+    CREATE_PRESCRIPTION:'/prescriptions',
+    ALL_PRESCRIPTION:'/prescription/me',
+    GET_PRESCRIPTION_ID:(prescriptionId:string)=>`prescriptions/${prescriptionId}`,
+  }
+  ,
+  LARORARIES:{
+    LAB_REPORT:'/lab-reports'
+  },
   DOCTOR: {
-    DASHBOARD: '/doctor-dashboard',
+    DASHBOARD: '/doctor/dashboard',
     APPOINTMENTS: '/doctor/appointments',
     PATIENTS: '/doctor/patients',
     PRESCRIPTIONS: '/doctor/prescriptions',
@@ -44,6 +63,26 @@ export const ROUTES = {
     SCHEDULE: '/doctor/schedule',
     VIDEO_CALL: '/doctor/video-call/:appointmentId',
   },
+  INVITATIOIN:{
+    SEND_INVITATION:(organizationId :string)=>`/invitations/organizations/${organizationId}/invite`,
+    ACCEPT_INVITATION:'/accept-invite'
+  },
+  ORGANIZATION:{
+    HOSPITAL:{
+      ALL_HOSPITAL:(organizationId :string)=> `organizations/${organizationId}/hospitals`,
+    },
+    CLINIC:{
+      ALL_CLINIC:(organizationId :string)=> `organizations/${organizationId}/clinics`,
+    },
+    LABROTARY:{
+      ALL_LABROTARY:(organizationId :string)=> `organizations/${organizationId}/pharmacy/requests`,
+    },
+    PHARMACY:{
+      ALL_PHARMACY:(organizationId :string)=> `organizations/${organizationId}/hospitals`,
+
+    }
+  },
+
 
   ADMIN: {
     DASHBOARD: '/admin/dashboard',

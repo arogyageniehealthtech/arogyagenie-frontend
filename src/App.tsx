@@ -11,7 +11,7 @@ import { store } from './store/index.ts';
 import { useAppDispatch } from './store/hooks.ts';
 import { initializeAuth } from './store/slices/authSlice.ts';
 import { FloatingHealthAssistant } from './components/health/FloatingHealthAssistant';
-
+import {PartnerProviderContext} from '@/features/partner/context/PartnerContext.tsx'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -41,13 +41,13 @@ function AuthSessionInitializer() {
 
 export default function App() {
   return (
+    <PartnerProviderContext>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''}>
       <ErrorBoundary>
         <ReduxProvider store={store}>
           <QueryClientProvider client={queryClient}>
             <AuthSessionInitializer />
             <RouterProvider router={router} />
-            
             <Toaster 
               position="top-right" 
               toastOptions={{
@@ -69,6 +69,7 @@ export default function App() {
         </ReduxProvider>
       </ErrorBoundary>
     </GoogleOAuthProvider>
+    </PartnerProviderContext>
   );
 }
-
+

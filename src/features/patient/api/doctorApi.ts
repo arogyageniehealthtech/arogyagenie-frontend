@@ -1,9 +1,11 @@
+
+import { ROUTES } from '@/constants/routes.constants';
 import axiosClient from '../../../lib/axios';
 import type { Doctor } from '../types/doctor';
 
 export interface DoctorSearchParams {
-  query?: string;
-  specialty?: string | null;
+  search?: string;
+  specializationId?: string | null;
   radius?: number;
   location?: {
     lat?: number;
@@ -14,23 +16,20 @@ export interface DoctorSearchParams {
 export interface AppointmentPayload {
   doctorId: string;
   facilityId?: string;
-  consultationType: "IN_PERSON" | "VIDEO";
-  date: string;
-  time: string;
+  consultationType: "IN-PERSON" | "VIDEO";
+  date?: string;
+  scheduledStart: string;
+  scheduledEnd?: string;
   patientId?: string;
   patientDetails?: any;
 }
 
 export const doctorApi = {
   // Get list of doctors with optional filters
-  getDoctors: async (params: DoctorSearchParams): Promise<{ data: Doctor[] } | Doctor[]> => {
-    try {
-      const response = await axiosClient.get('/doctors', { params });
-      return response.data;
-    } catch (e) {
-      console.warn("Failed to fetch doctors from /doctors:", e);
-      return [];
-    }
+  getDoctors: async (params: DoctorSearchParams): Promise<Doctor[]> => {
+    console.log(params)
+    const response = await axiosClient.get(ROUTES.PATIENT.DOCTOR,{params});
+    return response.data;
   },
 
   // Get a single doctor's full profile
@@ -54,8 +53,8 @@ export const doctorApi = {
       let hours = 10;
       let minutes = 0;
 
-      if (payload.time.includes(":")) {
-        const [timePart, meridiem] = payload.time.split(" ");
+      if (payload.scheduledStart.includes(":")) {
+        const [timePart, meridiem] = payload.scheduledStart.split(" ");
         const [h, m] = timePart.split(":").map(Number);
         hours = h;
         minutes = m || 0;
