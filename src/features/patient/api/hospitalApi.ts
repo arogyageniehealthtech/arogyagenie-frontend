@@ -22,8 +22,15 @@ export interface BedBookingPayload {
 
 export const hospitalApi = {
   // Fetch hospitals based on search criteria
-  getHospitals: (params?: HospitalSearchParams): Promise<Hospital[]> => {
-    return axiosClient.get('/hospitals', { params });
+  getHospitals: async(params?: HospitalSearchParams): Promise<Hospital[]> => {
+    const response = await axiosClient('/locations/nearby-facilities',{params:{
+        // latitude: params?.lat,
+        // longitude: params?.lng,
+        radiusKm: params?.radiusKm ?? 100,
+        type: 'HOSPITAL',
+        limit: 50
+      }})
+    return response.data;
   },
 
   // Fetch detailed hospital info (including live bed count)

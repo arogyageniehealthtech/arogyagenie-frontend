@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, MapPin, CreditCard, CheckCircle2, Trash2, Plus, Minus, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, CreditCard, CheckCircle2, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 import { selectCartItems, updateQuantity, removeItem, clearCart } from '@/store/slices/cartSlice';
@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { pharmacyApi } from '../api/pharmacyApi';
+import { ROUTES } from '@/constants/routes.constants';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -23,19 +25,25 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
-  // Dynamic Calculation: Since user might change quantity in checkout, 
-  // we calculate total by finding the specific discount percent for each item from the quotation.
+  // Form State
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    address: ''
+  });
+
+  // Dynamic Calculation
   let rawSubtotal = 0;
   let discountedSubtotal = 0;
 
   cartItems.forEach((item: any) => {
+    const medId = item.medicineId || item.id;
     // Find if this item had a specific discount in the quotation
-    const quotedItem = quotation?.items?.find((q: any) => q.medicineId === item.medicineId);
+    const quotedItem = quotation?.items?.find((q: any) => q.medicineId === medId);
     
-    // Default to 0% discount if not in quote (fallback)
-    const itemDiscountPercent = quotedItem?.discountPercent ?? 0;
-    
-    const originalPrice = item.unitPrice ?? item.medicine?.price ?? 0;
+    // Fallbacks
+    const itemDiscountPercent = quotedItem?.disc ?? quotation?.totalDisc ?? 0;
+    const originalPrice = item.unitPrice ?? item.medicine?.price ?? item.price ?? 0;
     const discountedPrice = originalPrice * (1 - itemDiscountPercent / 100);
     
     rawSubtotal += originalPrice * item.quantity;
@@ -43,22 +51,32 @@ export default function CheckoutPage() {
   });
 
   const totalDiscountSaved = rawSubtotal - discountedSubtotal;
-  
-  // Free shipping over ₹500
   const shippingFee = discountedSubtotal > 500 ? 0 : 40; 
   const finalTotal = discountedSubtotal + shippingFee;
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cartItems.length === 0) return;
 
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+
+    try {
+      if (quotation?.id && !quotation.id.startsWith('MOCK')) {
+        // Accept the real API offer if an offerId exists
+        await pharmacyApi.acceptOffer(quotation.id);
+      } else {
+        // Fallback for mock flow: simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+
       setOrderPlaced(true);
       dispatch(clearCart());
       toast.success('Order placed successfully!');
-    }, 1500);
+    } catch (error) {
+      toast.error('Failed to place order. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (orderPlaced) {
@@ -69,8 +87,8 @@ export default function CheckoutPage() {
             <CheckCircle2 className="w-10 h-10" />
           </motion.div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Order Confirmed!</h2>
-          <p className="text-slate-500 text-sm mb-8">Your medicines will be delivered safely. You will receive an SMS with tracking details shortly.</p>
-          <Button onClick={() => navigate('/medicines')} className="w-full bg-indigo-600 hover:bg-indigo-700 py-6 rounded-xl font-bold">Back to Pharmacy</Button>
+          <p className="text-slate-500 text-sm mb-8">Your medicines will be delivered safely to {formData.address}. You will receive tracking details shortly.</p>
+          <Button onClick={() => navigate(ROUTES.PATIENT.MEDICINE)} className="w-full bg-indigo-600 hover:bg-indigo-700 py-6 rounded-xl font-bold">Back to Pharmacy</Button>
         </div>
       </div>
     );
@@ -84,7 +102,7 @@ export default function CheckoutPage() {
           <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-slate-200/60 max-w-2xl mx-auto flex flex-col items-center">
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4"><ShoppingBag className="w-8 h-8 text-slate-300" /></div>
             <h2 className="text-xl font-bold text-slate-900">Your cart is empty</h2>
-            <Button onClick={() => navigate('/medicines')} className="mt-6 bg-indigo-600 hover:bg-indigo-700 rounded-xl px-8">Browse Medicines</Button>
+            <Button onClick={() => navigate(ROUTES.PATIENT.MEDICINE)} className="mt-6 bg-indigo-600 hover:bg-indigo-700 rounded-xl px-8">Browse Medicines</Button>
           </div>
         </div>
       </div>
@@ -110,16 +128,16 @@ export default function CheckoutPage() {
               <div className="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-6"><MapPin className="w-5 h-5 text-indigo-600" /> Delivery Details</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5"><Label className="text-slate-600">Full Name</Label><Input required placeholder="John Doe" className="bg-slate-50" /></div>
-                  <div className="space-y-1.5"><Label className="text-slate-600">Phone</Label><Input required type="tel" placeholder="+91 98765 43210" className="bg-slate-50" /></div>
-                  <div className="space-y-1.5 sm:col-span-2"><Label className="text-slate-600">Address</Label><Input required placeholder="House/Flat No., Street" className="bg-slate-50" /></div>
+                  <div className="space-y-1.5"><Label className="text-slate-600">Full Name</Label><Input required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} placeholder="John Doe" className="bg-slate-50" /></div>
+                  <div className="space-y-1.5"><Label className="text-slate-600">Phone</Label><Input required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} type="tel" placeholder="+91 98765 43210" className="bg-slate-50" /></div>
+                  <div className="space-y-1.5 sm:col-span-2"><Label className="text-slate-600">Address</Label><Input required value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} placeholder="House/Flat No., Street" className="bg-slate-50" /></div>
                 </div>
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-6"><CreditCard className="w-5 h-5 text-indigo-600" /> Payment Method</h3>
                 <RadioGroup defaultValue="cod" className="gap-3">
-                  <Label htmlFor="cod" className="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-slate-50 has-[[data-state=checked]]:border-indigo-600 has-[[data-state=checked]]:bg-indigo-50/50">
+                  <Label htmlFor="cod" className="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-slate-50 has-data-[state=checked]:border-indigo-600 has-data-[state=checked]:bg-indigo-50/50">
                     <RadioGroupItem value="cod" id="cod" className="text-indigo-600 mr-3" />
                     <div><p className="font-bold text-slate-900">Cash on Delivery</p><p className="text-xs text-slate-500">Pay when order arrives</p></div>
                   </Label>
@@ -133,7 +151,7 @@ export default function CheckoutPage() {
               <h3 className="text-lg font-bold text-slate-900 mb-6">Order Summary</h3>
               {quotation && (
                 <div className="mb-4 bg-indigo-50 text-indigo-700 p-3 rounded-xl text-xs font-bold border border-indigo-100 flex justify-between">
-                  <span>Fulfilling via: {quotation.pharmacy.name}</span>
+                  <span>Fulfilling via: {quotation.p?.name || quotation.pharmacy?.name || 'Selected Pharmacy'}</span>
                   <span>{quotation.eta}</span>
                 </div>
               )}
@@ -141,17 +159,20 @@ export default function CheckoutPage() {
               <div className="space-y-4 max-h-[35vh] overflow-y-auto pr-2">
                 <AnimatePresence>
                   {cartItems.map((item: any) => {
-                    const quotedItem = quotation?.items?.find((q: any) => q.medicineId === item.medicineId);
-                    const discountPercent = quotedItem?.discountPercent ?? 0;
-                    const originalPrice = item.unitPrice ?? item.medicine?.price ?? 0;
+                    const medId = item.medicineId || item.id;
+                    const quotedItem = quotation?.items?.find((q: any) => q.medicineId === medId);
+                    const discountPercent = quotedItem?.disc ?? quotation?.totalDisc ?? 0;
+                    
+                    const originalPrice = item.unitPrice ?? item.medicine?.price ?? item.price ?? 0;
                     const discountedPrice = originalPrice * (1 - discountPercent / 100);
+                    const medicineName = item.medicine?.name || item.name || 'Medicine';
 
                     return (
-                      <motion.div key={item.medicineId} layout exit={{ opacity: 0 }} className="flex gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50/50">
+                      <motion.div key={medId} layout exit={{ opacity: 0 }} className="flex gap-4 p-3 rounded-xl border border-slate-100 bg-slate-50/50">
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start gap-2">
-                            <h4 className="font-bold text-xs text-slate-900">{item.medicine?.name || 'Medicine'}</h4>
-                            <button onClick={() => dispatch(removeItem(item.medicineId))} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <h4 className="font-bold text-xs text-slate-900">{medicineName}</h4>
+                            <button onClick={() => dispatch(removeItem(medId))} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                           </div>
                           
                           {/* Itemized Discount Info */}
@@ -170,9 +191,9 @@ export default function CheckoutPage() {
                             </div>
 
                             <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-0.5">
-                              <button onClick={() => dispatch(updateQuantity({ medicineId: item.medicineId, quantity: item.quantity - 1 }))} className="w-6 h-6 flex items-center justify-center text-slate-500"><Minus className="w-3 h-3" /></button>
+                              <button onClick={() => dispatch(updateQuantity({ medicineId: medId, quantity: item.quantity - 1 }))} className="w-6 h-6 flex items-center justify-center text-slate-500"><Minus className="w-3 h-3" /></button>
                               <span className="text-[11px] font-bold w-4 text-center">{item.quantity}</span>
-                              <button onClick={() => dispatch(updateQuantity({ medicineId: item.medicineId, quantity: item.quantity + 1 }))} className="w-6 h-6 flex items-center justify-center text-slate-500"><Plus className="w-3 h-3" /></button>
+                              <button onClick={() => dispatch(updateQuantity({ medicineId: medId, quantity: item.quantity + 1 }))} className="w-6 h-6 flex items-center justify-center text-slate-500"><Plus className="w-3 h-3" /></button>
                             </div>
                           </div>
                         </div>

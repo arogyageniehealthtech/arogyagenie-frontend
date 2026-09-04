@@ -5,17 +5,11 @@ export interface MedicineItem {
   id: string;
   name: string;
   quantity: number;
-  dosage: string;
-<<<<<<< HEAD
-=======
-  price: number;
-  composition: string;
-  packSize: string;
->>>>>>> bf712cdfb9b971cae5afc9a392adcfd638f5cdf2
   form: string;
   requiresPrescription: boolean;
-  price?: number;        // Optional
-  composition?: string;  // Optional
+  dosage?: string;
+  price?: number;
+  composition?: string;
   packSize?: string;
 }
 

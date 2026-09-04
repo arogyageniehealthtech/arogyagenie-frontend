@@ -272,14 +272,12 @@ export default function DoctorDiscoveryPage() {
   const locationState = useAppSelector((state) => state.location);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
-  const [radius, setRadius] = useState<number>(32);
+  const [radiusKm, setRadiusKm] = useState<number>(32);
   const [bookingDoctor, setBookingDoctor] = useState<Doctor | null>(null);
   
   const [showLocationOptions, setShowLocationOptions] = useState(false);
   const [showCustomLocationModal, setShowCustomLocationModal] = useState(false);
   const locationButtonRef = useRef<HTMLButtonElement | null>(null);
-  
-  const RADIUS_PRESETS = [2, 4, 8, 16, 32];
 
   // Automatically fetch browser location on mount if not already present
   useEffect(() => {
@@ -310,19 +308,14 @@ export default function DoctorDiscoveryPage() {
         const queryParams = {
           search: searchQuery,
           specializationId: selectedSpecialty,
-          radius,
+          radius: radiusKm,
           location: activeCoordinates ? {
             lat: activeCoordinates.lat,
             long: activeCoordinates.lng,
           } : undefined,
         };
 
-
         const response: any = await doctorApi.getDoctors(queryParams);
-        console.log(queryParams.location);
-        console.log(response);
-
-        
         let doctorsList: Doctor[] = [...response.data];
 
         if (isMounted) {
@@ -348,7 +341,7 @@ export default function DoctorDiscoveryPage() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [searchQuery, selectedSpecialty, radius, activeCoordinates]);
+  }, [searchQuery, selectedSpecialty, radiusKm, activeCoordinates]);
 
   const safeDoctorList = Array.isArray(filteredDoctors) ? filteredDoctors : [];
 
@@ -360,135 +353,105 @@ export default function DoctorDiscoveryPage() {
   return (
     <div className="min-h-screen flex flex-col font-sans relative bg-[#F1F5F9]">
       <div className="relative z-10 flex flex-col flex-1">
-        <main className="flex-1 max-w-7xl mx-auto w-full px-1.5 md:px-3 py-1.5 md:py-3 flex flex-col gap-2.5">
+        <main className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-2">
           
-          <section className="relative z-25 w-full bg-white px-3 py-2.5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col gap-2.5 transition-all">
-            <div className="flex flex-row gap-2 items-center">
-              
-              <div className="relative flex-1 group h-9 md:h-10">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className={`w-4 h-4 transition-colors ${searchQuery ? 'text-[#5B21B6]' : 'text-gray-400'}`} />
-                </div>
-                <input 
-                  type="text" 
-                  placeholder="Search hospitals, emergency care..." 
-                  className="w-full h-full pl-10 pr-8 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] text-[#13102F] text-xs md:text-sm font-medium transition-all shadow-inner" 
-                  value={searchQuery} 
-                  onChange={(e) => setSearchQuery(e.target.value)} 
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+          {/* SEARCH & FILTER SECTION - Balanced Layout with Compact Select */}
+          <section className="relative z-25 w-full bg-white px-2 py-2 shadow-sm border border-slate-200/80 rounded-lg flex flex-col lg:flex-row items-center gap-2.5 transition-all">
+            
+            {/* Search Input */}
+            <div className="relative w-full lg:flex-1 h-8 min-w-50">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                <Search className={`w-3.5 h-3.5 transition-colors ${searchQuery ? 'text-[#5B21B6]' : 'text-slate-400'}`} />
               </div>
-
-              <div className="relative z-50 w-27.5 sm:w-35 md:w-48 h-9 md:h-10 shrink-0 text-xs">
-                <CustomSelect 
-                  value={selectedSpecialty || ""} 
-                  onChange={(val) => setSelectedSpecialty(val === "All Specialties" ? null : val)} 
-                  options={["All Specialties", ...DOCTOR_SPECIALTIES]} 
-                  placeholder="Specialty" 
-                />
-              </div>
-
-              <div className="relative shrink-0">
-                <button 
-                  ref={locationButtonRef}
-                  onClick={() => setShowLocationOptions(!showLocationOptions)}
-                  className="h-10 md:h-11 px-3.5 md:px-5 flex items-center justify-center gap-1.5 rounded-2xl font-bold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-md hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70 whitespace-nowrap"
-                  title="Location options"
-                  disabled={isLocating}
-                >
-                  {isLocating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <MapPin className="w-4 h-4" />
-                  )}
-                  <span className="hidden md:inline">{isLocating ? 'Locating...' : 'Location'}</span>
-                  <ChevronDown className="w-3.5 h-3.5 hidden md:inline" />
+              <input 
+                type="text" 
+                placeholder="Search doctors, specialties..." 
+                className="w-full h-full pl-8 pr-7 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5B21B6] focus:border-[#5B21B6] text-[#13102F] text-xs font-medium transition-all" 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600">
+                  <X className="w-3.5 h-3.5" />
                 </button>
-
-                <LocationOptionsDropdown
-                  isOpen={showLocationOptions}
-                  isLocating={isLocating}
-                  onCurrentLocation={fetchLocation}
-                  onCustomLocation={() => setShowCustomLocationModal(true)}
-                  onClose={() => setShowLocationOptions(false)}
-                  buttonRef={locationButtonRef}
-                />
-              </div>
+              )}
             </div>
 
-            {locationError && (
-              <div className="text-[11px] text-rose-600 bg-rose-50 px-3 py-1 rounded-lg border border-rose-100 font-medium">
-                {locationError}
-              </div>
-            )}
+            {/* Desktop Divider */}
+            <div className="hidden lg:block w-px h-5 bg-slate-200 shrink-0"></div>
 
-            {apiError && (
-              <div className="text-[11px] text-rose-600 bg-rose-50 px-3 py-1 rounded-lg border border-rose-100 font-medium">
-                {apiError}
-              </div>
-            )}
-
-            <div className="pt-2 border-t border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-              <div className="flex items-center justify-between lg:justify-start gap-2.5 w-full lg:w-auto">
-                <span className="text-slate-700 font-bold text-xs">Radius:</span>
-                <div className="bg-[#5B21B6]/10 text-[#5B21B6] px-2 py-0.5 rounded-lg text-xs font-bold border border-[#5B21B6]/20">{radius} km</div>
-              </div>
-              
-              <div className="flex-1 flex items-center gap-2 w-full lg:max-w-sm">
-                <input 
-                  type="range" 
-                  min="2" 
-                  max="32" 
-                  step="2" 
-                  value={radius} 
-                  onChange={(e) => setRadius(Number(e.target.value))} 
-                  className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#5B21B6]" 
-                />
-              </div>
-
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 lg:pb-0 scrollbar-hide w-full lg:w-auto">
-                {RADIUS_PRESETS.map((preset) => (
-                  <button 
-                    key={preset} 
-                    onClick={() => setRadius(preset)} 
-                    className={`whitespace-nowrap px-3 py-1 text-xs font-semibold rounded-xl border transition-all ${
-                      radius === preset ? 'bg-[#5B21B6] text-white border-[#5B21B6] shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:border-[#5B21B6]/40 hover:text-[#5B21B6]'
-                    }`}
-                  >
-                    {preset} km
-                  </button>
-                ))}
-              </div>
+            {/* Specialty Filter */}
+            <div className="relative z-50 w-full lg:w-40 shrink-0">
+              <CustomSelect 
+                value={selectedSpecialty || ""} 
+                onChange={(val) => setSelectedSpecialty(val === "All Specialties" ? null : val)} 
+                options={["All Specialties", ...DOCTOR_SPECIALTIES]} 
+                placeholder="Specialty" 
+              />
             </div>
 
+            {/* Desktop Divider */}
+            <div className="hidden lg:block w-px h-5 bg-slate-200 shrink-0"></div>
+
+            {/* Radius Horizontal Bar & Label */}
+            <div className="flex items-center justify-between lg:justify-start gap-2 w-full lg:w-56 h-8 shrink-0 px-2.5 bg-slate-50/80 rounded-lg border border-slate-100">
+              <span className="text-slate-500 font-semibold text-[11px] whitespace-nowrap">Radius:</span>
+              <input 
+                type="range" 
+                min="2" max="32" step="2" 
+                value={radiusKm} 
+                onChange={(e) => setRadiusKm(Number(e.target.value))} 
+                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#5B21B6]" 
+              />
+              <span className="text-[#5B21B6] text-[11px] font-bold min-w-9 text-right shrink-0">
+                {radiusKm} km
+              </span>
+            </div>
+
+            {/* Location Button */}
+            <div className="relative w-full lg:w-auto shrink-0">
+              <button 
+                ref={locationButtonRef}
+                onClick={() => setShowLocationOptions(!showLocationOptions)}
+                disabled={isLocating}
+                className="w-full lg:w-auto shrink-0 h-8 px-3.5 flex items-center justify-center gap-1.5 rounded-lg font-bold transition-all text-[11px] bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-sm hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70"
+                title="Location options"
+              >
+                {isLocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
+                <span>{isLocating ? 'Locating...' : 'Location'}</span>
+                <ChevronDown className="w-3 h-3 ml-0.5" />
+              </button>
+
+              <LocationOptionsDropdown
+                isOpen={showLocationOptions}
+                isLocating={isLocating}
+                onCurrentLocation={fetchLocation}
+                onCustomLocation={() => setShowCustomLocationModal(true)}
+                onClose={() => setShowLocationOptions(false)}
+                buttonRef={locationButtonRef}
+              />
+            </div>
           </section>
 
-          <div className="flex flex-col lg:flex-row gap-3 items-start w-full relative pt-1">
-            
+          {/* RESULTS & MAP SECTION */}
+          <div className="flex flex-col lg:flex-row gap-3 items-start w-full relative">
             <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
-              
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  {safeDoctorList.length} {safeDoctorList.length === 1 ? 'Result' : 'Results'} Found
+                  {isLoading ? 'Searching doctors...' : `${safeDoctorList.length} ${safeDoctorList.length === 1 ? 'Result' : 'Results'} Found`}
                 </h2>
               </div>
 
               {isLoading ? (
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm flex flex-col items-center justify-center gap-2">
-                  <Loader2 className="w-6 h-6 text-[#5B21B6] animate-spin" />
-                  <p className="text-xs font-semibold text-slate-600">Loading doctors...</p>
+                <div className="bg-white border border-slate-200 p-8 rounded-xl text-center shadow-sm flex flex-col items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#5B21B6] mb-2" />
+                  <p className="text-xs text-slate-500 font-medium">Fetching doctor results from API...</p>
                 </div>
               ) : safeDoctorList.length === 0 ? (
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center shadow-sm">
+                <div className="bg-white border border-slate-200 p-6 rounded-xl text-center shadow-sm">
                   <Search className="w-6 h-6 text-slate-400 mx-auto mb-2" />
                   <h3 className="text-sm font-bold text-slate-900 mb-1">No doctors found</h3>
-                  <button onClick={() => { setSearchQuery(""); setSelectedSpecialty(null); setRadius(32); }} className="text-[#5B21B6] text-xs font-bold hover:underline">
-                    Reset Search Filters
-                  </button>
+                  <button onClick={() => { setSearchQuery(""); setSelectedSpecialty(null); setRadiusKm(32); }} className="text-[#5B21B6] text-xs font-bold hover:underline">Reset Search Filters</button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 pb-4">
@@ -499,7 +462,7 @@ export default function DoctorDiscoveryPage() {
               )}
             </div>
             
-            <div className="w-full lg:flex-1 lg:sticky lg:top-22.5 z-10 rounded-2xl overflow-hidden shadow-sm border border-slate-200 h-65 sm:h-80 lg:h-[calc(100vh-140px)] lg:max-h-150">
+            <div className="w-full lg:flex-1 lg:sticky lg:top-20 z-10 overflow-hidden rounded-xl shadow-sm border border-slate-200 h-64 sm:h-80 lg:h-[calc(100vh-100px)] lg:max-h-150">
               <MapContainer
                 centerCoordinates={activeCoordinates ? { lat: activeCoordinates.lat, lng: activeCoordinates.lng } : undefined}
                 locations={safeDoctorList
@@ -515,14 +478,13 @@ export default function DoctorDiscoveryPage() {
                     return { ...d, lat, lng, category: 'doctor' as const };
                   })
                   .filter((d): d is NonNullable<typeof d> => d !== null)}
-                radiusKm={radius}
+                radiusKm={radiusKm}
               />
             </div>
-
           </div>
         </main>
       </div>
-
+       
       {bookingDoctor && <BookAppointmentModal doctor={bookingDoctor} onClose={() => setBookingDoctor(null)} />}
       
       <CustomLocationModal

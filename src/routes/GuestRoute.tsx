@@ -1,37 +1,21 @@
-// import { Navigate, Outlet } from 'react-router';
-// import { useAppSelector } from '../store/hooks';
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAppSelector } from '../store/hooks';
+import { getRoleDashboardPath } from '../features/auth/hooks/useAuth';
 
+interface GuestRouteProps {
+  children?: React.ReactNode;
+}
 
-// export const GuestRoute = () => {
-  
-//   const { isAuthenticated, userType } = useAppSelector((state) => state.auth);
-//   if (isAuthenticated) {
-  
-//     let dashboardPath = '/dashboard';
+export const GuestRoute: React.FC<GuestRouteProps> = ({ children }) => {
+  const { isAuthenticated, userType, AccessToken } = useAppSelector((state) => state.auth);
 
-//     switch (userType) {
-//       case 'PATIENT':
-//         dashboardPath = '/dashboard';
-//         break;
-//       case 'DOCTOR':
-//         dashboardPath = '/doctor-dashboard';
-//         break;
-//       case 'SYSTEM_ADMIN':
-//         dashboardPath = '/admin-dashboard';
-//         break;
-//       case 'LAB':
-//       case 'PHARMACY':
-//       case 'HOSPITAL_ADMIN':
-       
-//         dashboardPath = `/${userType.toLowerCase().replace('_', '-')}-dashboard`;
-//         break;
-//       default:
-//         dashboardPath = '/dashboard';
-//         break;
-//     }
+  if (isAuthenticated && AccessToken) {
+    const dashboardPath = getRoleDashboardPath(userType);
+    return <Navigate to={dashboardPath} replace />;
+  }
 
-//     return <Navigate to={dashboardPath} replace />;
-//   }
+  return children ? <>{children}</> : <Outlet />;
+};
 
-//   return <Outlet />;
-// };
+export default GuestRoute;

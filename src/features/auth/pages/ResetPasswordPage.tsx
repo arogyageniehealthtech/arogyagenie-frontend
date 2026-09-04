@@ -11,33 +11,36 @@ export function ResetPasswordPage() {
   const { resetPassword, isLoading, error, clearError } = useAuth();
 
   const queryParams = new URLSearchParams(location.search);
-  const emailParam = queryParams.get("email") || "";
+  const tokenParam = queryParams.get("token") || "";
 
-  const [emailOrPhone, setEmailOrPhone] = useState(emailParam);
-  const [tokenOrOtp, setTokenOrOtp] = useState("");
+  const [tokenOrOtp, setTokenOrOtp] = useState(tokenParam);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 10) return "New password must be at least 10 characters long.";
+    if (!/[a-z]/.test(pwd)) return "New password must contain at least one lowercase letter.";
+    if (!/[A-Z]/.test(pwd)) return "New password must contain at least one uppercase letter.";
+    if (!/[0-9]/.test(pwd)) return "New password must contain at least one digit.";
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
     clearError();
-
-    if (!emailOrPhone.trim()) {
-      setValidationError("Please specify your email or phone.");
-      return;
-    }
 
     if (!tokenOrOtp.trim()) {
       setValidationError("Please enter the recovery code/token received.");
       return;
     }
 
-    if (newPassword.length < 6) {
-      setValidationError("New password must be at least 6 characters long.");
+    const pwdError = validatePassword(newPassword);
+    if (pwdError) {
+      setValidationError(pwdError);
       return;
     }
 
@@ -48,13 +51,17 @@ export function ResetPasswordPage() {
 
     try {
       await resetPassword({
-        emailOrPhone: emailOrPhone.trim(),
-        tokenOrOtp: tokenOrOtp.trim(),
+        token: tokenOrOtp.trim(),
         newPassword,
       });
       setIsSuccess(true);
-    } catch {
-      // Handled via auth hook state
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Password reset failed. Please check your token.";
+      setValidationError(msg);
     }
   };
 
@@ -110,44 +117,36 @@ export function ResetPasswordPage() {
       ) : (
         /* Form */
         <form onSubmit={handleSubmit} className="space-y-3">
-          {!emailParam && (
-            <div>
-              <label className="text-xs font-medium text-slate-300 block mb-1">Email or Phone</label>
-              <input
-                type="text"
-                value={emailOrPhone}
-                onChange={(e) => setEmailOrPhone(e.target.value)}
-                placeholder="Your registered email or phone"
-                className="w-full px-3 py-2 rounded-xl border border-white/15 bg-white/5 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-hidden focus:border-indigo-400"
-              />
-            </div>
-          )}
-
           <div>
             <label className="text-xs font-medium text-slate-300 block mb-1">
-              Reset Code / OTP Token
+              Reset Token / Code
             </label>
             <div className="relative">
               <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
+                required
                 value={tokenOrOtp}
                 onChange={(e) => setTokenOrOtp(e.target.value)}
-                placeholder="Enter 6-digit recovery code"
+                placeholder="Enter password reset token"
                 className="w-full pl-9 pr-3 py-2 rounded-xl border border-white/15 bg-white/5 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-hidden focus:border-indigo-400"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1">New Password</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs font-medium text-slate-300">New Password</label>
+              <span className="text-[10px] text-slate-400">Min 10 chars (A-Z, a-z, 0-9)</span>
+            </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
               <input
                 type={showPassword ? "text" : "password"}
+                required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Min 6 characters"
+                placeholder="Min 10 characters"
                 className="w-full pl-9 pr-8 py-2 rounded-xl border border-white/15 bg-white/5 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-hidden focus:border-indigo-400"
               />
               <button
@@ -164,6 +163,7 @@ export function ResetPasswordPage() {
             <label className="text-xs font-medium text-slate-300 block mb-1">Confirm New Password</label>
             <input
               type={showPassword ? "text" : "password"}
+              required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm new password"
@@ -196,3 +196,4 @@ export function ResetPasswordPage() {
 }
 
 export default ResetPasswordPage;
+

@@ -3,7 +3,14 @@ import {
   createSlice,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-import type { AuthUser, BackendUserType } from "@/types/auth.types";
+import type {
+  AuthResponse,
+  AuthUser,
+  BackendUserType,
+  IdentityDTO,
+  LoginCredentials,
+  MfaLoginPayload,
+} from "@/types/auth.types";
 import authApi from "../../features/auth/api/auth.api";
 
 // =====================================================
@@ -17,8 +24,8 @@ export type MfaType = "TOTP" | "SMS_OTP" | "EMAIL_OTP";
 
 export interface MfaPendingState {
   required: boolean;
+  challengeToken: string;
   mfaType?: MfaType;
-  tempToken?: string;
   emailOrPhone?: string;
 }
 
@@ -32,31 +39,16 @@ export interface AuthState {
   mfaPending: MfaPendingState | null;
 }
 
-export interface LoginResponse {
-  AccessToken?: string;
-  accessToken?: string;
-  token?: string;
-  user?: AuthUser;
-  mfaRequired?: false;
-  data?: {
-    accessToken?: string;
-    token?: string;
-    user?: AuthUser;
-  };
-}
-
 export interface MfaRequiredResponse {
   mfaRequired: true;
-  mfaType: MfaType;
-  tempToken: string;
-  emailOrPhone?: string;
+  challengeToken: string;
+  requiresMfa?: boolean;
 }
 
-export type LoginResult = LoginResponse | MfaRequiredResponse;
+export type LoginResult = AuthResponse | MfaRequiredResponse;
 
-// Safe Type Guard against undefined/null responses
-function isMfaRequired(res: LoginResult | undefined | null): res is MfaRequiredResponse {
-  return Boolean(res && typeof res === "object" && "mfaRequired" in res && res.mfaRequired === true);
+export function isMfaRequired(res: any): res is MfaRequiredResponse {
+  return Boolean(res && typeof res === "object" && res.mfaRequired === true && res.challengeToken);
 }
 
 // =====================================================
@@ -92,8 +84,13 @@ const clearAuthStorage = () => {
 };
 
 const extractErrorMessage = (error: unknown, fallback: string): string => {
-  const err = error as { response?: { data?: { message?: string } } };
-  return err?.response?.data?.message ?? fallback;
+  const err = error as { response?: { data?: { message?: string; error?: { message?: string } } }; message?: string };
+  return (
+    err?.response?.data?.error?.message ||
+    err?.response?.data?.message ||
+    err?.message ||
+    fallback
+  );
 };
 
 // =====================================================
@@ -103,16 +100,27 @@ const extractErrorMessage = (error: unknown, fallback: string): string => {
 const loadInitialState = (): AuthState => {
   try {
     const serializedState = localStorage.getItem(AUTH_KEY);
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+
     if (serializedState) {
       const parsed = JSON.parse(serializedState);
-      const AccessToken =
-        parsed.AccessToken ?? localStorage.getItem(TOKEN_KEY) ?? null;
+      const AccessToken = parsed.AccessToken ?? storedToken ?? null;
 
       return {
         isAuthenticated: !!AccessToken && !!parsed.user,
         userType: parsed.userType ?? parsed.user?.userType ?? null,
         AccessToken,
         user: parsed.user ?? null,
+        isLoading: false,
+        error: null,
+        mfaPending: null,
+      };
+    } else if (storedToken) {
+      return {
+        isAuthenticated: true,
+        userType: null,
+        AccessToken: storedToken,
+        user: null,
         isLoading: false,
         error: null,
         mfaPending: null,
@@ -141,26 +149,28 @@ const initialState: AuthState = loadInitialState();
 // =====================================================
 
 export const initializeAuth = createAsyncThunk<
-  AuthUser,
+  IdentityDTO,
   void,
   { rejectValue: string }
 >("auth/initializeAuth", async (_, { rejectWithValue }) => {
   try {
-    const user = await authApi.getMe();
-    if (!user) {
-      return rejectWithValue("User not authenticated");
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      return rejectWithValue("No authentication token found");
     }
-    return user;
+    const identity = await authApi.getMe();
+    if (!identity) {
+      return rejectWithValue("User session invalid or expired");
+    }
+    return identity;
   } catch (error: unknown) {
-    return rejectWithValue(
-      extractErrorMessage(error, "Authentication failed")
-    );
+    return rejectWithValue(extractErrorMessage(error, "Authentication session expired"));
   }
 });
 
 export const loginUser = createAsyncThunk<
   LoginResult,
-  Parameters<typeof authApi.login>[0],
+  LoginCredentials,
   { rejectValue: string }
 >("auth/loginUser", async (credentials, { rejectWithValue }) => {
   try {
@@ -168,9 +178,25 @@ export const loginUser = createAsyncThunk<
     if (!response) {
       return rejectWithValue("Empty response received from server.");
     }
-    return response as LoginResult;
+    return response;
   } catch (error: unknown) {
     return rejectWithValue(extractErrorMessage(error, "Login failed"));
+  }
+});
+
+export const verifyMfaLoginThunk = createAsyncThunk<
+  AuthResponse,
+  MfaLoginPayload,
+  { rejectValue: string }
+>("auth/verifyMfaLogin", async (payload, { rejectWithValue }) => {
+  try {
+    const response = await authApi.verifyMfaLogin(payload);
+    if (!response) {
+      return rejectWithValue("Invalid MFA response from server.");
+    }
+    return response;
+  } catch (error: unknown) {
+    return rejectWithValue(extractErrorMessage(error, "MFA Verification failed"));
   }
 });
 
@@ -230,16 +256,9 @@ const authSlice = createSlice({
 
     setMfaPending: (
       state,
-      action: PayloadAction<Omit<MfaPendingState, "required"> | null>
+      action: PayloadAction<MfaPendingState | null>
     ) => {
-      if (action.payload) {
-        state.mfaPending = {
-          required: true,
-          ...action.payload,
-        };
-      } else {
-        state.mfaPending = null;
-      }
+      state.mfaPending = action.payload;
       state.isLoading = false;
     },
 
@@ -261,21 +280,36 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // -------------------------------------------------
-      // INITIALIZE AUTH
+      // INITIALIZE AUTH (GET /auth/me)
       // -------------------------------------------------
       .addCase(initializeAuth.pending, (state) => {
-        state.isLoading = false;
+        state.isLoading = true;
         state.error = null;
       })
       .addCase(initializeAuth.fulfilled, (state, action) => {
+        const identity = action.payload;
         state.isAuthenticated = true;
-        state.user = action.payload;
-        state.userType = action.payload.userType ?? null;
+        state.user = {
+          id: identity.id,
+          email: identity.email,
+          phone: identity.phone,
+          status: identity.status,
+          emailVerified: identity.emailVerified,
+          mfaEnabled: identity.mfaEnabled,
+          userType: identity.userType,
+          profile: identity.profile,
+          memberships: identity.memberships,
+          activeOrganizationId: identity.activeOrganizationId,
+          activeOrgRole: identity.activeOrgRole,
+          firstName: identity.profile && 'firstName' in identity.profile ? identity.profile.firstName : undefined,
+          lastName: identity.profile && 'lastName' in identity.profile ? identity.profile.lastName : undefined,
+        };
+        state.userType = identity.userType;
         state.isLoading = false;
         state.error = null;
 
-        if (state.AccessToken) {
-          persistAuth(state.AccessToken, action.payload);
+        if (state.AccessToken && state.user) {
+          persistAuth(state.AccessToken, state.user);
         }
       })
       .addCase(initializeAuth.rejected, (state, action) => {
@@ -284,7 +318,7 @@ const authSlice = createSlice({
         state.userType = null;
         state.AccessToken = null;
         state.isLoading = false;
-        state.error = action.payload ?? "Authentication failed";
+        state.error = action.payload ?? "Authentication expired";
         clearAuthStorage();
       })
 
@@ -305,9 +339,7 @@ const authSlice = createSlice({
           state.userType = null;
           state.mfaPending = {
             required: true,
-            mfaType: result.mfaType,
-            tempToken: result.tempToken,
-            emailOrPhone: result.emailOrPhone,
+            challengeToken: result.challengeToken,
           };
           state.isLoading = false;
           state.error = null;
@@ -315,36 +347,61 @@ const authSlice = createSlice({
           return;
         }
 
-        // Safely extract token and user across various object shapes
-        const resObj = (result as any) ?? {};
-        const AccessToken = 
-          resObj.AccessToken || 
-          resObj.accessToken || 
-          resObj.token || 
-          resObj.data?.accessToken || 
-          resObj.data?.token;
+        const accessToken = result.AccessToken || result.accessToken || "";
+        const user = result.user;
 
-        const user = resObj.user || resObj.data?.user;
-
-        if (!AccessToken || !user) {
+        if (!accessToken || !user) {
           state.isLoading = false;
-          state.error = "Invalid login response format from server.";
+          state.error = "Invalid login response received from server.";
           return;
         }
 
         state.isAuthenticated = true;
-        state.AccessToken = AccessToken;
+        state.AccessToken = accessToken;
         state.user = user;
-        state.userType = user?.userType ?? null;
+        state.userType = user.userType ?? null;
         state.isLoading = false;
         state.error = null;
         state.mfaPending = null;
 
-        persistAuth(AccessToken, user);
+        persistAuth(accessToken, user);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload ?? "Login failed";
+      })
+
+      // -------------------------------------------------
+      // MFA VERIFY LOGIN
+      // -------------------------------------------------
+      .addCase(verifyMfaLoginThunk.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyMfaLoginThunk.fulfilled, (state, action) => {
+        const result = action.payload;
+        const accessToken = result.AccessToken || result.accessToken || "";
+        const user = result.user;
+
+        if (!accessToken || !user) {
+          state.isLoading = false;
+          state.error = "Invalid MFA verification response received.";
+          return;
+        }
+
+        state.isAuthenticated = true;
+        state.AccessToken = accessToken;
+        state.user = user;
+        state.userType = user.userType ?? null;
+        state.isLoading = false;
+        state.error = null;
+        state.mfaPending = null;
+
+        persistAuth(accessToken, user);
+      })
+      .addCase(verifyMfaLoginThunk.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? "MFA verification failed";
       })
 
       // -------------------------------------------------
@@ -371,7 +428,6 @@ const authSlice = createSlice({
   },
 });
 
-
 export const {
   login,
   updateUser,
@@ -380,4 +436,4 @@ export const {
   resetAuthState,
 } = authSlice.actions;
 
-export default authSlice.reducer;
+export default authSlice.reducer;

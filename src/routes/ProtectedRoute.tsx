@@ -1,40 +1,32 @@
-// import { Navigate, Outlet, useLocation } from 'react-router';
-// import { useAppSelector } from '../store/hooks';
-// import type { UserRole } from '../store/slices/authSlice';
+import React from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAppSelector } from '../store/hooks';
+import { ROUTES } from '../constants/routes.constants';
+import type { BackendUserType } from '../types/auth.types';
+import { getRoleDashboardPath } from '../features/auth/hooks/useAuth';
 
-// interface ProtectedRouteProps {
+interface ProtectedRouteProps {
+  allowedRoles?: BackendUserType[];
+  children?: React.ReactNode;
+}
 
-//   allowedRoles?: UserRole[];
-// }
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children }) => {
+  const { isAuthenticated, AccessToken, userType, isLoading } = useAppSelector((state) => state.auth);
+  const location = useLocation();
 
+  // If initial token load is still resolving, we allow continuation if token exists
+  const hasToken = Boolean(AccessToken || localStorage.getItem('AccessToken'));
 
-// export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-//   const { isAuthenticated, userRole } = useAppSelector((state) => state.auth);
-//   const location = useLocation();
+  if (!isAuthenticated && !hasToken && !isLoading) {
+    return <Navigate to={ROUTES.AUTH.LOGIN} state={{ from: location }} replace />;
+  }
 
- 
-//   if (!isAuthenticated) {
-   
-//     return <Navigate to="/login" state={{ from: location }} replace />;
-//   }
+  if (allowedRoles && userType && !allowedRoles.includes(userType)) {
+    const fallbackPath = getRoleDashboardPath(userType);
+    return <Navigate to={fallbackPath} replace />;
+  }
 
- 
-//   if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
-    
+  return children ? <>{children}</> : <Outlet />;
+};
 
-//     let fallbackPath = '/dashboard';
-    
-//     if (userRole === 'DOCTOR') {
-//       fallbackPath = '/doctor-dashboard';
-//     } else if (userRole === 'SYSTEM_ADMIN') {
-//       fallbackPath = '/admin-dashboard';
-//     } else if (userRole !== 'PATIENT') {
-//       fallbackPath = `/${userRole.toLowerCase().replace('_', '-')}-dashboard`;
-//     }
-
-//     return <Navigate to={fallbackPath} replace />;
-//   }
-
-
-//   return <Outlet />;
-// };
+export default ProtectedRoute;

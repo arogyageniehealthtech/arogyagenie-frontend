@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -38,7 +38,16 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onCloseMobile })
 
   const pendingRequestsCount = requests.filter((r) => r.status === 'PENDING').length;
   const providerType = activeProvider?.type || 'PHARMACY';
+  useEffect(()=>{
+    // setActiveProviderId("provider-pharmacy-1")
+    // setActiveProviderId("provider-hospital-1")
+    // setActiveProviderId("provider-lab-1")
+    setActiveProviderId("provider-clinic-1")
 
+  },[]
+
+)
+// setActiveProviderId("provider-lab-1")
   // Navigation schema configured by provider type
   const navGroups = [
     {
@@ -141,7 +150,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onCloseMobile })
         </div>
 
         {/* Quick Demo Switcher Selector */}
-        <div className="mt-4 p-2.5 rounded-xl bg-violet-950/50 border border-violet-800/40">
+        {/* <div className="mt-4 p-2.5 rounded-xl bg-violet-950/50 border border-violet-800/40">
           <label className="block text-[10px] font-bold uppercase tracking-wider text-violet-300/70 mb-1 flex items-center gap-1">
             <Sparkles className="h-3 w-3 text-amber-400" />
             Active Partner Facility:
@@ -157,7 +166,7 @@ export const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onCloseMobile })
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
       </div>
 
       {/* Nav Items List */}

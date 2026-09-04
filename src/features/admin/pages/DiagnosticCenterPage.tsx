@@ -72,8 +72,8 @@ export function AdminDiagnosticCentersPage() {
 
               <div className="flex items-center gap-2 w-full md:w-auto">
                 <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
+                <Select value={statusFilter} onValueChange={(val)=>setStatusFilter(val || "")}>
+                  <SelectTrigger className="w-45">
                     <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>

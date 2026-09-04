@@ -44,7 +44,7 @@ export function LoginPage() {
       await login({
         email: emailOrPhone.trim(),
         password,
-        userType: selectedRole,
+        // userType: selectedRole,
         // rememberMe,
       });
     } catch (err: unknown) {

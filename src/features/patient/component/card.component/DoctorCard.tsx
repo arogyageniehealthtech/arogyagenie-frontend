@@ -9,7 +9,7 @@ export default function DoctorCard({ doctor, onBook }: { doctor: Doctor; onBook:
   ? `₹${doctor.facilityAffiliations[0].consultationFee}`
   : "N/A";
   
-console.log(priceDisplay)
+console.log(doctor)
   return (
     <div className="relative bg-[#F4F6F9] rounded-xl sm:rounded-2xl border border-indigo-100 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_30px_-6px_rgba(99,102,241,0.15)] hover:border-indigo-300 transition-all duration-300 w-full overflow-hidden flex flex-col group">
       

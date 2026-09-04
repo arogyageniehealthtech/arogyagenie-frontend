@@ -5,15 +5,14 @@ export const ROUTES = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
-    VERIFY_OTP: '/auth/verify-otp',
+    VERIFY_OTP: '/auth/login/mfa',
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
-    GOOGLE: '/auth/google',
+    GOOGLE: '/auth/oauth/google',
     VERIFY_EMAIL: '/auth/verify-email',
     RELOAD:'/auth/me',
     LOGOUT: '/auth/logout',
    RESEND_VERIFICATION: '/auth/resend-verification'
-    // GOOGLE: '/auth/google',
   },
 
   PATIENT: {
@@ -56,7 +55,17 @@ export const ROUTES = {
     LAB_REPORT:'/lab-reports'
   },
   DOCTOR: {
-    DASHBOARD: '/doctor-dashboard',
+    DASHBOARD: '/doctor/dashboard',
+    APPOINTMENTS: '/doctor/appointments',
+    PATIENTS: '/doctor/patients',
+    PRESCRIPTIONS: '/doctor/prescriptions',
+    PROFILE: '/doctor/profile',
+    SCHEDULE: '/doctor/schedule',
+    VIDEO_CALL: '/doctor/video-call/:appointmentId',
+  },
+  INVITATIOIN:{
+    SEND_INVITATION:(organizationId :string)=>`/invitations/organizations/${organizationId}/invite`,
+    ACCEPT_INVITATION:'/accept-invite'
   },
   ORGANIZATION:{
     HOSPITAL:{
@@ -73,6 +82,7 @@ export const ROUTES = {
 
     }
   },
+
 
   ADMIN: {
     DASHBOARD: '/admin/dashboard',

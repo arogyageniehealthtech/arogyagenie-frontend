@@ -111,7 +111,7 @@ export const PartnerDashboardPage: React.FC = () => {
             <Button
               onClick={simulateIncomingRequest}
               className="rounded-xl bg-linear-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs shadow-md border-0"
-              leftIcon={<Sparkles className="h-4 w-4" />}
+              // leftIcon={<Sparkles className="h-4 w-4" />}
             >
               Simulate AarogyaGenie Request
             </Button>
@@ -119,7 +119,7 @@ export const PartnerDashboardPage: React.FC = () => {
               variant="outline"
               onClick={() => navigate('/partner/requests')}
               className="rounded-xl bg-white/10 text-white hover:bg-white/20 border-white/20 text-xs font-bold"
-              rightIcon={<ArrowRight className="h-4 w-4" />}
+              // rightIcon={<ArrowRight className="h-4 w-4" />}
             >
               View Pipeline
             </Button>

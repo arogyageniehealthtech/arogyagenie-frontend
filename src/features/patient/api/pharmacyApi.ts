@@ -1,37 +1,64 @@
-// src/api/pharmacyApi.ts
 import axiosClient from '../../../lib/axios';
-// Assuming you have Pharmacy and Medicine types defined
-import type { Pharmacy ,MedicineItem , MedicineRequest} from '../types/pharmacy'; 
 
 export interface PharmacySearchParams {
-  query?: string;
+  latitude: number;
+  longitude: number;
   radiusKm?: number;
-  lat?: number;
-  lng?: number;
+  type?: 'HOSPITAL' | 'CLINIC' | 'PHARMACY' | 'LAB';
+  limit?: number;
 }
 
 export const pharmacyApi = {
-  // Fetch nearby pharmacies
-  getPharmacies: (params?: PharmacySearchParams): Promise<Pharmacy[]> => {
-    return axiosClient.get('/pharmacies', { params });
-  },
-
-  // Global search for specific medicines across all nearby pharmacies
-  searchMedicines: (query: string, lat?: number, lng?: number): Promise<MedicineItem[]> => {
-    return axiosClient.get('/pharmacies/medicines/search', { params: { query, lat, lng } });
-  },
-
-  // Place an order for medicines
-  placeOrder: (payload: MedicineRequest): Promise<{ success: boolean; orderId: string; eta: string }> => {
-    return axiosClient.post('/pharmacies/order', payload);
-  },
-
-  // Upload prescription for Rx-required medicines
-  uploadPrescription: (file: File): Promise<{ url: string }> => {
-    const formData = new FormData();
-    formData.append('prescription', file);
-    return axiosClient.post('/pharmacies/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+  // 1. Fetch medicine catalog
+  getMedicines: (search?: string, page = 1, limit = 20) => {
+    return axiosClient.get('/pharmacy/medicines', { 
+      params: { search, page, limit } 
     });
+  },
+
+  // 2. Fetch nearby pharmacies (Locations API)
+  getNearbyPharmacies: (params: PharmacySearchParams) => {
+    return axiosClient.get('/locations/nearby-facilities', { 
+      params: { ...params, type: 'PHARMACY' } 
+    });
+  },
+
+  // 3. Create an order request (Broadcast to nearby)
+  createOrderRequest: (payload: {
+    deliveryAddressId: string;
+    prescriptionId?: string;
+    notes?: string;
+    items: Array<{
+      medicineId: string;
+      medicineName: string;
+      strength?: string;
+      quantity: number;
+      instructions?: string;
+    }>;
+  }) => {
+    return axiosClient.post('/pharmacy/order-requests', payload);
+  },
+
+  // 4. Get offers received for a specific broadcast request
+  getOffers: (requestId: string) => {
+    return axiosClient.get(`/pharmacy/order-requests/${requestId}/offers`);
+  },
+
+  // 5. Accept a pharmacy's offer (Creates the actual MedicineOrder)
+  acceptOffer: (offerId: string) => {
+    return axiosClient.post(`/pharmacy/offers/${offerId}/accept`);
+  },
+  getMyOrders: () => {
+    return axiosClient.get('/pharmacy/orders/me');
+  },
+
+  // 2. Get specific order details
+  getOrderDetails: (orderId: string) => {
+    return axiosClient.get(`/pharmacy/orders/${orderId}`);
+  },
+
+  // 3. Cancel an order request
+  cancelOrderRequest: (requestId: string, reason: string) => {
+    return axiosClient.post(`/pharmacy/order-requests/${requestId}/cancel`, { reason });
   }
 };

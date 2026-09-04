@@ -1,51 +1,45 @@
-// import { Navigate, Outlet, useLocation } from 'react-router';
-// import { useAppSelector } from '../store/hooks';
-// import type { UserRole } from '../store/slices/authSlice';
+import React from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAppSelector } from '../store/hooks';
+import { ROUTES } from '../constants/routes.constants';
+import type { BackendUserType, OrgRole } from '../types/auth.types';
+import { getRoleDashboardPath } from '../features/auth/hooks/useAuth';
 
-// interface RoleBasedRouteProps {
- 
-//   allowedRoles: UserRole[];
-// }
+interface RoleBasedRouteProps {
+  allowedRoles: BackendUserType[];
+  allowedOrgRoles?: OrgRole[];
+  children?: React.ReactNode;
+}
 
+export const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({
+  allowedRoles,
+  allowedOrgRoles,
+  children,
+}) => {
+  const { isAuthenticated, userType, user, AccessToken, isLoading } = useAppSelector((state) => state.auth);
+  const location = useLocation();
 
-// export const RoleBasedRoute = ({ allowedRoles }: RoleBasedRouteProps) => {
-//   const { isAuthenticated, userRole } = useAppSelector((state) => state.auth);
-//   const location = useLocation();
+  const hasToken = Boolean(AccessToken || localStorage.getItem('AccessToken'));
 
+  if (!isAuthenticated && !hasToken && !isLoading) {
+    return <Navigate to={ROUTES.AUTH.LOGIN} state={{ from: location }} replace />;
+  }
 
-//   if (!isAuthenticated) {
+  const effectiveUserType = userType || user?.userType;
+  const activeOrgRole = user?.activeOrgRole;
 
-//     return <Navigate to="/login" state={{ from: location }} replace />;
-//   }
+  const roleAllowed = effectiveUserType ? allowedRoles.includes(effectiveUserType) : false;
+  const orgRoleAllowed =
+    allowedOrgRoles && activeOrgRole
+      ? allowedOrgRoles.includes(activeOrgRole)
+      : true;
 
- 
-//   if (!userRole || !allowedRoles.includes(userRole)) {
+  if (!roleAllowed || !orgRoleAllowed) {
+    const fallbackPath = effectiveUserType ? getRoleDashboardPath(effectiveUserType) : ROUTES.COMMON.UNAUTHORIZED;
+    return <Navigate to={fallbackPath} replace />;
+  }
 
-//     let fallbackPath = '/dashboard';
-    
-//     switch (userRole) {
-//       case 'PATIENT':
-//         fallbackPath = '/dashboard';
-//         break;
-//       case 'DOCTOR':
-//         fallbackPath = '/doctor-dashboard';
-//         break;
-//       case 'SYSTEM_ADMIN':
-//         fallbackPath = '/admin-dashboard';
-//         break;
-//       case 'LAB':
-//       case 'PHARMACY':
-//       case 'HOSPITAL_ADMIN':
+  return children ? <>{children}</> : <Outlet />;
+};
 
-//         fallbackPath = `/${userRole.toLowerCase().replace('_', '-')}-dashboard`;
-//         break;
-//       default:
-//         fallbackPath = '/unauthorized';
-//     }
-
-
-//     return <Navigate to={fallbackPath} replace />;
-//   }
-
-//   return <Outlet />;
-// };
+export default RoleBasedRoute;

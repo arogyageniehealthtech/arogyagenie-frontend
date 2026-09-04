@@ -72,7 +72,7 @@ export function AdminPharmaciesPage() {
 
               <div className="flex items-center gap-2 w-full md:w-auto">
                 <Filter className="h-4 w-4 text-slate-400 shrink-0" />
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={(val)=>setStatusFilter(val || "")}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>

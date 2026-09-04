@@ -7,6 +7,7 @@ interface CustomSelectProps {
   options: string[];
   placeholder?: string;
    icon?: LucideIcon;
+   className?: string;
 }
 
 export default function CustomSelect({ value, onChange, options, placeholder = "Select..." }: CustomSelectProps) {

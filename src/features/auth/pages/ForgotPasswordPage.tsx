@@ -9,7 +9,7 @@ export function ForgotPasswordPage() {
   const navigate = useNavigate();
   const { forgotPassword, isLoading, error, clearError } = useAuth();
 
-  const [emailOrPhone, setEmailOrPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -19,17 +19,22 @@ export function ForgotPasswordPage() {
     setValidationError(null);
     clearError();
 
-    if (!emailOrPhone.trim()) {
-      setValidationError("Please enter your registered email address or phone number.");
+    if (!email.trim() || !email.includes("@")) {
+      setValidationError("Please enter your registered email address.");
       return;
     }
 
     try {
-      const res = await forgotPassword({ emailOrPhone: emailOrPhone.trim() });
+      const res = await forgotPassword({ email: email.trim().toLowerCase() });
       setSuccessMessage(res.message || "Reset instructions sent.");
       setIsSubmitted(true);
-    } catch {
-      // Handled via auth hook state
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.error?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to send reset link.";
+      setValidationError(msg);
     }
   };
 
@@ -66,13 +71,13 @@ export function ForgotPasswordPage() {
           <div>
             <h3 className="text-sm font-bold text-white">Recovery Instructions Sent</h3>
             <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-              {successMessage || `We have sent a password reset token/code to ${emailOrPhone}.`}
+              {successMessage || `We have sent password reset instructions to ${email}.`}
             </p>
           </div>
           <button
             type="button"
             onClick={() =>
-              navigate(`${ROUTES.AUTH.RESET_PASSWORD}?email=${encodeURIComponent(emailOrPhone)}`)
+              navigate(`${ROUTES.AUTH.RESET_PASSWORD}?email=${encodeURIComponent(email)}`)
             }
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg transition-all cursor-pointer"
             style={{
@@ -80,7 +85,7 @@ export function ForgotPasswordPage() {
             }}
           >
             <KeyRound className="h-4 w-4" />
-            <span>Enter Reset Code Now</span>
+            <span>Enter Reset Token Now</span>
           </button>
         </div>
       ) : (
@@ -88,14 +93,15 @@ export function ForgotPasswordPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-medium text-slate-300 block mb-1.5">
-              Registered Email or Phone
+              Registered Email Address
             </label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
-                type="text"
-                value={emailOrPhone}
-                onChange={(e) => setEmailOrPhone(e.target.value)}
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. user@arogyagenie.com"
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/15 bg-white/5 text-white placeholder-slate-500 text-sm focus:outline-hidden focus:border-indigo-400"
               />
@@ -130,3 +136,4 @@ export function ForgotPasswordPage() {
 }
 
 export default ForgotPasswordPage;
+

@@ -1,4 +1,3 @@
-// src/api/diagnosticApi.ts
 import axiosClient from '../../../lib/axios';
 import type { DiagnosticCentre } from '../../patient/types/diagnostic';
 
@@ -17,13 +16,22 @@ export interface LabBookingPayload {
   date: string;
   time: string;
   patientDetails: any;
-  prescriptionUrl?: string; // If user uploaded a prescription to cloud storage first
+  prescriptionUrl?: string;
 }
 
 export const diagnosticApi = {
-  // Fetch labs/diagnostic centres
-  getCentres: (params?: DiagnosticSearchParams): Promise<DiagnosticCentre[]> => {
-    return axiosClient.get('/diagnostics', { params });
+  // Fetch labs/diagnostic centres mapped precisely to backend Swagger /locations/nearby-facilities
+  getCentres: async (params?: DiagnosticSearchParams): Promise<DiagnosticCentre[]> => {
+    const response = await axiosClient.get('/locations/nearby-facilities', {
+      params: {
+        // latitude: params?.lat,
+        // longitude: params?.lng,
+        radiusKm: params?.radiusKm ?? 100,
+        type: 'LAB',
+        limit: 50
+      }
+    });
+    return response.data;
   },
 
   // Fetch a specific lab's details and test catalog
