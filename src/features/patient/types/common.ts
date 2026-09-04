@@ -20,4 +20,5 @@ export interface BaseFacility {
   availableDates: string[];
   lat?: number; // Added for Google Maps
   lng?: number; // Added for Google Maps
+  phone?: string;
 }

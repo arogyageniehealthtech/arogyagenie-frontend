@@ -158,6 +158,7 @@ export function DoctorProfile() {
         experience: data.experience,
         bio: data.bio,
         languages: langArray,
+        consultationFee: data.consultationFee ? Number(data.consultationFee) : undefined,
       },
       {
         onSuccess: () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   X, Video, Building2, ChevronLeft, ChevronRight, 
   Calendar as CalendarIcon, Clock, Loader2 
@@ -14,7 +14,22 @@ interface BookAppointmentModalProps {
 
 export default function BookAppointmentModal({ doctor, onClose, onSuccess }: BookAppointmentModalProps) {
   const [step, setStep] = useState(1);
-  const [selectedType, setSelectedType] = useState<ConsultationOption | null>(null);
+
+  const defaultFee = Number(doctor.facilityAffiliations?.[0]?.consultationFee || doctor.consultationFee || 500);
+
+  // Both In-Person and Video consultation options
+  const consultationOptions: ConsultationOption[] = useMemo(() => {
+    if (doctor.consultationOptions && doctor.consultationOptions.length > 0) {
+      return doctor.consultationOptions;
+    }
+
+    return [
+      { mode: "IN_PERSON", fee: defaultFee },
+      { mode: "VIDEO", fee: defaultFee }
+    ];
+  }, [doctor, defaultFee]);
+
+  const [selectedType, setSelectedType] = useState<ConsultationOption | null>(() => consultationOptions[0] || null);
   
   // Calendar State
   const [monthOffset, setMonthOffset] = useState(0); 
@@ -27,6 +42,7 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
 
   // Dynamic Calendar calculations (anchored relative to current date)
   const today = new Date();
+  const todayStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
   const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1); 
   const viewYear = baseDate.getFullYear();
   const viewMonth = baseDate.getMonth() + 1;
@@ -40,11 +56,18 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
   const calendarDays = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1;
     const dateStr = `${viewYear}-${viewMonth.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-    const isAvailable = doctor.availableDates?.includes(dateStr) || false;
+    const isPast = dateStr < todayStr;
+    const isAvailable = !isPast && (doctor.availableDates && doctor.availableDates.length > 0 ? doctor.availableDates.includes(dateStr) : true);
     return { day, dateStr, isAvailable };
   });
 
   const timeSlots = ["09:00 AM", "10:30 AM", "12:30 PM", "02:00 PM", "04:30 PM"];
+
+  const doctorSpecialty = doctor.specialization?.name || 
+    doctor.specializations?.map(s => s.specialization?.name).filter(Boolean).join(", ") || 
+    "General Physician";
+
+  const doctorFullName = `${doctor.firstName || ''} ${doctor.lastName || ''}`.trim() || 'Doctor';
 
   // Backend Booking Handler
   const handleConfirmBooking = async () => {
@@ -54,10 +77,11 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
     setBookingError(null);
 
     try {
+      const facilityId = doctor.facilityAffiliations?.[0]?.facilityId;
       await doctorApi.bookAppointment({
         doctorId: doctor.id,
+        facilityId: facilityId || undefined,
         consultationType: selectedType.mode,
-        // fee: selectedType.fee,
         date: selectedDate,
         time: selectedTime,
         patientDetails: undefined
@@ -83,7 +107,7 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
           <div className="text-center mt-1">
             <h2 className="font-bold text-xl sm:text-2xl text-gray-900 tracking-tight">Book Appointment</h2>
             <p className="text-sm font-medium text-gray-600 mt-1.5">
-              {doctor.firstName}${doctor.lastName} • <span className="text-purple-600">{doctor.specialization?.name}</span>
+              {doctorFullName} • <span className="text-purple-600">{doctorSpecialty}</span>
             </p>
           </div>
           
@@ -107,34 +131,41 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
               </div>
               
               <div className="space-y-3 pt-2">
-                {doctor.consultationOptions?.map((opt,idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedType(opt)}
-                    className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
-                      selectedType?.mode === opt.mode 
-                        ? 'border-purple-600 bg-purple-50 shadow-sm' 
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${selectedType?.mode === opt.mode ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {opt.mode === "VIDEO" ? <Video className="w-6 h-6" /> : <Building2 className="w-6 h-6" />}
+                {consultationOptions.map((opt, idx) => {
+                  const isSelected = selectedType?.mode === opt.mode;
+                  const isVideo = opt.mode === "VIDEO";
+                  const title = isVideo ? "Video Consultation" : "In-Person Clinic Visit";
+                  const desc = isVideo ? "Connect via high-quality video call" : "Visit doctor at the clinic / hospital";
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedType(opt)}
+                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
+                        isSelected 
+                          ? 'border-purple-600 bg-purple-50/60 shadow-sm' 
+                          : 'border-gray-200 hover:border-purple-300 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-lg ${isSelected ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
+                          {isVideo ? <Video className="w-6 h-6" /> : <Building2 className="w-6 h-6" />}
+                        </div>
+                        <div>
+                          <p className={`font-bold text-base ${isSelected ? 'text-purple-900' : 'text-gray-900'}`}>
+                            {title}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className={`font-bold text-base ${selectedType?.mode === opt.mode ? 'text-purple-900' : 'text-gray-900'}`}>
-                          {opt.mode}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-600 mt-1">Fee: ₹{opt.fee}</p>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        isSelected ? 'border-purple-600' : 'border-gray-300'
+                      }`}>
+                        {isSelected && <div className="w-2.5 h-2.5 bg-purple-600 rounded-full" />}
                       </div>
-                    </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      selectedType?.mode === opt.mode ? 'border-purple-600' : 'border-gray-300'
-                    }`}>
-                      {selectedType?.mode === opt.mode && <div className="w-2.5 h-2.5 bg-purple-600 rounded-full" />}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="pt-4">
@@ -272,11 +303,13 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
                 <div className="grid grid-cols-2 gap-y-6 gap-x-4 text-sm">
                   <div>
                     <p className="text-gray-500 font-medium mb-1">Doctor</p>
-                    <p className="font-semibold text-gray-900">{doctor.firstName}${doctor.lastName}</p>
+                    <p className="font-semibold text-gray-900">{doctorFullName}</p>
                   </div>
                   <div>
                     <p className="text-gray-500 font-medium mb-1">Consultation</p>
-                    <p className="font-semibold text-gray-900">{selectedType?.mode}</p>
+                    <p className="font-semibold text-gray-900">
+                      {selectedType?.mode === "VIDEO" ? "Video Consultation" : "In-Person Clinic Visit"}
+                    </p>
                   </div>
                   <div className="col-span-2 p-3 rounded-xl border bg-white border-gray-200 flex justify-between items-center shadow-sm">
                     <div>
@@ -286,11 +319,6 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
                       </p>
                     </div>
                   </div>
-                </div>
-                
-                <div className="border-t border-gray-200 pt-4 mt-2 flex justify-between items-center">
-                  <span className="text-gray-600 font-medium">Consultation Fee</span>
-                  <span className="text-2xl font-bold text-gray-900">₹{selectedType?.fee}</span>
                 </div>
               </div>
 

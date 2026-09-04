@@ -16,4 +16,5 @@ export interface Hospital extends BaseFacility {
   nextAvailableBed: string;
   departments: string[];
   bedOptions: BedOption[];
+  emergencyServices?: boolean;
 }

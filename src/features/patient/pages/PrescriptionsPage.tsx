@@ -1,9 +1,10 @@
-import  { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   FileText, Search, Calendar, Stethoscope, 
-  Download, Eye, ArrowLeft, Pill,X
+  Download, Eye, ArrowLeft, Pill, X, Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axiosInstance from '../../../lib/axios';
 
 // ==========================================
 // Types
@@ -28,7 +29,7 @@ interface Prescription {
 }
 
 // ==========================================
-// Mock Prescriptions Data
+// Mock Prescriptions Data Fallback
 // ==========================================
 const MOCK_PRESCRIPTIONS: Prescription[] = [
   {
@@ -74,11 +75,58 @@ const MOCK_PRESCRIPTIONS: Prescription[] = [
 
 export default function PrescriptionsPage() {
   const navigate = useNavigate();
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>(MOCK_PRESCRIPTIONS);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
 
+  useEffect(() => {
+    let mounted = true;
+    const fetchPrescriptions = async () => {
+      try {
+        setLoading(true);
+        const res = await axiosInstance.get('/prescriptions/me');
+        const rawItems = Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data?.data?.items)
+          ? res.data.data.items
+          : Array.isArray(res.data)
+          ? res.data
+          : [];
+
+        if (rawItems.length > 0 && mounted) {
+          const mapped: Prescription[] = rawItems.map((item: any) => ({
+            id: item.id || `RX-${Math.floor(10000 + Math.random() * 90000)}`,
+            doctorName: item.doctor?.user?.fullName || item.doctorName || 'Dr. Medical Practitioner',
+            specialization: item.doctor?.specialization?.name || item.specialization || 'General Physician',
+            hospitalName: item.facility?.name || item.hospitalName || 'Healthcare Center',
+            date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+            diagnosis: item.diagnosis || item.consultation?.symptoms || 'General Consultation',
+            medicines: Array.isArray(item.medications) 
+              ? item.medications.map((m: any) => ({
+                  name: m.medicineName || m.name || 'Prescribed Medicine',
+                  dosage: m.dosage || 'As directed',
+                  frequency: m.frequency || 'Once daily',
+                  duration: m.duration || '5 Days'
+                }))
+              : (Array.isArray(item.medicines) ? item.medicines : []),
+            notes: item.notes || item.instructions || '',
+            prescriptionUrl: item.fileUrl || item.prescriptionUrl
+          }));
+          setPrescriptions(mapped);
+        }
+      } catch {
+        // Fall back to default mock prescriptions
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    fetchPrescriptions();
+    return () => { mounted = false; };
+  }, []);
+
   // Filter prescriptions based on search query
-  const filteredPrescriptions = MOCK_PRESCRIPTIONS.filter(rx => 
+  const filteredPrescriptions = prescriptions.filter(rx => 
     rx.doctorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     rx.specialization.toLowerCase().includes(searchQuery.toLowerCase()) ||
     rx.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
