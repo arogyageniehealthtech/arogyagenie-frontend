@@ -130,43 +130,43 @@ export function DoctorAppointments() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 pb-12 font-sans">
+      <div className="space-y-5 sm:space-y-6 pb-12 font-sans min-w-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-              <Stethoscope className="h-7 w-7 text-violet-600" />
-              Doctor Consultations & Appointments
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+              <Stethoscope className="h-6 w-6 sm:h-7 sm:w-7 text-violet-600 shrink-0" />
+              <span>Doctor Consultations & Appointments</span>
             </h1>
-            <p className="text-slate-500 mt-1 text-sm">
+            <p className="text-slate-500 mt-1 text-xs sm:text-sm">
               Review booked visits, launch video telehealth rooms, confirm slots, and write digital prescriptions.
             </p>
           </div>
           <Button
             onClick={() => handleOpenPrescribe(1)}
-            className="bg-violet-600 hover:bg-violet-700 text-white font-bold gap-2 rounded-xl shadow-md h-10 shrink-0"
+            className="bg-violet-600 hover:bg-violet-700 text-white font-bold gap-2 rounded-xl shadow-md h-10 px-4 text-xs sm:text-sm shrink-0 self-start sm:self-auto"
           >
-            <Plus className="h-4 w-4" /> Issue Prescription
+            <Plus className="h-4 w-4 shrink-0" /> Issue Prescription
           </Button>
         </div>
 
         {/* Filter Controls Bar */}
         <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <CardContent className="p-3.5 sm:p-5">
+            <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch lg:items-center justify-between">
               {/* Search */}
-              <div className="relative w-full md:w-80">
+              <div className="relative w-full lg:w-80">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <Input
                   placeholder="Search patient name or ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 text-xs sm:text-sm rounded-xl border-slate-200"
+                  className="pl-9 text-xs sm:text-sm rounded-xl border-slate-200 w-full"
                 />
               </div>
 
               {/* Filters */}
-              <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
                 {/* Status */}
                 <div className="flex items-center gap-1.5">
                   <Filter className="h-4 w-4 text-slate-400 shrink-0" />
@@ -187,7 +187,7 @@ export function DoctorAppointments() {
 
                 {/* Consultation Type */}
                 <Select value={selectedType} onValueChange={(val)=>setSelectedType(val ||"")}>
-                  <SelectTrigger className="w-[130px] text-xs rounded-xl">
+                  <SelectTrigger className="w-32.5 text-xs rounded-xl">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -198,16 +198,16 @@ export function DoctorAppointments() {
                 </Select>
 
                 {/* Date Picker */}
-                <div className="flex items-center gap-1.5">
-                  <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0" />
+                <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                  <CalendarIcon className="h-4 w-4 text-slate-400 shrink-0 hidden sm:block" />
                   <Input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-[150px] text-xs rounded-xl border-slate-200"
+                    className="w-full sm:w-36.25 text-xs rounded-xl border-slate-200"
                   />
                   {selectedDate && (
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedDate("")} className="text-xs h-8 px-2">
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedDate("")} className="text-xs h-8 px-2 shrink-0">
                       Clear
                     </Button>
                   )}
@@ -221,20 +221,20 @@ export function DoctorAppointments() {
         {isLoading ? (
           <div className="py-20 text-center text-slate-400 font-medium space-y-3">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent mx-auto" />
-            <p>Loading appointments from server...</p>
+            <p className="text-sm">Loading appointments from server...</p>
           </div>
         ) : filteredAppointments?.length === 0 ? (
           <Card className="rounded-2xl border-slate-200/80">
-            <CardContent className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-2">
+            <CardContent className="flex flex-col items-center justify-center py-16 sm:py-20 text-slate-400 space-y-2 p-4 text-center">
               <CalendarIcon className="h-12 w-12 text-slate-300 mb-2" />
               <p className="text-base font-bold text-slate-700">No appointments found</p>
-              <p className="text-xs text-slate-400 max-w-sm text-center">
+              <p className="text-xs text-slate-400 max-w-sm">
                 There are no consultation bookings matching your current filter criteria.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredAppointments?.map((apt) => {
               const isVideo = apt.type.toUpperCase().includes("VIDEO");
               const isScheduled = apt.status === "SCHEDULED" || apt.status === "pending";
@@ -247,12 +247,12 @@ export function DoctorAppointments() {
                   key={apt.id}
                   className="rounded-2xl border-slate-200 shadow-xs hover:shadow-md hover:border-violet-300 transition-all overflow-hidden"
                 >
-                  <div className="p-5 sm:p-6 space-y-4">
+                  <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                     {/* Top Row: Patient Info + Status + Fee */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-extrabold text-lg text-slate-900">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <h3 className="font-extrabold text-base sm:text-lg text-slate-900 truncate">
                             {apt.patientName ? apt.patientName : `Patient #${String(apt.patientId).slice(0, 6)}`}
                           </h3>
                           <Badge
@@ -270,34 +270,34 @@ export function DoctorAppointments() {
                             {apt.status}
                           </Badge>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-slate-800">
                             {apt.appointmentDate} at {apt.appointmentTime}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1 font-medium text-slate-600">
-                            {isVideo ? <Video className="h-3.5 w-3.5 text-violet-600" /> : <MapPin className="h-3.5 w-3.5 text-slate-400" />}
+                            {isVideo ? <Video className="h-3.5 w-3.5 text-violet-600 shrink-0" /> : <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
                             {isVideo ? "Video Telehealth" : "In-Person Clinic Visit"}
                           </span>
                         </p>
                       </div>
 
-                      <div className="text-left sm:text-right">
-                        <span className="text-xs text-slate-400 block font-medium">Consultation Fee</span>
+                      <div className="text-left sm:text-right shrink-0">
+                        <span className="text-[11px] text-slate-400 block font-medium">Consultation Fee</span>
                         <span className="text-sm font-extrabold text-slate-900">₹{apt.consultationFee ?? 500}</span>
                       </div>
                     </div>
 
                     {/* Symptoms / Notes */}
                     {apt.symptoms && (
-                      <div className="text-xs bg-slate-50 p-3 rounded-xl border border-slate-100 text-slate-700">
+                      <div className="text-xs bg-slate-50 p-3 rounded-xl border border-slate-100 text-slate-700 leading-relaxed">
                         <strong className="text-slate-900 font-bold mr-1">Reported Symptoms:</strong>
                         {apt.symptoms}
                       </div>
                     )}
 
                     {/* Action Bar */}
-                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
                       {/* Video Room Button */}
                       {isVideo && !isCancelled && (
                         <Button
@@ -305,7 +305,7 @@ export function DoctorAppointments() {
                           onClick={() => navigate(`/doctor/video-call/${apt.id}`)}
                           className="bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs gap-1.5 rounded-xl shadow-md h-8 px-3.5"
                         >
-                          <Video className="h-3.5 w-3.5" /> Join Video Call
+                          <Video className="h-3.5 w-3.5 shrink-0" /> Join Video Call
                         </Button>
                       )}
 
@@ -316,9 +316,9 @@ export function DoctorAppointments() {
                           variant="outline"
                           onClick={() => handleAction(apt.id, "confirm")}
                           disabled={updateAppointment.isPending}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 text-xs font-bold gap-1 rounded-xl h-8"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 text-xs font-bold gap-1 rounded-xl h-8 px-3"
                         >
-                          <CheckCircle className="h-3.5 w-3.5" /> Confirm
+                          <CheckCircle className="h-3.5 w-3.5 shrink-0" /> Confirm
                         </Button>
                       )}
 
@@ -329,9 +329,9 @@ export function DoctorAppointments() {
                           variant="outline"
                           onClick={() => handleAction(apt.id, "check-in")}
                           disabled={updateAppointment.isPending}
-                          className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 text-xs font-bold gap-1 rounded-xl h-8"
+                          className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 border-indigo-200 text-xs font-bold gap-1 rounded-xl h-8 px-3"
                         >
-                          <Clock className="h-3.5 w-3.5" /> Check-In
+                          <Clock className="h-3.5 w-3.5 shrink-0" /> Check-In
                         </Button>
                       )}
 
@@ -342,9 +342,9 @@ export function DoctorAppointments() {
                           variant="outline"
                           onClick={() => handleAction(apt.id, "complete")}
                           disabled={updateAppointment.isPending}
-                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200 text-xs font-bold gap-1 rounded-xl h-8"
+                          className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200 text-xs font-bold gap-1 rounded-xl h-8 px-3"
                         >
-                          <CheckCircle className="h-3.5 w-3.5" /> Mark Completed
+                          <CheckCircle className="h-3.5 w-3.5 shrink-0" /> Mark Completed
                         </Button>
                       )}
 
@@ -355,9 +355,9 @@ export function DoctorAppointments() {
                           variant="outline"
                           onClick={() => handleAction(apt.id, "cancel")}
                           disabled={updateAppointment.isPending}
-                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 text-xs font-bold gap-1 rounded-xl h-8"
+                          className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 text-xs font-bold gap-1 rounded-xl h-8 px-3"
                         >
-                          <XCircle className="h-3.5 w-3.5" /> Cancel
+                          <XCircle className="h-3.5 w-3.5 shrink-0" /> Cancel
                         </Button>
                       )}
 
@@ -366,9 +366,9 @@ export function DoctorAppointments() {
                         size="sm"
                         variant="secondary"
                         onClick={() => handleOpenPrescribe(apt.patientId, apt.id, apt.patientName)}
-                        className="ml-auto text-slate-800 bg-slate-100 hover:bg-slate-200 text-xs font-bold gap-1.5 rounded-xl h-8"
+                        className="sm:ml-auto text-slate-800 bg-slate-100 hover:bg-slate-200 text-xs font-bold gap-1.5 rounded-xl h-8 px-3"
                       >
-                        <Clipboard className="h-3.5 w-3.5 text-violet-600" /> Issue Prescription
+                        <Clipboard className="h-3.5 w-3.5 text-violet-600 shrink-0" /> Issue Prescription
                       </Button>
                     </div>
                   </div>
@@ -380,10 +380,11 @@ export function DoctorAppointments() {
 
         {/* Cancellation Reason Modal */}
         <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
-          <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogContent className="sm:max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-rose-500" /> Cancel Appointment
+              <DialogTitle className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-rose-500 shrink-0" />
+                <span>Cancel Appointment</span>
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3 py-2 text-xs">
@@ -394,14 +395,14 @@ export function DoctorAppointments() {
                 placeholder="e.g. Doctor emergency leave / Reschedule needed"
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                className="rounded-xl"
+                className="rounded-xl text-xs sm:text-sm"
               />
             </div>
-            <DialogFooter className="gap-2">
-              <Button variant="outline" onClick={() => setCancelModalOpen(false)} className="rounded-xl">
+            <DialogFooter className="gap-2 flex-col sm:flex-row pt-2">
+              <Button variant="outline" onClick={() => setCancelModalOpen(false)} className="rounded-xl w-full sm:w-auto text-xs">
                 Keep Appointment
               </Button>
-              <Button onClick={handleConfirmCancel} className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl">
+              <Button onClick={handleConfirmCancel} className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl w-full sm:w-auto text-xs font-bold">
                 Confirm Cancellation
               </Button>
             </DialogFooter>

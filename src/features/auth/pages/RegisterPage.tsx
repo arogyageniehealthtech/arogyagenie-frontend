@@ -16,8 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { AuthCard } from "../components/AuthCard";
-import { GoogleLoginButton } from "../components/GoogleLoginButton";
-import { useAuth, getRoleDashboardPath } from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "@/constants/routes.constants";
 import type { BackendUserType } from "@/types/auth.types";
 
@@ -56,7 +55,6 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(true);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [registrationSuccessMessage, setRegistrationSuccessMessage] = useState<string | null>(null);
 
@@ -89,18 +87,12 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!agreeTerms) {
-      setValidationError("You must agree to the Terms of Service & Privacy Policy.");
-      return;
-    }
-
     try {
       const response = await register({
         userType,
         email: email.trim(),
         password,
       });
-      console.log(response)
       setRegistrationSuccessMessage(
         response?.message || "Registration successful! A verification link has been sent to your email."
       );
@@ -108,19 +100,19 @@ export default function RegisterPage() {
       console.error("Registration error:", err);
       let msg =
         err?.response?.data?.error?.message ||
-        err?.response?.data?.message ||
-        err?.message ||
-        "Registration failed. Please try again.";
-      if (err.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
-        msg = "The server took too long to respond (timeout). If the backend is waking up from idle or processing, please wait a moment and try again.";
+        err?.response?.data?.message;
+
+      if (!msg) {
+        if (err.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
+          msg = "The server took too long to respond (timeout). The backend may be waking up from idle on Render. Please wait a moment and try again.";
+        } else if (err.message === "Network Error" || err.code === "ERR_NETWORK") {
+          msg = "Unable to connect to the backend server. Please check your internet connection or backend service status.";
+        } else {
+          msg = err?.message || "Registration failed. Please try again.";
+        }
       }
       setValidationError(msg);
     }
-  };
-
-  const handleGoogleSignup = async () => {
-    // In production, Google Sign-in flow passes idToken to POST /auth/oauth/google
-    setValidationError("Please use the Google Sign-in button on the login page for automated account linking.");
   };
 
   return (
@@ -128,8 +120,9 @@ export default function RegisterPage() {
       title="Create Account"
       subtitle="Join ArogyaGenie digital healthcare ecosystem"
       badge="Quick Signup"
+      maxWidth="max-w-md sm:max-w-xl md:max-w-2xl"
       footer={
-        <p className="text-center text-xs sm:text-sm text-slate-400">
+        <p className="text-center text-xs text-slate-400">
           Already registered?{" "}
           <Link
             to={ROUTES.AUTH.LOGIN}
@@ -140,22 +133,22 @@ export default function RegisterPage() {
         </p>
       }
     >
-      <div className="space-y-4 w-full max-w-md mx-auto px-1 sm:px-0">
+      <div className="space-y-2.5 w-full mx-auto">
         {/* Success State */}
         {registrationSuccessMessage ? (
-          <div className="space-y-4 text-center py-4 animate-fadeIn">
-            <div className="h-12 w-12 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
-              <CheckCircle2 className="h-6 w-6" />
+          <div className="space-y-2.5 text-center py-2 animate-fadeIn">
+            <div className="h-10 w-10 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
+              <CheckCircle2 className="h-5 w-5" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Check Your Email</h3>
-              <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
                 {registrationSuccessMessage}
               </p>
             </div>
             <Link
               to={ROUTES.AUTH.LOGIN}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 transition-all"
             >
               <span>Return to Sign In</span>
               <ArrowRight className="h-4 w-4" />
@@ -165,10 +158,10 @@ export default function RegisterPage() {
           <>
             {/* Role Selector Cards */}
             <div>
-              <label className="text-xs font-semibold text-slate-300 block mb-2 tracking-wide uppercase">
+              <label className="text-[10px] sm:text-[11px] font-semibold text-slate-300 block mb-1 tracking-wide uppercase">
                 Select Account Type
               </label>
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
                 {ROLES.map(({ type, label, description, icon: Icon }) => {
                   const isSelected = userType === type;
                   return (
@@ -180,23 +173,21 @@ export default function RegisterPage() {
                         clearError();
                         setValidationError(null);
                       }}
-                      className={`relative flex flex-col items-center justify-between p-2.5 sm:p-3 rounded-xl text-left border transition-all duration-200 cursor-pointer ${
+                      className={`relative flex flex-col items-center justify-center py-1.5 px-1.5 sm:py-2 sm:px-2 rounded-xl text-center border transition-all duration-150 cursor-pointer ${
                         isSelected
-                          ? "border-indigo-500 bg-indigo-600/15 text-white shadow-lg shadow-indigo-500/10 ring-1 ring-indigo-500/50"
+                          ? "border-indigo-500 bg-indigo-600/20 text-white shadow-md shadow-indigo-500/10 ring-1 ring-indigo-500/50"
                           : "border-white/10 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20"
                       }`}
                     >
                       {isSelected && (
-                        <span className="absolute top-1.5 right-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-full bg-indigo-500 flex items-center justify-center text-white">
-                          <Check className="h-2.5 w-2.5 stroke-3" />
+                        <span className="absolute top-1 right-1 h-3 w-3 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                          <Check className="h-2 w-2 stroke-3" />
                         </span>
                       )}
-                      <Icon className={`h-5 w-5 sm:h-6 sm:w-6 mb-1.5 ${isSelected ? "text-indigo-400" : "text-slate-400"}`} />
-                      <div className="text-center w-full">
-                        <div className="text-xs sm:text-sm font-semibold truncate leading-tight">{label}</div>
-                        <div className="text-[10px] text-slate-400 truncate mt-0.5 block">
-                          {description}
-                        </div>
+                      <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 mb-0.5 shrink-0 ${isSelected ? "text-indigo-400" : "text-slate-400"}`} />
+                      <div className="text-[11px] sm:text-xs font-semibold truncate leading-tight w-full">{label}</div>
+                      <div className="text-[9px] text-slate-400 truncate hidden sm:block w-full mt-0.5">
+                        {description}
                       </div>
                     </button>
                   );
@@ -206,108 +197,98 @@ export default function RegisterPage() {
 
             {/* Error Alert */}
             {(error || validationError) && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-2 text-red-300 text-xs sm:text-sm animate-fadeIn">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-400" />
+              <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-1.5 text-red-300 text-xs animate-fadeIn">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-red-400" />
                 <span className="flex-1 leading-snug wrap-break-word">{error || validationError}</span>
               </div>
             )}
 
             {/* Registration Form */}
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5">
+            <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-2.5">
               {/* Email Input */}
               <div>
-                <label className="text-xs sm:text-sm font-medium text-slate-300 block mb-1">Email Address</label>
+                <label className="text-[11px] sm:text-xs font-medium text-slate-300 block mb-0.5">Email Address</label>
                 <div className="relative group">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full pl-9 pr-3 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                   />
                 </div>
               </div>
 
-              {/* Password Input */}
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs sm:text-sm font-medium text-slate-300">Password</label>
-                  <span className="text-[10px] text-slate-400">Min 10 chars (A-Z, a-z, 0-9)</span>
+              {/* Password & Confirm Password Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+                {/* Password Input */}
+                <div>
+                  <div className="flex justify-between items-center mb-0.5">
+                    <label className="text-[11px] sm:text-xs font-medium text-slate-300">Password</label>
+                    <span className="text-[9px] text-slate-400">Min 10 chars</span>
+                  </div>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Min 10 chars (A-Z, a-z, 0-9)"
+                      className="w-full pl-9 pr-8 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
                 </div>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min 10 characters"
-                    className="w-full pl-9 pr-9 py-2.5 sm:py-3 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
 
-              {/* Confirm Password Input */}
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-slate-300 block mb-1">Confirm Password</label>
-                <div className="relative group">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat password"
-                    className={`w-full pl-9 pr-3 py-2.5 sm:py-3 rounded-xl border bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none transition-all ${
-                      confirmPassword && confirmPassword === password
-                        ? "border-emerald-500/50 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                        : "border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                    }`}
-                  />
+                {/* Confirm Password Input */}
+                <div>
+                  <div className="flex justify-between items-center mb-0.5">
+                    <label className="text-[11px] sm:text-xs font-medium text-slate-300">Confirm Password</label>
+                  </div>
+                  <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat password"
+                      className={`w-full pl-9 pr-3 py-2 rounded-xl border bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none transition-all ${
+                        confirmPassword && confirmPassword === password
+                          ? "border-emerald-500/50 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                          : "border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      }`}
+                    />
+                  </div>
                 </div>
-              </div>
-
-              {/* Terms Checkbox */}
-              <div className="flex items-start gap-2.5 pt-1">
-                <input
-                  id="agreeTerms"
-                  type="checkbox"
-                  checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="h-4 w-4 mt-0.5 shrink-0 rounded border-white/20 bg-slate-900/60 text-indigo-600 accent-indigo-600 cursor-pointer focus:ring-0"
-                />
-                <label htmlFor="agreeTerms" className="text-xs sm:text-sm text-slate-400 leading-relaxed cursor-pointer select-none">
-                  I accept the{" "}
-                  <span className="text-indigo-400 hover:underline">Terms of Service</span> and{" "}
-                  <span className="text-indigo-400 hover:underline">Privacy Policy</span>.
-                </label>
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg shadow-indigo-600/30 bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-[0.99] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg shadow-indigo-600/30 bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-[0.99] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-1"
               >
                 {isLoading ? (
                   <span className="inline-flex items-center gap-2 text-center">
-                    <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                    <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
                     <span className="truncate">Creating Account...</span>
                   </span>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4 shrink-0" />
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
                     <span>Create Account</span>
-                    <ArrowRight className="h-4 w-4 ml-auto shrink-0" />
+                    <ArrowRight className="h-3.5 w-3.5 ml-auto shrink-0" />
                   </>
                 )}
               </button>

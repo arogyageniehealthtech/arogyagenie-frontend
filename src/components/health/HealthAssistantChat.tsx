@@ -724,8 +724,8 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
               <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-4 sm:space-y-5 scrollbar-thin scrollbar-thumb-indigo-900/60">
                 {/* 1. Welcome Message & Quick Actions (Rendered as first item in thread) */}
                 <div className="space-y-4">
-                  {/* Mobile-Only Interactive 3D Bot Mascot Card */}
-                  <div className="lg:hidden flex flex-col items-center justify-center p-2 rounded-3xl bg-[#080b26]/70 border border-indigo-500/30 relative overflow-hidden backdrop-blur-md shadow-lg">
+                  {/* Mobile-Only Interactive 3D Bot Mascot Card (hidden on phones) */}
+                  <div className="hidden sm:flex lg:hidden flex-col items-center justify-center p-2 rounded-3xl bg-[#080b26]/70 border border-indigo-500/30 relative overflow-hidden backdrop-blur-md shadow-lg">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl bg-cyan-500/15 pointer-events-none" />
                     <div className="relative w-32 h-36 sm:w-64 sm:h-72 flex items-center justify-center">
                       <AarogyaBot3D className="w-full h-full" />

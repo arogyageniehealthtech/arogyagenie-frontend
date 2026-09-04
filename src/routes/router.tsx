@@ -104,20 +104,27 @@ export const router = createBrowserRouter([
       { path: "/login", element: <Navigate to={ROUTES.AUTH.LOGIN} replace /> },
       { path: ROUTES.AUTH.LOGIN, element: withSuspense(<LoginPage />) },
       { path: ROUTES.AUTH.REGISTER, element: withSuspense(<RegisterPage />) },
+      { path: "/register", element: <Navigate to={ROUTES.AUTH.REGISTER} replace /> },
       { path: ROUTES.AUTH.FORGOT_PASSWORD, element: withSuspense(<ForgotPasswordPage />) },
+      { path: "/forgot-password", element: withSuspense(<ForgotPasswordPage />) },
       { path: ROUTES.AUTH.RESET_PASSWORD, element: withSuspense(<ResetPasswordPage />) },
+      { path: `${ROUTES.AUTH.RESET_PASSWORD}/:token`, element: withSuspense(<ResetPasswordPage />) },
+      { path: "/reset-password", element: withSuspense(<ResetPasswordPage />) },
+      { path: "/reset-password/:token", element: withSuspense(<ResetPasswordPage />) },
       { path: `${ROUTES.AUTH.VERIFY_EMAIL}/:token`, element: withSuspense(<VerifyEmailPage />) },
       { path: ROUTES.AUTH.VERIFY_EMAIL, element: withSuspense(<VerifyEmailPage />) },
+      { path: "/verify-email", element: withSuspense(<VerifyEmailPage />) },
+      { path: "/verify-email/:token", element: withSuspense(<VerifyEmailPage />) },
     ],
   },
 
   // --- Patient Portal Routes ------------------------------------------
   {
-    // element: (
-      // <ProtectedRoute>
-      //   <RoleBasedRoute allowedRoles={["PATIENT"]} />
-      // </ProtectedRoute>
-    // ),
+    element: (
+      <ProtectedRoute>
+        <RoleBasedRoute allowedRoles={["PATIENT"]} />
+      </ProtectedRoute>
+    ),
     errorElement: <RouteErrorElement />,
     children: [
       {

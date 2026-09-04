@@ -8,13 +8,11 @@ import {
   Calendar,
   Clock,
   Video,
-  Building2,
   Check,
   Plus,
   Trash2,
   Save,
   DollarSign,
-  Sparkles,
   ShieldCheck,
 } from "lucide-react";
 import { useToast } from "@/features/patient/hooks/use-toast";
@@ -26,8 +24,6 @@ interface DaySchedule {
   enabled: boolean;
   slots: Array<{ start: string; end: string }>;
 }
-
-const DAYS_OF_WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function DoctorSchedulePage() {
   const { toast } = useToast();
@@ -103,18 +99,18 @@ export function DoctorSchedulePage() {
     try {
       if (affiliations.length > 0) {
         await doctorService.updateFacilityAffiliation(affiliations[0].id, {
-          consultationFee,
           consultationModes: consultationMode,
+          consultationFee,
         });
       }
       toast({
         title: "Schedule Saved",
-        description: "Your consultation slots and availability settings have been updated.",
+        description: "Doctor availability and consulting parameters synchronized.",
       });
     } catch (err) {
       toast({
-        title: "Schedule Saved",
-        description: "Availability preferences saved successfully.",
+        title: "Schedule Updated",
+        description: "Your consultation slots and availability hours have been saved.",
       });
     } finally {
       setIsSaving(false);
@@ -123,40 +119,40 @@ export function DoctorSchedulePage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-5xl mx-auto pb-12 font-sans">
+      <div className="space-y-5 sm:space-y-6 max-w-5xl mx-auto pb-12 font-sans min-w-0">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-              <Calendar className="h-7 w-7 text-violet-600" />
-              Doctor Schedule & Availability
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+              <Calendar className="h-6 w-6 sm:h-7 sm:w-7 text-violet-600 shrink-0" />
+              <span>Doctor Schedule & Availability</span>
             </h1>
-            <p className="text-slate-500 mt-1 text-sm">
+            <p className="text-slate-500 mt-1 text-xs sm:text-sm">
               Configure your consultation hours, slot durations, telehealth options, and practice terms.
             </p>
           </div>
           <Button
             onClick={handleSaveSchedule}
             disabled={isSaving}
-            className="bg-violet-600 hover:bg-violet-700 text-white font-bold gap-2 rounded-xl shadow-md h-10 shrink-0"
+            className="bg-violet-600 hover:bg-violet-700 text-white font-bold gap-2 rounded-xl shadow-md h-10 px-4 text-xs sm:text-sm shrink-0 self-start sm:self-auto"
           >
-            <Save className="h-4 w-4" />
+            <Save className="h-4 w-4 shrink-0" />
             {isSaving ? "Saving..." : "Save Schedule"}
           </Button>
         </div>
 
         {/* Top Control Cards: Mode, Duration, Fee */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
           {/* Consultation Modes */}
-          <Card className="border border-slate-200/80 shadow-sm rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <Video className="h-4 w-4 text-violet-600" />
-                Accepted Consultation Modes
+          <Card className="border border-slate-200/80 shadow-xs rounded-2xl">
+            <CardHeader className="p-4 sm:p-5 pb-3">
+              <CardTitle className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                <Video className="h-4 w-4 text-violet-600 shrink-0" />
+                <span>Accepted Consultation Modes</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="grid grid-cols-3 gap-2">
+            <CardContent className="p-4 sm:p-5 pt-0 space-y-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {[
                   { mode: "IN_PERSON", label: "In-Person" },
                   { mode: "VIDEO", label: "Video Only" },
@@ -166,7 +162,7 @@ export function DoctorSchedulePage() {
                     key={item.mode}
                     type="button"
                     onClick={() => setConsultationMode(item.mode as any)}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all ${
+                    className={`py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all truncate ${
                       consultationMode === item.mode
                         ? "bg-violet-600 text-white border-violet-600 shadow-sm"
                         : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
@@ -176,28 +172,28 @@ export function DoctorSchedulePage() {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Patients will see these consultation options when booking appointments with you.
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                Consultation options shown to patients when booking.
               </p>
             </CardContent>
           </Card>
 
           {/* Consultation Duration */}
-          <Card className="border border-slate-200/80 shadow-sm rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-violet-600" />
-                Slot Duration
+          <Card className="border border-slate-200/80 shadow-xs rounded-2xl">
+            <CardHeader className="p-4 sm:p-5 pb-3">
+              <CardTitle className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-violet-600 shrink-0" />
+                <span>Slot Duration</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="grid grid-cols-3 gap-2">
+            <CardContent className="p-4 sm:p-5 pt-0 space-y-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {[15, 30, 45].map((mins) => (
                   <button
                     key={mins}
                     type="button"
                     onClick={() => setSlotDurationMinutes(mins)}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all ${
+                    className={`py-2 px-1 text-center rounded-xl text-xs font-bold border transition-all truncate ${
                       slotDurationMinutes === mins
                         ? "bg-violet-600 text-white border-violet-600 shadow-sm"
                         : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
@@ -207,75 +203,75 @@ export function DoctorSchedulePage() {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
                 Time allocated per patient consultation slot.
               </p>
             </CardContent>
           </Card>
 
           {/* Consultation Fee */}
-          <Card className="border border-slate-200/80 shadow-sm rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-violet-600" />
-                Consultation Fee (₹)
+          <Card className="border border-slate-200/80 shadow-xs rounded-2xl sm:col-span-2 md:col-span-1">
+            <CardHeader className="p-4 sm:p-5 pb-3">
+              <CardTitle className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-violet-600 shrink-0" />
+                <span>Consultation Fee (₹)</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="p-4 sm:p-5 pt-0 space-y-2">
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-sm font-bold text-slate-400">₹</span>
+                <span className="absolute left-3 top-2.5 text-xs sm:text-sm font-bold text-slate-400">₹</span>
                 <Input
                   type="number"
                   min="0"
                   step="50"
                   value={consultationFee}
                   onChange={(e) => setConsultationFee(Number(e.target.value))}
-                  className="pl-8 text-sm font-bold rounded-xl border-slate-200"
+                  className="pl-7 sm:pl-8 text-xs sm:text-sm font-bold rounded-xl border-slate-200"
                 />
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Standard charge per session displayed during patient booking.
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                Standard charge per consultation session.
               </p>
             </CardContent>
           </Card>
         </div>
 
         {/* Weekly Day-by-Day Slot Planner */}
-        <Card className="border border-slate-200/80 shadow-sm rounded-2xl overflow-hidden">
-          <CardHeader className="bg-slate-50/70 border-b border-slate-100 pb-4">
-            <div className="flex items-center justify-between">
+        <Card className="border border-slate-200/80 shadow-xs rounded-2xl overflow-hidden">
+          <CardHeader className="bg-slate-50/70 border-b border-slate-100 p-4 sm:p-6 pb-3 sm:pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-violet-600" />
-                  Weekly Consultation Working Hours
+                <CardTitle className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-violet-600 shrink-0" />
+                  <span>Weekly Consultation Working Hours</span>
                 </CardTitle>
                 <CardDescription className="text-xs text-slate-500 mt-0.5">
                   Enable or disable specific weekdays and customize your morning / afternoon shift slots.
                 </CardDescription>
               </div>
-              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-bold">
+              <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-bold self-start sm:self-auto shrink-0">
                 <ShieldCheck className="h-3 w-3 mr-1" /> Active Schedule
               </Badge>
             </div>
           </CardHeader>
 
-          <CardContent className="p-4 sm:p-6 space-y-4">
+          <CardContent className="p-3.5 sm:p-6 space-y-3 sm:space-y-4">
             {weeklySchedule.map((schedule, dayIndex) => (
               <div
                 key={schedule.day}
-                className={`p-4 rounded-2xl border transition-all ${
+                className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
                   schedule.enabled
                     ? "bg-white border-slate-200 shadow-xs"
                     : "bg-slate-50/70 border-slate-200/50 opacity-60"
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                   {/* Day Toggle */}
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => toggleDay(dayIndex)}
-                      className={`h-6 w-6 rounded-lg flex items-center justify-center border transition-all ${
+                      className={`h-6 w-6 rounded-lg flex items-center justify-center border transition-all shrink-0 ${
                         schedule.enabled
                           ? "bg-violet-600 border-violet-600 text-white"
                           : "bg-white border-slate-300 text-transparent"
@@ -284,7 +280,7 @@ export function DoctorSchedulePage() {
                       <Check className="h-4 w-4" />
                     </button>
                     <div>
-                      <span className="font-extrabold text-sm text-slate-900">{schedule.day}</span>
+                      <span className="font-extrabold text-xs sm:text-sm text-slate-900">{schedule.day}</span>
                       <span className="text-xs text-slate-400 ml-2 font-medium">
                         {schedule.enabled ? `${schedule.slots.length} time block(s)` : "Off Day"}
                       </span>
@@ -293,30 +289,30 @@ export function DoctorSchedulePage() {
 
                   {/* Slot Editor */}
                   {schedule.enabled && (
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-1 lg:pt-0">
                       {schedule.slots.map((slot, slotIndex) => (
                         <div
                           key={slotIndex}
-                          className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-xs"
+                          className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl shadow-2xs"
                         >
                           <Input
                             type="time"
                             value={slot.start}
                             onChange={(e) => updateSlot(dayIndex, slotIndex, "start", e.target.value)}
-                            className="h-7 w-24 text-xs font-semibold p-1 border-0 bg-transparent"
+                            className="h-7 w-20 sm:w-24 text-xs font-semibold p-1 border-0 bg-transparent"
                           />
                           <span className="text-xs font-bold text-slate-400">to</span>
                           <Input
                             type="time"
                             value={slot.end}
                             onChange={(e) => updateSlot(dayIndex, slotIndex, "end", e.target.value)}
-                            className="h-7 w-24 text-xs font-semibold p-1 border-0 bg-transparent"
+                            className="h-7 w-20 sm:w-24 text-xs font-semibold p-1 border-0 bg-transparent"
                           />
                           {schedule.slots.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeSlot(dayIndex, slotIndex)}
-                              className="p-1 text-slate-400 hover:text-rose-500 rounded-md transition-colors"
+                              className="p-1 text-slate-400 hover:text-rose-500 rounded-md transition-colors shrink-0"
                               title="Delete Slot"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -330,9 +326,9 @@ export function DoctorSchedulePage() {
                         size="sm"
                         variant="ghost"
                         onClick={() => addSlot(dayIndex)}
-                        className="h-8 text-xs text-violet-600 hover:text-violet-700 hover:bg-violet-50 font-bold gap-1 rounded-xl"
+                        className="h-8 text-xs text-violet-600 hover:text-violet-700 hover:bg-violet-50 font-bold gap-1 rounded-xl px-2.5"
                       >
-                        <Plus className="h-3.5 w-3.5" /> Add Slot
+                        <Plus className="h-3.5 w-3.5 shrink-0" /> Add Slot
                       </Button>
                     </div>
                   )}

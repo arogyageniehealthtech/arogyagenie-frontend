@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useCreatePrescription, useExtractOcr, getGetDoctorDashboardQueryKey, getListPrescriptionsQueryKey } from "@workspace/api-client-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -112,30 +111,30 @@ export function PrescribeModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-900">
-            <Pill className="h-5 w-5 text-primary" />
-            Issue Digital Prescription
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
+        <DialogHeader className="border-b pb-3">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold text-slate-900">
+            <Pill className="h-5 w-5 text-violet-600 shrink-0" />
+            <span>Issue Digital Prescription</span>
           </DialogTitle>
           {patientName && (
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 truncate">
               Patient: <strong className="text-slate-800">{patientName}</strong>
             </p>
           )}
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3.5 sm:space-y-4 pt-2 text-xs sm:text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <FormField
                 control={form.control}
                 name="patientId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Patient ID</FormLabel>
+                    <FormLabel className="text-xs font-bold text-slate-700">Patient ID *</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter Patient ID" {...field} />
+                      <Input type="number" placeholder="Enter Patient ID" className="rounded-xl text-xs sm:text-sm" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -147,11 +146,12 @@ export function PrescribeModal({
                 name="appointmentId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Appointment ID (Optional)</FormLabel>
+                    <FormLabel className="text-xs font-bold text-slate-700">Appointment ID (Optional)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         placeholder="Optional"
+                        className="rounded-xl text-xs sm:text-sm"
                         value={field.value ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
@@ -167,9 +167,9 @@ export function PrescribeModal({
               name="diagnosis"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Diagnosis</FormLabel>
+                  <FormLabel className="text-xs font-bold text-slate-700">Diagnosis *</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Acute Bronchitis / Viral Fever" {...field} />
+                    <Input placeholder="e.g. Acute Bronchitis / Viral Fever" className="rounded-xl text-xs sm:text-sm" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -181,24 +181,24 @@ export function PrescribeModal({
               name="medicines"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Medicines & Dosage Schedule</FormLabel>
+                  <div className="flex flex-wrap items-center justify-between gap-1">
+                    <FormLabel className="text-xs font-bold text-slate-700">Medicines & Dosage Schedule *</FormLabel>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs text-primary gap-1"
+                      className="h-6 text-[11px] text-violet-600 hover:text-violet-700 hover:bg-violet-50 font-bold gap-1 px-1.5 rounded-lg"
                       onClick={handleRunOcr}
                       disabled={extractOcr.isPending}
                     >
-                      <Scan className="h-3.5 w-3.5" />
-                      {extractOcr.isPending ? "Scanning..." : "Auto-Scan Rx with OCR"}
+                      <Scan className="h-3 w-3 shrink-0" />
+                      {extractOcr.isPending ? "Scanning..." : "Auto-Scan with OCR"}
                     </Button>
                   </div>
                   <FormControl>
                     <Textarea
                       placeholder="e.g. Amoxicillin 500mg - 1 capsule thrice daily after meals (5 days)&#10;Paracetamol 650mg - 1 tablet twice daily as needed"
-                      className="min-h-[100px]"
+                      className="min-h-[100px] text-xs font-mono rounded-xl leading-relaxed"
                       {...field}
                     />
                   </FormControl>
@@ -212,11 +212,11 @@ export function PrescribeModal({
               name="instructions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Special Instructions (Optional)</FormLabel>
+                  <FormLabel className="text-xs font-bold text-slate-700">Special Instructions (Optional)</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="e.g. Drink plenty of warm water. Rest for 3 days. Follow up if fever persists."
-                      className="min-h-[70px]"
+                      className="min-h-[70px] text-xs sm:text-sm rounded-xl leading-relaxed"
                       {...field}
                     />
                   </FormControl>
@@ -230,20 +230,20 @@ export function PrescribeModal({
               name="prescribedDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Prescribed Date</FormLabel>
+                  <FormLabel className="text-xs font-bold text-slate-700">Prescribed Date *</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input type="date" className="rounded-xl text-xs sm:text-sm" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
+            <DialogFooter className="pt-3 gap-2 flex-col-reverse sm:flex-row">
+              <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto rounded-xl text-xs">
                 Cancel
               </Button>
-              <Button type="submit" disabled={createPrescription.isPending}>
+              <Button type="submit" disabled={createPrescription.isPending} className="w-full sm:w-auto bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl text-xs">
                 {createPrescription.isPending ? "Issuing..." : "Issue Prescription"}
               </Button>
             </DialogFooter>
@@ -253,3 +253,5 @@ export function PrescribeModal({
     </Dialog>
   );
 }
+
+export default PrescribeModal;

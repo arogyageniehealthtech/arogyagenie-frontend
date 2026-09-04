@@ -261,7 +261,7 @@ export default function DashboardPage() {
                 {dateStr}
               </p>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                Good Morning, {firstName} 👋
+                Good Morning, {firstName}
               </h1>
               <p className="text-xs sm:text-sm text-violet-200/80 leading-relaxed max-w-xl">
                 Here is your health overview, live vitals tracking, and longitudinal AI medical insights.

@@ -8,6 +8,7 @@ import {
   Clipboard,
   Users,
   Clock,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes.constants";
@@ -34,7 +35,12 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-export function DoctorSidebar() {
+export interface DoctorSidebarProps {
+  onClose?: () => void;
+  isMobile?: boolean;
+}
+
+export function DoctorSidebar({ onClose, isMobile = false }: DoctorSidebarProps) {
   const location = useLocation();
   const { user, logout } = useAuth();
 
@@ -57,40 +63,61 @@ export function DoctorSidebar() {
   const initials = getInitials(displayName, user?.email);
 
   const handleSignOut = async () => {
+    if (onClose) onClose();
     await logout();
+  };
+
+  const handleLinkClick = () => {
+    if (onClose) {
+      onClose();
+    }
   };
 
   return (
     <aside
-      className="w-64 flex flex-col h-full shrink-0 overflow-hidden select-none"
+      className={`w-72 sm:w-64 flex flex-col h-full shrink-0 overflow-hidden select-none ${
+        isMobile ? "shadow-2xl" : ""
+      }`}
       style={{
         background: "linear-gradient(180deg, #18103A 0%, #120A2D 50%, #0E0724 100%)",
         borderRight: "1px solid rgba(255,255,255,0.06)",
       }}
     >
       {/* Logo Area */}
-      <div className="px-5 py-5 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md bg-white p-2">
-          <img
-            src="/LOGO.png"
-            alt="ArogyaGenie"
-            className="h-6 w-6 object-contain"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
+      <div className="px-5 py-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md bg-white p-2">
+            <img
+              src="/LOGO.png"
+              alt="ArogyaGenie"
+              className="h-6 w-6 object-contain"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          </div>
+          <div>
+            <span
+              className="font-extrabold text-lg tracking-tight"
+              style={{ color: "rgba(255,255,255,0.97)" }}
+            >
+              ArogyaGenie
+            </span>
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-violet-300/60">
+              Doctor Portal
+            </p>
+          </div>
         </div>
-        <div>
-          <span
-            className="font-extrabold text-lg tracking-tight"
-            style={{ color: "rgba(255,255,255,0.97)" }}
+
+        {isMobile && onClose && (
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-violet-300/70 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Close menu"
           >
-            ArogyaGenie
-          </span>
-          <p className="text-[10px] font-semibold tracking-widest uppercase text-violet-300/60">
-            Doctor Portal
-          </p>
-        </div>
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       {/* Divider */}
@@ -109,7 +136,8 @@ export function DoctorSidebar() {
             <Link
               key={item.href}
               to={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
+              onClick={handleLinkClick}
+              className="flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all duration-150"
               style={
                 isActive
                   ? {
