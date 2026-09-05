@@ -37,6 +37,7 @@ export function FloatingHealthAssistant() {
     const handleOpen = () => {
       const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
       if (isMobile) {
+        setIsOpen(false);
         if (window.location.pathname !== ROUTES.PATIENT.ASSISTANT && window.location.pathname !== "/assistant") {
           router.navigate(ROUTES.PATIENT.ASSISTANT);
         }
@@ -68,18 +69,23 @@ export function FloatingHealthAssistant() {
     return null;
   }
 
-  const handleOrbClick = () => {
+  const handleOrbClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     if (isMobile) {
-      router.navigate(ROUTES.PATIENT.ASSISTANT);
+      setIsOpen(false);
+      if (window.location.pathname !== ROUTES.PATIENT.ASSISTANT && window.location.pathname !== "/assistant") {
+        router.navigate(ROUTES.PATIENT.ASSISTANT);
+      }
     } else {
-      setIsOpen(true);
+      setIsOpen((prev) => !prev);
     }
   };
 
   return (
     <>
-      {/* ── Floating Chat Panel (Emerges from Orb) ────────────────────────── */}
+      {/* ── Desktop Floating Chat Panel (Hidden on Mobile) ────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -107,7 +113,7 @@ export function FloatingHealthAssistant() {
               damping: 28,
               mass: 0.9,
             }}
-            className="fixed z-75 flex flex-col overflow-hidden bg-[#060819] border-0 sm:border border-indigo-500/40 shadow-2xl transition-all inset-x-0 top-0 bottom-14 sm:inset-auto sm:right-6 sm:bottom-6 sm:w-155 md:w-205 lg:w-247.5 xl:w-270 sm:h-170 lg:h-185 rounded-none sm:rounded-[32px] max-w-none sm:max-w-[calc(100vw-2rem)] max-h-none sm:max-h-[calc(100vh-5rem)]"
+            className="hidden sm:flex fixed z-75 flex-col overflow-hidden bg-[#060819] border border-indigo-500/40 shadow-2xl transition-all sm:right-6 sm:bottom-6 sm:w-155 md:w-205 lg:w-247.5 xl:w-270 sm:h-170 lg:h-185 rounded-[32px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)]"
             style={{
               boxShadow:
                 "0 30px 100px -10px rgba(88, 28, 135, 0.5), 0 20px 50px -10px rgba(30, 27, 75, 0.7), 0 0 0 1px rgba(129, 140, 248, 0.3)",

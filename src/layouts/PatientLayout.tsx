@@ -11,7 +11,8 @@ import {
   Bell,
   Pill,
   MapPin,
-  ChevronDown
+  ChevronDown,
+  Bot
 } from 'lucide-react';
 import { ROUTES } from '../constants/routes.constants';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
