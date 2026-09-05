@@ -8,6 +8,8 @@ import BookLabModal from '../component/others/BookLabModal';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { diagnosticApi } from '../api/diagnosticApi';
 import { fetchCurrentLocation, setCustomLocation } from '@/store/slices/locationSlice';
+import { LocationBanner } from '../component/common/LocationBanner';
+import { EmptyNearbyHealthcare } from '../component/common/EmptyNearbyHealthcare';
 import type { DiagnosticCentre } from '../../patient/types/diagnostic';
 import { facilityApi } from '../api/facilityApi';
 
@@ -306,6 +308,7 @@ export default function DiagnosticDiscoveryPage() {
 
   const { coords: browserCoords, isLocating, error: locationError, fetchLocation } = useGeolocation(locationState.coordinates ?? FALLBACK_COORDS);
   const activeCoordinates = locationState.coordinates || browserCoords;
+  const hasLocationError = Boolean(locationState.error || locationError);
 
   // Primary API Data Fetch using diagnosticApi.getCentres bound to Swagger endpoint
   useEffect(() => {
@@ -646,11 +649,18 @@ export default function DiagnosticDiscoveryPage() {
             </div>
           </section>
 
-          {locationError && (
-            <div className="text-[11px] text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 font-medium w-full">
-              {locationError}
-            </div>
-          )}
+          {/* LOCATION STATUS BANNER */}
+          <LocationBanner
+            locationName={locationState.addressString || (activeCoordinates ? "Current Live Coordinates" : "Current Location")}
+            isCustomLocation={locationState.isUsingCustom}
+            isLocating={isLocating || locationState.isLoading}
+            hasLocationError={hasLocationError}
+            errorMessage={locationState.error || locationError}
+            radiusKm={radiusKm}
+            onRetryLocation={fetchLocation}
+            onChangeLocation={() => setShowCustomLocationModal(true)}
+            serviceCategory="diagnostic labs & test centers"
+          />
 
           {apiError && (
             <div className="text-[11px] text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 font-medium w-full">
@@ -676,7 +686,7 @@ export default function DiagnosticDiscoveryPage() {
             <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  {isLoadingApi ? 'Searching labs...' : `${filteredCentres?.length || 0} ${(filteredCentres?.length || 0) === 1 ? 'Result' : 'Results'} Found`}
+                  {isLoadingApi ? 'Searching labs...' : `${filteredCentres?.length || 0} ${(filteredCentres?.length || 0) === 1 ? 'Lab' : 'Labs'} within ${radiusKm} KM`}
                 </h2>
               </div>
 
@@ -692,16 +702,14 @@ export default function DiagnosticDiscoveryPage() {
                   <p className="text-xs text-slate-500 mb-3">{apiError}</p>
                 </div>
               ) : (filteredCentres?.length || 0) === 0 ? (
-                <div className="bg-white border border-slate-200 p-6 rounded-xl text-center shadow-sm">
-                  <Microscope className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">No diagnostic centres found</h3>
-                  <button 
-                    onClick={() => { setSearchQuery(''); setSelectedTestFilter(null); setRadiusKm(32); }} 
-                    className="text-[#5B21B6] text-xs font-bold hover:underline cursor-pointer"
-                  >
-                    Reset Search Filters
-                  </button>
-                </div>
+                <EmptyNearbyHealthcare
+                  serviceName="diagnostic labs"
+                  radiusKm={radiusKm}
+                  message={`No verified diagnostic labs or test centers were found within ${radiusKm} KM of your location.`}
+                  hasActiveFilters={Boolean(searchQuery || selectedTestFilter)}
+                  onResetSearch={() => { setSearchQuery(''); setSelectedTestFilter(null); setRadiusKm(32); }}
+                  onChangeLocation={() => setShowCustomLocationModal(true)}
+                />
               ) : (
                 <div className="flex flex-col gap-3 pb-4">
                   {(filteredCentres || []).map((centre) => (

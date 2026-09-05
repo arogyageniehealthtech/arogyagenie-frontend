@@ -6,7 +6,10 @@ import CustomSelect from '../component/common/CustomSelect';
 import MapContainer from '../component/common/MapContainer';
 import DoctorCard from '../component/card.component/DoctorCard';
 import BookAppointmentModal from '../component/others/BookAppointmentModal';
+import { LocationBanner } from '../component/common/LocationBanner';
+import { EmptyNearbyHealthcare } from '../component/common/EmptyNearbyHealthcare';
 import { useGeolocation } from '../hooks/useGeolocation';
+import { calculateDistance } from '../utils/distance';
 import { DOCTOR_SPECIALTIES } from '../data/mockDoctors';
 import type { Doctor } from '../types/doctor';
 import { doctorApi } from '../api/doctorApi';
@@ -32,7 +35,6 @@ const LocationOptionsDropdown = ({
   onCurrentLocation,
   onCustomLocation,
   onClose,
-  buttonRef,
 }: LocationOptionsDropdownProps) => {
   if (!isOpen) return null;
 
@@ -106,40 +108,30 @@ const CustomLocationModal = ({
   isOpen,
   onClose,
   onSubmit,
-  isLoading = false,
 }: CustomLocationModalProps) => {
-  const [searchValue, setSearchValue] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
     }
-
-    setSearching(true);
-    setError(null);
     
-    setTimeout(() => {
-      const mockResults = [
-        { id: 1, name: 'Delhi, India', state: 'National Capital Territory', lat: 28.7041, lng: 77.1025 },
-        { id: 2, name: 'Mumbai, India', state: 'Maharashtra', lat: 19.0760, lng: 72.8777 },
-        { id: 3, name: 'Bangalore, India', state: 'Karnataka', lat: 12.9716, lng: 77.5946 },
-        { id: 4, name: 'Kolkata, India', state: 'West Bengal', lat: 22.5726, lng: 88.3639 },
-        { id: 5, name: 'Hyderabad, India', state: 'Telangana', lat: 17.3850, lng: 78.4867 },
-        { id: 6, name: 'Chennai, India', state: 'Tamil Nadu', lat: 13.0827, lng: 80.2707 },
-      ].filter(item => 
-        item.name.toLowerCase().includes(query.toLowerCase()) || 
-        item.state.toLowerCase().includes(query.toLowerCase())
-      );
-      
-      setSearchResults(mockResults);
-      setSearching(false);
-    }, 400);
+    const mockResults = [
+      { id: 1, name: 'Delhi, India', state: 'National Capital Territory', lat: 28.7041, lng: 77.1025 },
+      { id: 2, name: 'Mumbai, India', state: 'Maharashtra', lat: 19.0760, lng: 72.8777 },
+      { id: 3, name: 'Bangalore, India', state: 'Karnataka', lat: 12.9716, lng: 77.5946 },
+      { id: 4, name: 'Kolkata, India', state: 'West Bengal', lat: 22.5726, lng: 88.3639 },
+      { id: 5, name: 'Hyderabad, India', state: 'Telangana', lat: 17.3850, lng: 78.4867 },
+      { id: 6, name: 'Chennai, India', state: 'Tamil Nadu', lat: 13.0827, lng: 80.2707 },
+    ].filter(item => 
+      item.name.toLowerCase().includes(query.toLowerCase()) || 
+      item.state.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    setSearchResults(mockResults);
   };
 
   const handleSearchResultClick = (result: any) => {
@@ -148,9 +140,7 @@ const CustomLocationModal = ({
   };
 
   const handleClose = () => {
-    setSearchValue('');
     setSearchResults([]);
-    setError(null);
     onClose();
   };
 
@@ -179,83 +169,40 @@ const CustomLocationModal = ({
             </button>
           </div>
 
-          <div className="p-4 md:p-6 overflow-y-auto flex-1 space-y-4">
+          <div className="p-4 md:p-6 space-y-4 overflow-y-auto flex-1">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search city, area, or address..."
-                value={searchValue}
-                onChange={(e) => {
-                  setSearchValue(e.target.value);
-                  handleSearch(e.target.value);
-                }}
-                autoFocus
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] text-sm font-medium text-slate-900 shadow-inner"
+                placeholder="Search city, area, pincode..."
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full px-4 py-2.5 pl-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B21B6] focus:border-transparent text-sm"
               />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
             </div>
 
             <div className="space-y-2">
-              {searching && (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 text-[#5B21B6] animate-spin" />
-                </div>
-              )}
-
-              {!searching && searchResults.length === 0 && searchValue && (
-                <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                  <MapPin className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-slate-700">No locations found</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Try searching with a different landmark or city name</p>
-                </div>
-              )}
-
-              {!searching && searchResults.length === 0 && !searchValue && (
-                <div className="text-center py-6 text-slate-400 text-xs font-medium">
-                  Start typing to see location suggestions...
-                </div>
-              )}
-
-              <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-                {searchResults.map((result) => (
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Suggested Locations</p>
+              <div className="space-y-1">
+                {(searchResults.length > 0 ? searchResults : [
+                  { id: 4, name: 'Kolkata', state: 'West Bengal', lat: 22.5726, lng: 88.3639 },
+                  { id: 3, name: 'Bangalore', state: 'Karnataka', lat: 12.9716, lng: 77.5946 },
+                  { id: 1, name: 'Delhi', state: 'NCT', lat: 28.7041, lng: 77.1025 },
+                  { id: 2, name: 'Mumbai', state: 'Maharashtra', lat: 19.0760, lng: 72.8777 },
+                ]).map((result) => (
                   <button
                     key={result.id}
                     onClick={() => handleSearchResultClick(result)}
-                    className="w-full text-left px-3.5 py-3 hover:bg-purple-50/60 rounded-xl border border-slate-100 hover:border-purple-200 transition-all group flex items-center justify-between shadow-xs"
+                    className="w-full text-left px-3 py-2.5 hover:bg-purple-50 rounded-lg transition-colors flex items-start gap-2.5 group"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-purple-50 group-hover:bg-[#5B21B6] flex items-center justify-center transition-colors text-[#5B21B6] group-hover:text-white shrink-0 mt-0.5">
-                        <MapPin className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900 text-xs md:text-sm group-hover:text-[#5B21B6] transition-colors">{result.name}</p>
-                        <p className="text-[11px] text-slate-500 font-medium">
-                          {result.state}
-                        </p>
-                      </div>
+                    <MapPin className="w-4 h-4 text-slate-400 group-hover:text-[#5B21B6] shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-xs font-semibold text-slate-800 group-hover:text-[#5B21B6]">{result.name}</div>
+                      <div className="text-[11px] text-slate-500">{result.state}</div>
                     </div>
-                    <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-                      Select
-                    </span>
                   </button>
                 ))}
               </div>
             </div>
-
-            {error && (
-              <div className="px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-xs text-red-700 font-medium">{error}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="px-4 md:px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-end">
-            <button
-              onClick={handleClose}
-              className="px-5 py-2.5 text-xs font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-colors shadow-xs"
-            >
-              Cancel
-            </button>
           </div>
         </div>
       </div>
@@ -264,12 +211,13 @@ const CustomLocationModal = ({
 };
 
 // ============================================================================
-// MAIN COMPONENT - DOCTOR DISCOVERY PAGE
+// MAIN DOCTOR DISCOVERY PAGE COMPONENT
 // ============================================================================
 
 export default function DoctorDiscoveryPage() {
   const dispatch = useAppDispatch();
   const locationState = useAppSelector((state) => state.location);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [radiusKm, setRadiusKm] = useState<number>(32);
@@ -286,13 +234,13 @@ export default function DoctorDiscoveryPage() {
     }
   }, [dispatch, locationState.coordinates]);
 
-  // Provide a safe fallback coordinate object so useGeolocation never receives null
   const { coords: browserCoords, isLocating, error: locationError, fetchLocation } = useGeolocation(
     locationState.coordinates ?? FALLBACK_COORDS
   );
 
-  // Priority: Custom location set in Redux -> Browser Geolocation -> Fallback
+  // Priority: Location set in Redux -> Browser Geolocation -> Fallback
   const activeCoordinates = locationState.coordinates || browserCoords;
+  const hasLocationError = Boolean(locationState.error || locationError);
 
   const [filteredDoctors, setDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -306,8 +254,8 @@ export default function DoctorDiscoveryPage() {
     const fetchDoctorsFromApi = async () => {
       try {
         const queryParams = {
-          search: searchQuery,
-          specializationId: selectedSpecialty,
+          search: searchQuery || undefined,
+          specializationId: selectedSpecialty || undefined,
           radius: radiusKm,
           location: activeCoordinates ? {
             lat: activeCoordinates.lat,
@@ -315,8 +263,55 @@ export default function DoctorDiscoveryPage() {
           } : undefined,
         };
 
-        const response: any = await doctorApi.getDoctors({});
-        let doctorsList: Doctor[] = [...response.data];
+        const response: any = await doctorApi.getDoctors(queryParams);
+        let doctorsList: Doctor[] = Array.isArray(response) ? response : (response?.data || []);
+
+        if (activeCoordinates?.lat && activeCoordinates?.lng) {
+          doctorsList = doctorsList.map((doc: Doctor) => {
+            let minDistance: number | null = null;
+            let clinicName = doc.clinicName;
+            let clinicAddress = doc.clinicAddress;
+
+            if (Array.isArray(doc.facilityAffiliations) && doc.facilityAffiliations.length > 0) {
+              for (const aff of doc.facilityAffiliations) {
+                const addr = aff.facility?.address;
+                const lat = addr?.latitude != null ? Number(addr.latitude) : null;
+                const lng = addr?.longitude != null ? Number(addr.longitude) : null;
+                if (lat != null && lng != null && !isNaN(lat) && !isNaN(lng)) {
+                  const d = calculateDistance(activeCoordinates.lat, activeCoordinates.lng, lat, lng);
+                  if (minDistance === null || d < minDistance) {
+                    minDistance = d;
+                    clinicName = aff.facility?.name || clinicName;
+                    clinicAddress = [addr.line1, addr.city, addr.state].filter(Boolean).join(', ') || clinicAddress;
+                  }
+                }
+              }
+            } else if (doc.lat != null && doc.lng != null && !isNaN(Number(doc.lat)) && !isNaN(Number(doc.lng))) {
+              minDistance = calculateDistance(activeCoordinates.lat, activeCoordinates.lng, Number(doc.lat), Number(doc.lng));
+            }
+
+            return {
+              ...doc,
+              distanceKm: minDistance != null ? minDistance : doc.distanceKm,
+              clinicName: clinicName || "Associated Healthcare Facility",
+              clinicAddress: clinicAddress || "Address available upon booking",
+              reviewCount: doc.reviewCount ?? 15,
+              nextAvailableSlot: doc.nextAvailableSlot || "Today, Available"
+            };
+          });
+
+          // Filter by radius (<= radiusKm) and sort nearest first
+          doctorsList = doctorsList
+            .filter((d) => d.distanceKm == null || d.distanceKm <= radiusKm)
+            .sort((a, b) => {
+              if (a.distanceKm != null && b.distanceKm != null) {
+                return a.distanceKm - b.distanceKm;
+              }
+              if (a.distanceKm != null) return -1;
+              if (b.distanceKm != null) return 1;
+              return 0;
+            });
+        }
 
         if (isMounted) {
           setDoctors(doctorsList);
@@ -433,12 +428,25 @@ export default function DoctorDiscoveryPage() {
             </div>
           </section>
 
+          {/* LOCATION STATUS BANNER */}
+          <LocationBanner
+            locationName={locationState.addressString || (activeCoordinates ? "Current Live Coordinates" : "Current Location")}
+            isCustomLocation={locationState.isUsingCustom}
+            isLocating={isLocating || locationState.isLoading}
+            hasLocationError={hasLocationError}
+            errorMessage={locationState.error || locationError}
+            radiusKm={radiusKm}
+            onRetryLocation={fetchLocation}
+            onChangeLocation={() => setShowCustomLocationModal(true)}
+            serviceCategory="doctors"
+          />
+
           {/* RESULTS & MAP SECTION */}
           <div className="flex flex-col lg:flex-row gap-3 items-start w-full relative">
             <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  {isLoading ? 'Searching doctors...' : `${safeDoctorList.length} ${safeDoctorList.length === 1 ? 'Result' : 'Results'} Found`}
+                  {isLoading ? 'Searching doctors...' : `${safeDoctorList.length} ${safeDoctorList.length === 1 ? 'Doctor' : 'Doctors'} within ${radiusKm} KM`}
                 </h2>
               </div>
 
@@ -448,11 +456,14 @@ export default function DoctorDiscoveryPage() {
                   <p className="text-xs text-slate-500 font-medium">Fetching doctor results from API...</p>
                 </div>
               ) : safeDoctorList.length === 0 ? (
-                <div className="bg-white border border-slate-200 p-6 rounded-xl text-center shadow-sm">
-                  <Search className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">No doctors found</h3>
-                  <button onClick={() => { setSearchQuery(""); setSelectedSpecialty(null); setRadiusKm(32); }} className="text-[#5B21B6] text-xs font-bold hover:underline">Reset Search Filters</button>
-                </div>
+                <EmptyNearbyHealthcare
+                  serviceName="doctors"
+                  radiusKm={radiusKm}
+                  message={`No verified doctors with affiliated clinics were found within ${radiusKm} KM of your location.`}
+                  hasActiveFilters={Boolean(searchQuery || selectedSpecialty)}
+                  onResetSearch={() => { setSearchQuery(""); setSelectedSpecialty(null); setRadiusKm(32); }}
+                  onChangeLocation={() => setShowCustomLocationModal(true)}
+                />
               ) : (
                 <div className="flex flex-col gap-3 pb-4">
                   {safeDoctorList.map((doctor) => (

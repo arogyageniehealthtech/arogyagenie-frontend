@@ -31,3 +31,46 @@ export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2
   
   return Number(distance.toFixed(1)); 
 }
+
+export const calculateDistanceKm = calculateDistance;
+
+/**
+ * Formats a distance in kilometers to a clean, user-friendly string
+ * e.g., "2.3 km away" or "850 m away"
+ */
+export function formatDistance(distanceKm?: number | null): string {
+  if (distanceKm == null || isNaN(distanceKm)) return '';
+  if (distanceKm < 1) {
+    return `${Math.round(distanceKm * 1000)} m away`;
+  }
+  return `${distanceKm.toFixed(1)} km away`;
+}
+
+/**
+ * Gets the current browser location via navigator.geolocation as a Promise
+ */
+export function getCurrentLocation(): Promise<{ lat: number; lng: number }> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported by your browser"));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      (error) => {
+        reject(error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000,
+      }
+    );
+  });
+}
