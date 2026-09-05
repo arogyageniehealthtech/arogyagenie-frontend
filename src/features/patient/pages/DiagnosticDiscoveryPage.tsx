@@ -9,6 +9,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { diagnosticApi } from '../api/diagnosticApi';
 import { fetchCurrentLocation, setCustomLocation } from '@/store/slices/locationSlice';
 import type { DiagnosticCentre } from '../../patient/types/diagnostic';
+import { facilityApi } from '../api/facilityApi';
 
 const FALLBACK_COORDS = { lat: 22.5726, lng: 88.3639 };
 
@@ -199,7 +200,7 @@ const CustomLocationModal = ({
                 </div>
               )}
 
-              {!searching && searchResults.length === 0 && searchValue && (
+              {!searching && (searchResults?.length || 0) === 0 && searchValue && (
                 <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                   <MapPin className="w-6 h-6 text-slate-400 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-slate-700">No locations found</p>
@@ -207,14 +208,14 @@ const CustomLocationModal = ({
                 </div>
               )}
 
-              {!searching && searchResults.length === 0 && !searchValue && (
+              {!searching && (searchResults?.length || 0) === 0 && !searchValue && (
                 <div className="text-center py-6 text-slate-400 text-xs font-medium">
                   Start typing to see location suggestions...
                 </div>
               )}
 
               <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
-                {searchResults.map((result) => (
+                {(searchResults || []).map((result) => (
                   <button
                     key={result.id}
                     onClick={() => handleSearchResultClick(result)}
@@ -319,13 +320,16 @@ export default function DiagnosticDiscoveryPage() {
       setIsLoadingApi(true);
       setApiError(null);
       try {
-        const data = await diagnosticApi.getCentres({
-          lat: activeCoordinates.lat,
-          lng: activeCoordinates.lng,
+        const data = await facilityApi.getNearbyFacilities (
+          {
+          latitude: activeCoordinates.lat,
+          longitude: activeCoordinates.lng,
           radiusKm,
+           type: 'LAB',
           query: searchQuery || undefined,
           testName: selectedTestFilter || undefined
-        });
+        }
+      );
 
         if (isSubscribed) {
           const mappedCentres: DiagnosticCentre[] = (data || []).map((centre: any) => ({
@@ -366,13 +370,13 @@ export default function DiagnosticDiscoveryPage() {
 
   // Local Filtering fallback for instant interaction
   useEffect(() => {
-    let filtered = allCentres;
+    let filtered = allCentres || [];
 
     if (searchQuery) {
       const lowerQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(centre => 
-        centre.name.toLowerCase().includes(lowerQuery) ||
-        centre.availableTests?.some(t => t.name.toLowerCase().includes(lowerQuery))
+        centre.name?.toLowerCase().includes(lowerQuery) ||
+        centre.availableTests?.some(t => t.name?.toLowerCase().includes(lowerQuery))
       );
     }
 
@@ -422,7 +426,7 @@ export default function DiagnosticDiscoveryPage() {
     setShowCustomLocationModal(false);
   };
 
-  const mapLocations: MapLocation[] = filteredCentres
+  const mapLocations: MapLocation[] = (filteredCentres || [])
     .filter((c): c is DiagnosticCentre & { lat: number; lng: number } => c.lat != null && c.lng != null)
     .map((c) => ({
       id: c.id,
@@ -437,7 +441,7 @@ export default function DiagnosticDiscoveryPage() {
     <div className="min-h-screen flex flex-col font-sans relative bg-[#F1F5F9]">
       
       {/* INITIAL ENTRY CHOICE MODAL */}
-      {showInitialPrompt && (
+      {/* {showInitialPrompt && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col items-center text-center relative">
             <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#5B21B6] mb-4 shadow-inner">
@@ -468,7 +472,7 @@ export default function DiagnosticDiscoveryPage() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* PRESCRIPTION UPLOAD MODAL */}
       {showUploadModal && (
@@ -595,7 +599,7 @@ export default function DiagnosticDiscoveryPage() {
               <CustomSelect 
                 value={selectedTestFilter || ''} 
                 onChange={(val) => setSelectedTestFilter(val === 'All Tests' ? null : val)} 
-                options={['All Tests', ...availableTestOptions]} 
+                options={['All Tests', ...(availableTestOptions || [])]} 
                 placeholder="Test Type" 
               />
             </div>
@@ -672,7 +676,7 @@ export default function DiagnosticDiscoveryPage() {
             <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  {isLoadingApi ? 'Searching labs...' : `${filteredCentres.length} ${filteredCentres.length === 1 ? 'Result' : 'Results'} Found`}
+                  {isLoadingApi ? 'Searching labs...' : `${filteredCentres?.length || 0} ${(filteredCentres?.length || 0) === 1 ? 'Result' : 'Results'} Found`}
                 </h2>
               </div>
 
@@ -687,7 +691,7 @@ export default function DiagnosticDiscoveryPage() {
                   <h3 className="text-sm font-bold text-slate-900 mb-1">Unable to Load Data</h3>
                   <p className="text-xs text-slate-500 mb-3">{apiError}</p>
                 </div>
-              ) : filteredCentres.length === 0 ? (
+              ) : (filteredCentres?.length || 0) === 0 ? (
                 <div className="bg-white border border-slate-200 p-6 rounded-xl text-center shadow-sm">
                   <Microscope className="w-6 h-6 text-slate-400 mx-auto mb-2" />
                   <h3 className="text-sm font-bold text-slate-900 mb-1">No diagnostic centres found</h3>
@@ -700,7 +704,7 @@ export default function DiagnosticDiscoveryPage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 pb-4">
-                  {filteredCentres.map((centre) => (
+                  {(filteredCentres || []).map((centre) => (
                     <LabCard 
                       key={centre.id} 
                       centre={centre} 

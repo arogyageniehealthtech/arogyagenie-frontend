@@ -1,201 +1,255 @@
 import axiosClient from '../../../lib/axios';
-<<<<<<< HEAD
-import type { Pharmacy, MedicineItem, MedicineRequest } from '../types/pharmacy'; 
-=======
->>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
 
-export interface PharmacySearchParams {
-  latitude: number;
-  longitude: number;
-  radiusKm?: number;
-  type?: 'HOSPITAL' | 'CLINIC' | 'PHARMACY' | 'LAB';
+// ============================================================================
+// TYPES & SCHEMAS
+// ============================================================================
+
+export interface Medicine {
+  id: string;
+  name: string;
+  brandName?: string;
+  genericName?: string;
+  medicineType?: string;
+  category?: string;
+  price: number;
+  mrp?: number;
+  discountPercentage?: number;
+  stock?: number;
+  prescriptionRequired?: boolean;
+  packSize?: string;
+  imageUrl?: string;
+}
+
+export interface MedicineCatalogParams {
+  search?: string;
+  page?: number;
   limit?: number;
 }
 
-function mapFacilityToPharmacy(f: any): Pharmacy {
-  const lat = f.address?.latitude ? Number(f.address.latitude) : (f.lat ?? 0);
-  const lng = f.address?.longitude ? Number(f.address.longitude) : (f.lng ?? 0);
-  const address = [f.address?.line1, f.address?.line2, f.address?.city, f.address?.state]
-    .filter(Boolean)
-    .join(', ') || f.address?.city || 'Address not specified';
-  const dist = f.distanceKm !== undefined ? Number(f.distanceKm.toFixed(1)) : (f.distance ?? 0);
-
-  return {
-    id: f.id,
-    name: f.name,
-    distance: dist,
-    distanceKm: dist,
-    lat,
-    lng,
-    phone: f.phone || '',
-    address,
-    status: f.status || 'OPEN',
-    verified: f.verified ?? true,
-    category: 'pharmacy',
-    rating: f.rating ?? 4.8,
-    reviewCount: f.reviewCount ?? 85,
-    deliveryTimeMinutes: f.deliveryTimeMinutes ?? f.deliveryTimeMins ?? 30,
-    closingTime: f.closingTime || '10:00 PM',
-  };
+export interface OrderRequestItemPayload {
+  medicineId?: string;
+  medicineName: string;
+  strength?: string;
+  quantity: number;
+  instructions?: string;
 }
 
+export interface CreateOrderRequestPayload {
+  deliveryAddressId: string;
+  prescriptionId?: string;
+  notes?: string;
+  items: OrderRequestItemPayload[];
+}
+
+export interface MedicineOrderRequest {
+  id: string;
+  patientId: string;
+  deliveryAddressId: string;
+  prescriptionId?: string;
+  notes?: string;
+  status: 'PENDING' | 'OFFERS_RECEIVED' | 'ACCEPTED' | 'CANCELLED';
+  items: Array<{
+    id: string;
+    medicineId?: string;
+    medicineName: string;
+    strength?: string;
+    quantity: number;
+    instructions?: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PharmacyOfferItem {
+  requestItemId: string;
+  medicineId?: string;
+  available?: boolean;
+  price: number;
+  disc?: number;
+}
+
+export interface PharmacyOffer {
+  id: string;
+  requestId: string;
+  pharmacyId: string;
+  pharmacy?: {
+    id: string;
+    name: string;
+    address?: string;
+    distance?: number;
+    rating?: number;
+  };
+  items: PharmacyOfferItem[];
+  totalPrice?: number;
+  totalDiscount?: number;
+  estimatedDeliveryMinutes?: number;
+  createdAt: string;
+}
+
+export interface SubmitOfferPayload {
+  items: {
+    requestItemId: string;
+    medicineId?: string;
+    available?: boolean;
+    price: number;
+  }[];
+}
+
+export type OrderStatus = 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'CANCELLED' | 'OUT_FOR_DELIVERY' | 'DELIVERED';
+
+export interface MedicineOrderItem {
+  medicineId: string;
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface MedicineOrder {
+  id: string;
+  orderRequestId?: string;
+  pharmacyId?: string;
+  pharmacyName: string;
+  pharmacyAddress: string;
+  deliveryAddress: string;
+  status: OrderStatus;
+  totalAmount: number;
+  items: MedicineOrderItem[];
+  otp?: string;
+  eta?: string;
+  riderName?: string;
+  riderPhone?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface DeliveryAssignment {
+  id: string;
+  orderId: string;
+  pharmacy: {
+    name: string;
+    address: string;
+    latitude?: number;
+    longitude?: number;
+  };
+  destination: {
+    address: string;
+    area?: string;
+    latitude?: number;
+    longitude?: number;
+  };
+  distanceKm?: number;
+  estimatedMinutes?: number;
+  earnings?: number;
+  status: 'OPEN' | 'CLAIMED' | 'PICKED_UP' | 'DELIVERED';
+  createdAt: string;
+}
+
+// ============================================================================
+// PHARMACY API SERVICE
+// ============================================================================
+
 export const pharmacyApi = {
-<<<<<<< HEAD
-  // Fetch nearby pharmacies
-  getPharmacies: async (params?: PharmacySearchParams): Promise<Pharmacy[]> => {
-    try {
-      const lat = params?.lat ?? 22.5726;
-      const lng = params?.lng ?? 88.3639;
+  // --- Medicine Catalog ---
 
-      const response = await axiosClient.get('/locations/nearby-facilities', {
-        params: {
-          latitude: lat,
-          longitude: lng,
-          radiusKm: params?.radiusKm ?? 10,
-          type: 'PHARMACY',
-          limit: 30,
-        },
-      });
-
-      const facilities = response.data?.data ?? response.data ?? [];
-      let mapped = facilities.map(mapFacilityToPharmacy);
-
-      if (params?.query) {
-        const q = params.query.toLowerCase();
-        mapped = mapped.filter((p: Pharmacy) =>
-          p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q)
-        );
-      }
-
-      return mapped;
-    } catch (e) {
-      console.warn('Failed to fetch from /locations/nearby-facilities?type=PHARMACY:', e);
-      return [];
-    }
+  /** Search / browse the medicine catalog */
+  getMedicines: (params?: MedicineCatalogParams): Promise<{ data: Medicine[] }> => {
+    return axiosClient.get('/pharmacy/medicines', { params });
   },
 
-  // Global search for specific medicines across backend
-  searchMedicines: async (query: string, lat?: number, lng?: number): Promise<MedicineItem[]> => {
-    try {
-      const response = await axiosClient.get('/search', {
-        params: {
-          query,
-          types: 'MEDICINE',
-          limit: 20,
-        },
-      });
+  // --- Prescription Upload ---
 
-      const results = response.data?.data?.medicines ?? response.data?.medicines ?? [];
-      return results.map((m: any) => ({
-        id: m.id,
-        name: m.name,
-        genericName: m.genericName,
-        price: m.price || 120,
-        strength: m.strength || '500mg',
-        form: m.form || 'TABLET',
-        requiresPrescription: m.requiresPrescription ?? false,
-        inStock: true,
-        manufacturer: 'Generic Pharma',
-      }));
-    } catch (e) {
-      console.warn('Search medicines API error:', e);
-      return [];
-    }
-  },
-
-  // Broadcast medicine order request
-  placeOrder: async (payload: MedicineRequest | any): Promise<{ success: boolean; orderId: string; eta: string }> => {
-    try {
-      const backendBody = {
-        deliveryAddressId: payload.deliveryAddressId,
-        prescriptionId: payload.prescriptionId || undefined,
-        notes: payload.notes || undefined,
-        items: payload.items?.map((it: any) => ({
-          medicineId: it.medicineId || undefined,
-          medicineName: it.name || it.medicineName || 'Medicine',
-          strength: it.strength || undefined,
-          quantity: it.quantity || 1,
-          instructions: it.instructions || undefined,
-        })) || [],
-      };
-
-      const response = await axiosClient.post('/pharmacy/requests', backendBody);
-      const reqId = response.data?.data?.id || response.data?.id || 'req-' + Date.now();
-      return { success: true, orderId: reqId, eta: '30-45 mins' };
-    } catch (err) {
-      return { success: true, orderId: 'ord-' + Date.now(), eta: '30-45 mins' };
-    }
-  },
-
-  // Upload prescription for Rx-required medicines
-  uploadPrescription: async (file: File): Promise<{ url: string }> => {
+  /** Upload prescription file */
+  uploadPrescription: (file: File): Promise<{ url: string; id?: string }> => {
     const formData = new FormData();
-    formData.append('document', file);
-    formData.append('type', 'PRESCRIPTION');
-    try {
-      const response = await axiosClient.post('/documents', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return { url: response.data?.data?.fileUrl || response.data?.fileUrl || '' };
-    } catch {
-      return { url: '' };
-    }
-  },
-};
+    formData.append('prescription', file);
 
-export default pharmacyApi;
-=======
-  // 1. Fetch medicine catalog
-  getMedicines: (search?: string, page = 1, limit = 20) => {
-    return axiosClient.get('/pharmacy/medicines', { 
-      params: { search, page, limit } 
+    return axiosClient.post('/pharmacy/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
   },
 
-  // 2. Fetch nearby pharmacies (Locations API)
-  getNearbyPharmacies: (params: PharmacySearchParams) => {
-    return axiosClient.get('/locations/nearby-facilities', { 
-      params: { ...params, type: 'PHARMACY' } 
-    });
-  },
+  // --- Order Requests (Patient Bidding / Broadcast) ---
 
-  // 3. Create an order request (Broadcast to nearby)
-  createOrderRequest: (payload: {
-    deliveryAddressId: string;
-    prescriptionId?: string;
-    notes?: string;
-    items: Array<{
-      medicineId: string;
-      medicineName: string;
-      strength?: string;
-      quantity: number;
-      instructions?: string;
-    }>;
-  }) => {
+  /** [Patient] Create an order request (broadcasts to nearby pharmacies) */
+  createOrderRequest: (payload: CreateOrderRequestPayload): Promise<{ data: MedicineOrderRequest }> => {
     return axiosClient.post('/pharmacy/order-requests', payload);
   },
 
-  // 4. Get offers received for a specific broadcast request
-  getOffers: (requestId: string) => {
+  /** [Patient] List own order requests */
+  getMyOrderRequests: (): Promise<{ data: MedicineOrderRequest[] }> => {
+    return axiosClient.get('/pharmacy/order-requests/me');
+  },
+
+  /** Get an order request by ID */
+  getOrderRequest: (requestId: string): Promise<{ data: MedicineOrderRequest }> => {
+    return axiosClient.get(`/pharmacy/order-requests/${requestId}`);
+  },
+
+  /** [Patient] Cancel an order request */
+  cancelOrderRequest: (requestId: string, reason?: string): Promise<{ message: string }> => {
+    return axiosClient.post(`/pharmacy/order-requests/${requestId}/cancel`, { reason });
+  },
+
+  // --- Offers / Bids ---
+
+  /** List offers received for an order request */
+  getOffers: (requestId: string): Promise<{ data: PharmacyOffer[] }> => {
     return axiosClient.get(`/pharmacy/order-requests/${requestId}/offers`);
   },
 
-  // 5. Accept a pharmacy's offer (Creates the actual MedicineOrder)
-  acceptOffer: (offerId: string) => {
+  /** [Pharmacy staff] Submit an offer for a broadcast request */
+  submitOffer: (requestId: string, payload: SubmitOfferPayload): Promise<{ data: PharmacyOffer }> => {
+    return axiosClient.post(`/pharmacy/order-requests/${requestId}/offers`, payload);
+  },
+
+  /** [Patient] Accept a pharmacy's offer — creates the MedicineOrder */
+  acceptOffer: (offerId: string): Promise<{ data: MedicineOrder }> => {
     return axiosClient.post(`/pharmacy/offers/${offerId}/accept`);
   },
-  getMyOrders: () => {
+
+  // --- Orders ---
+
+  /** [Patient] List own orders */
+  getMyOrders: (): Promise<{ data: MedicineOrder[] }> => {
     return axiosClient.get('/pharmacy/orders/me');
   },
 
-  // 2. Get specific order details
-  getOrderDetails: (orderId: string) => {
+  /** Get an order by ID */
+  getOrder: (orderId: string): Promise<{ data: MedicineOrder }> => {
     return axiosClient.get(`/pharmacy/orders/${orderId}`);
   },
 
-  // 3. Cancel an order request
-  cancelOrderRequest: (requestId: string, reason: string) => {
-    return axiosClient.post(`/pharmacy/order-requests/${requestId}/cancel`, { reason });
+  /** [Pharmacy staff] Advance order status (CONFIRMED -> PREPARING -> READY_FOR_PICKUP -> CANCELLED) */
+  updateOrderStatus: (
+    orderId: string,
+    status: 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'CANCELLED'
+  ): Promise<{ data: MedicineOrder }> => {
+    return axiosClient.patch(`/pharmacy/orders/${orderId}/status`, { status });
+  },
+
+  // --- Delivery Partner Operations ---
+
+  /** [Delivery partner] Browse nearby unclaimed delivery assignments */
+  getNearbyDeliveryAssignments: (params: {
+    latitude: number;
+    longitude: number;
+    radiusKm?: number;
+  }): Promise<{ data: DeliveryAssignment[] }> => {
+    return axiosClient.get('/pharmacy/delivery/nearby-open', { params });
+  },
+
+  /** [Delivery partner] Claim an open delivery assignment */
+  claimDeliveryAssignment: (assignmentId: string): Promise<{ data: DeliveryAssignment }> => {
+    return axiosClient.post(`/pharmacy/delivery/${assignmentId}/claim`);
+  },
+
+  /** [Delivery partner] Confirm pickup via OTP */
+  confirmDeliveryPickup: (assignmentId: string, otp: string): Promise<{ message: string }> => {
+    return axiosClient.post(`/pharmacy/delivery/${assignmentId}/pickup`, { otp });
+  },
+
+  /** [Delivery partner] Confirm delivery via OTP */
+  confirmDeliveryDropoff: (assignmentId: string, otp: string): Promise<{ message: string }> => {
+    return axiosClient.post(`/pharmacy/delivery/${assignmentId}/deliver`, { otp });
   }
 };
->>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23

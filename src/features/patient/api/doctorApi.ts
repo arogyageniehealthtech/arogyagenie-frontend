@@ -16,7 +16,7 @@ export interface DoctorSearchParams {
 export interface AppointmentPayload {
   doctorId: string;
   facilityId?: string;
-  consultationType: "IN-PERSON" | "VIDEO";
+  type: "IN_PERSON" | "VIDEO";
   date?: string;
   scheduledStart: string;
   scheduledEnd?: string;
@@ -80,7 +80,7 @@ export const doctorApi = {
     const backendBody = {
       doctorId: payload.doctorId,
       facilityId: payload.facilityId || undefined,
-      type: payload.consultationType === "VIDEO" ? "VIDEO" : "IN_PERSON",
+      type: payload.type === "VIDEO" ? "VIDEO" : "IN_PERSON",
       scheduledStart: scheduledStart.toISOString(),
       scheduledEnd: scheduledEnd.toISOString(),
     };

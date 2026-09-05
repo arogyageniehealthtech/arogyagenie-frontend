@@ -56,58 +56,6 @@ function mapFacilityToHospital(f: any): Hospital {
 }
 
 export const hospitalApi = {
-<<<<<<< HEAD
-  // Fetch hospitals based on coordinates and radius, with search query support
-  getHospitals: async (params?: HospitalSearchParams): Promise<Hospital[]> => {
-    try {
-      const lat = params?.lat ?? 22.5726; // Default to Kolkata or user coords
-      const lng = params?.lng ?? 88.3639;
-
-      const response = await axiosClient.get('/locations/nearby-facilities', {
-        params: {
-          latitude: lat,
-          longitude: lng,
-          radiusKm: params?.radiusKm ?? 32,
-          type: 'HOSPITAL',
-          limit: 30,
-        },
-      });
-
-      const facilities = response.data?.data ?? response.data ?? [];
-      let mapped = facilities.map(mapFacilityToHospital);
-
-      if (params?.query) {
-        const q = params.query.toLowerCase();
-        mapped = mapped.filter((h: Hospital) =>
-          h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q)
-        );
-      }
-
-      if (params?.department && params.department !== 'All Departments') {
-        const dept = params.department.toLowerCase();
-        mapped = mapped.filter((h: Hospital) =>
-          h.departments?.some((d) => d.toLowerCase().includes(dept))
-        );
-      }
-
-      return mapped;
-    } catch (err) {
-      console.warn('Failed to fetch from /locations/nearby-facilities:', err);
-      return [];
-    }
-=======
-  // Fetch hospitals based on search criteria
-  getHospitals: async(params?: HospitalSearchParams): Promise<Hospital[]> => {
-    const response = await axiosClient('/locations/nearby-facilities',{params:{
-        // latitude: params?.lat,
-        // longitude: params?.lng,
-        radiusKm: params?.radiusKm ?? 100,
-        type: 'HOSPITAL',
-        limit: 50
-      }})
-    return response.data;
->>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
-  },
 
   // Fetch detailed hospital info
   getHospitalById: async (id: string): Promise<Hospital | null> => {
@@ -122,21 +70,9 @@ export const hospitalApi = {
   },
 
   // Book a hospital bed
-<<<<<<< HEAD
-  bookBed: async (payload: BedBookingPayload): Promise<{ success: boolean; admissionId: string }> => {
-    return {
-      success: true,
-      admissionId: 'adm-' + Date.now(),
-    };
-  },
-};
-
-export default hospitalApi;
-=======
   bookBed: (payload: BedBookingPayload): Promise<{ success: boolean; admissionId: string }> => {
     return axiosClient.post('/hospitals/book-bed', payload);
   }
 };
 
 // organizations/{{organizationId}}/hospitals
->>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23

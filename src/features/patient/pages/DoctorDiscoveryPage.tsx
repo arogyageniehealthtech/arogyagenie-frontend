@@ -315,7 +315,7 @@ export default function DoctorDiscoveryPage() {
           } : undefined,
         };
 
-        const response: any = await doctorApi.getDoctors(queryParams);
+        const response: any = await doctorApi.getDoctors({});
         let doctorsList: Doctor[] = [...response.data];
 
         if (isMounted) {

@@ -6,9 +6,9 @@ import { motion } from 'framer-motion';
 const navItems = [
   { path: '/delivery/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/delivery/requests', icon: ListOrdered, label: 'Requests' },
-  { path: '/delivery/active', icon: Navigation, label: 'Active' },
+//   { path: '/delivery/active', icon: Navigation, label: 'Active' },
   { path: '/delivery/history', icon: Clock, label: 'History' },
-  { path: '/delivery/earnings', icon: IndianRupee, label: 'Earnings' },
+//   { path: '/delivery/earnings', icon: IndianRupee, label: 'Earnings' },
   { path: '/delivery/profile', icon: User, label: 'Profile' },
 ];
 

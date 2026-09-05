@@ -1,49 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  Mail,
-  Lock,
   Eye,
   EyeOff,
-  UserCheck,
-  Stethoscope,
-  Building2,
-  Truck,
   AlertCircle,
   ArrowRight,
   Check,
-  Sparkles,
   CheckCircle2,
+  ChevronDown,
 } from "lucide-react";
 import { AuthCard } from "../components/AuthCard";
 import { useAuth } from "../hooks/useAuth";
 import { ROUTES } from "@/constants/routes.constants";
 import type { BackendUserType } from "@/types/auth.types";
 
-const ROLES: { type: BackendUserType; label: string; description: string; icon: React.ElementType }[] = [
+const ROLES: { type: BackendUserType; label: string; description: string }[] = [
   {
     type: "PATIENT",
     label: "Patient",
     description: "Personal health hub",
-    icon: UserCheck,
   },
   {
     type: "DOCTOR",
     label: "Doctor",
     description: "Clinical management",
-    icon: Stethoscope,
   },
   {
     type: "ORG_MEMBER",
     label: "Partner / Staff",
     description: "Hospital, Pharmacy & Lab",
-    icon: Building2,
   },
   {
     type: "DELIVERY_PARTNER",
-    label: "Courier",
+    label: "Organization Member",
     description: "Medicine logistics",
-    icon: Truck,
   },
 ];
 
@@ -51,12 +41,28 @@ export default function RegisterPage() {
   const { register, isLoading, error, clearError } = useAuth();
 
   const [userType, setUserType] = useState<BackendUserType>("PATIENT");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [registrationSuccessMessage, setRegistrationSuccessMessage] = useState<string | null>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedRole = ROLES.find((r) => r.type === userType) || ROLES[0];
 
   const validatePassword = (pwd: string): string | null => {
     if (pwd.length < 10) return "Password must be at least 10 characters long.";
@@ -104,9 +110,9 @@ export default function RegisterPage() {
 
       if (!msg) {
         if (err.code === "ECONNABORTED" || err?.message?.includes("timeout")) {
-          msg = "The server took too long to respond (timeout). The backend may be waking up from idle on Render. Please wait a moment and try again.";
+          msg = "The server took too long to respond (timeout). Please wait a moment and try again.";
         } else if (err.message === "Network Error" || err.code === "ERR_NETWORK") {
-          msg = "Unable to connect to the backend server. Please check your internet connection or backend service status.";
+          msg = "Unable to connect to the backend server. Please check your internet connection.";
         } else {
           msg = err?.message || "Registration failed. Please try again.";
         }
@@ -120,49 +126,104 @@ export default function RegisterPage() {
       title="Create Account"
       subtitle="Join ArogyaGenie digital healthcare ecosystem"
       badge="Quick Signup"
-      maxWidth="max-w-md sm:max-w-xl md:max-w-2xl"
+      maxWidth="w-full max-w-[280px] sm:max-w-xl md:max-w-2xl mx-auto"
       footer={
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-[10px] sm:text-xs text-slate-400">
           Already registered?{" "}
           <Link
             to={ROUTES.AUTH.LOGIN}
             className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-1"
           >
-            Sign in here <ArrowRight className="h-3 w-3" />
+            Sign in here
           </Link>
         </p>
       }
     >
-      <div className="space-y-2.5 w-full mx-auto">
+      <div className="w-full space-y-2 sm:space-y-2.5">
         {/* Success State */}
         {registrationSuccessMessage ? (
-          <div className="space-y-2.5 text-center py-2 animate-fadeIn">
-            <div className="h-10 w-10 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
-              <CheckCircle2 className="h-5 w-5" />
+          <div className="space-y-2 sm:space-y-2.5 text-center py-1 sm:py-2 animate-fadeIn">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-emerald-500/15 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
+              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Check Your Email</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              <h3 className="text-xs sm:text-sm font-bold text-white">Check Your Email</h3>
+              <p className="text-[10px] sm:text-xs text-slate-300 mt-1 leading-relaxed break-words">
                 {registrationSuccessMessage}
               </p>
             </div>
             <Link
               to={ROUTES.AUTH.LOGIN}
-              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 py-1.5 sm:py-2.5 px-4 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 transition-all text-center"
             >
               <span>Return to Sign In</span>
-              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         ) : (
           <>
-            {/* Role Selector Cards */}
+            {/* Role Selector */}
             <div>
-              <label className="text-[10px] sm:text-[11px] font-semibold text-slate-300 block mb-1 tracking-wide uppercase">
+              <label className="text-[9px] sm:text-[11px] font-semibold text-slate-300 block mb-1 tracking-wide uppercase">
                 Select Account Type
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
-                {ROLES.map(({ type, label, description, icon: Icon }) => {
+
+              {/* Mobile Role-Only Dropdown */}
+              <div className="block sm:hidden relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isDropdownOpen}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border bg-slate-900/60 backdrop-blur-md transition-all text-left ${
+                    isDropdownOpen
+                      ? "border-indigo-500 ring-2 ring-indigo-500/20"
+                      : "border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  <span className="text-xs font-medium text-white truncate">
+                    {selectedRole.label}
+                  </span>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${
+                      isDropdownOpen ? "rotate-180 text-indigo-400" : ""
+                    }`}
+                  />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute z-30 left-0 right-0 mt-1 py-1 rounded-lg border border-white/10 bg-slate-900/95 backdrop-blur-xl shadow-xl shadow-black/50 space-y-0.5">
+                    {ROLES.map(({ type, label }) => {
+                      const isSelected = userType === type;
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => {
+                            setUserType(type);
+                            setIsDropdownOpen(false);
+                            clearError();
+                            setValidationError(null);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs transition-colors rounded-md ${
+                            isSelected
+                              ? "bg-indigo-600/20 text-indigo-400 font-semibold"
+                              : "text-slate-300 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          <span className="truncate">{label}</span>
+                          {isSelected && (
+                            <Check className="h-3 w-3 text-indigo-400 shrink-0 ml-2" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Desktop & Tablet grid */}
+              <div className="hidden sm:grid grid-cols-4 gap-2">
+                {ROLES.map(({ type, label, description }) => {
                   const isSelected = userType === type;
                   return (
                     <button
@@ -173,7 +234,7 @@ export default function RegisterPage() {
                         clearError();
                         setValidationError(null);
                       }}
-                      className={`relative flex flex-col items-center justify-center py-1.5 px-1.5 sm:py-2 sm:px-2 rounded-xl text-center border transition-all duration-150 cursor-pointer ${
+                      className={`relative flex flex-col items-center justify-center py-2 px-2 rounded-xl text-center border transition-all duration-150 cursor-pointer ${
                         isSelected
                           ? "border-indigo-500 bg-indigo-600/20 text-white shadow-md shadow-indigo-500/10 ring-1 ring-indigo-500/50"
                           : "border-white/10 bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20"
@@ -181,12 +242,13 @@ export default function RegisterPage() {
                     >
                       {isSelected && (
                         <span className="absolute top-1 right-1 h-3 w-3 rounded-full bg-indigo-500 flex items-center justify-center text-white">
-                          <Check className="h-2 w-2 stroke-3" />
+                          <Check className="h-2 w-2 stroke-[3]" />
                         </span>
                       )}
-                      <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 mb-0.5 shrink-0 ${isSelected ? "text-indigo-400" : "text-slate-400"}`} />
-                      <div className="text-[11px] sm:text-xs font-semibold truncate leading-tight w-full">{label}</div>
-                      <div className="text-[9px] text-slate-400 truncate hidden sm:block w-full mt-0.5">
+                      <div className="text-xs font-semibold truncate leading-tight w-full text-center">
+                        {label}
+                      </div>
+                      <div className="text-[9px] text-slate-400 truncate w-full mt-0.5 text-center">
                         {description}
                       </div>
                     </button>
@@ -197,79 +259,86 @@ export default function RegisterPage() {
 
             {/* Error Alert */}
             {(error || validationError) && (
-              <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-1.5 text-red-300 text-xs animate-fadeIn">
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-red-400" />
-                <span className="flex-1 leading-snug wrap-break-word">{error || validationError}</span>
+              <div className="p-1 sm:p-2 rounded-md sm:rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-1.5 text-red-300 text-[10px] sm:text-xs animate-fadeIn">
+                <AlertCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 mt-0.5 text-red-400" />
+                <span className="flex-1 leading-tight sm:leading-snug break-words">
+                  {error || validationError}
+                </span>
               </div>
             )}
 
             {/* Registration Form */}
-            <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-2.5">
+            <form onSubmit={handleSubmit} className="space-y-1.5 sm:space-y-2.5">
               {/* Email Input */}
-              <div>
-                <label className="text-[11px] sm:text-xs font-medium text-slate-300 block mb-0.5">Email Address</label>
-                <div className="relative group">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                  />
-                </div>
+              <div className="space-y-0.5">
+                <label className="text-[9px] sm:text-xs font-medium text-slate-300 block">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full px-2 py-1 sm:px-3 sm:py-2 rounded-md sm:rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 text-[11px] sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all box-border"
+                />
               </div>
 
-              {/* Password & Confirm Password Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
+              {/* Passwords: Stacked on Mobile, 2-Column on Desktop */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2.5">
                 {/* Password Input */}
-                <div>
-                  <div className="flex justify-between items-center mb-0.5">
-                    <label className="text-[11px] sm:text-xs font-medium text-slate-300">Password</label>
-                    <span className="text-[9px] text-slate-400">Min 10 chars</span>
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[9px] sm:text-xs font-medium text-slate-300">
+                      Password
+                    </label>
+                    <span className="text-[8px] sm:text-[9px] text-slate-400">
+                      Min 10 chars
+                    </span>
                   </div>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
+                  <div className="relative w-full">
                     <input
                       type={showPassword ? "text" : "password"}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min 10 chars (A-Z, a-z, 0-9)"
-                      className="w-full pl-9 pr-8 py-2 rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                      placeholder="••••••••••"
+                      className="w-full pl-2 pr-6 py-1 sm:pl-3 sm:pr-8 sm:py-2 rounded-md sm:rounded-xl border border-white/10 bg-slate-900/40 text-white placeholder-slate-500 text-[11px] sm:text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all box-border"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                      className="absolute right-1.5 sm:right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      {showPassword ? (
+                        <EyeOff className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
+                      ) : (
+                        <Eye className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
 
                 {/* Confirm Password Input */}
-                <div>
-                  <div className="flex justify-between items-center mb-0.5">
-                    <label className="text-[11px] sm:text-xs font-medium text-slate-300">Confirm Password</label>
+                <div className="space-y-0.5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[9px] sm:text-xs font-medium text-slate-300">
+                      Confirm Password
+                    </label>
                   </div>
-                  <div className="relative group">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-indigo-400 transition-colors" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Repeat password"
-                      className={`w-full pl-9 pr-3 py-2 rounded-xl border bg-slate-900/40 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none transition-all ${
-                        confirmPassword && confirmPassword === password
-                          ? "border-emerald-500/50 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                          : "border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                      }`}
-                    />
-                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••••"
+                    className={`w-full px-2 py-1 sm:px-3 sm:py-2 rounded-md sm:rounded-xl border bg-slate-900/40 text-white placeholder-slate-500 text-[11px] sm:text-sm focus:outline-none transition-all box-border ${
+                      confirmPassword && confirmPassword === password
+                        ? "border-emerald-500/50 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                        : "border-white/10 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    }`}
+                  />
                 </div>
               </div>
 
@@ -277,19 +346,15 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-xs sm:text-sm text-white shadow-lg shadow-indigo-600/30 bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-[0.99] transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+                className="w-full flex items-center justify-center py-1.5 sm:py-2.5 px-3 sm:px-4 rounded-md sm:rounded-xl font-semibold text-xs sm:text-sm text-white shadow-md shadow-indigo-600/30 bg-linear-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 active:scale-[0.99] transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-1 text-center"
               >
                 {isLoading ? (
-                  <span className="inline-flex items-center gap-2 text-center">
-                    <span className="h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
-                    <span className="truncate">Creating Account...</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                    <span>Creating...</span>
                   </span>
                 ) : (
-                  <>
-                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                    <span>Create Account</span>
-                    <ArrowRight className="h-3.5 w-3.5 ml-auto shrink-0" />
-                  </>
+                  <span>Create Account</span>
                 )}
               </button>
             </form>

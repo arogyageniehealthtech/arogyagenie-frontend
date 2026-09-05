@@ -1,5 +1,8 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type{ DeliveryStatus } from '@/features/delivery-partner/types/delivery';
+import type { DeliveryStatus } from '@/features/delivery-partner/types/delivery';
+
+// Re-export the type so other files can import it from this slice
+export type { DeliveryStatus };
 
 interface DeliveryState {
   isOnline: boolean;
@@ -30,7 +33,7 @@ const deliverySlice = createSlice({
     clearActiveDelivery: (state) => {
       state.activeDeliveryId = null;
       state.activeDeliveryStatus = null;
-    }
+    },
   },
 });
 

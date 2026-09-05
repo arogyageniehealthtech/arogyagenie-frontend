@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-import { useState, useEffect } from 'react';
-import { 
-  FileText, Search, Calendar, Stethoscope, 
-  Download, Eye, ArrowLeft, Pill, X, Loader2
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../../../lib/axios';
-=======
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   FileText, Search, Calendar, Stethoscope, 
@@ -15,143 +6,24 @@ import {
 } from 'lucide-react';
 import prescriptionApi from '../api/presciptionApi';
 import { type Prescription, type PrescriptionQueryParams } from '../api/presciptionApi';
->>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
 
 function parseDate(dateStr: string): number {
   const parsed = Date.parse(dateStr);
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-<<<<<<< HEAD
-interface Prescription {
-  id: string;
-  doctorName: string;
-  specialization: string;
-  hospitalName: string;
-  date: string;
-  diagnosis: string;
-  medicines: Medication[];
-  notes?: string;
-  prescriptionUrl?: string;
-}
-
-// ==========================================
-// Mock Prescriptions Data Fallback
-// ==========================================
-const MOCK_PRESCRIPTIONS: Prescription[] = [
-  {
-    id: 'RX-84920',
-    doctorName: 'Dr. Arup Kumar',
-    specialization: 'Cardiology',
-    hospitalName: 'City Care Multispecialty Hospital',
-    date: 'August 18, 2026',
-    diagnosis: 'Hypertension & Mild Tachycardia',
-    medicines: [
-      { name: 'Telmisartan', dosage: '40mg', frequency: 'Once daily (Morning)', duration: '30 Days' },
-      { name: 'Metoprolol', dosage: '25mg', frequency: 'Twice daily', duration: '15 Days' },
-    ],
-    notes: 'Reduce salt intake and monitor blood pressure twice daily.',
-  },
-  {
-    id: 'RX-73619',
-    doctorName: 'Dr. Sunita Sen',
-    specialization: 'Pediatrics',
-    hospitalName: 'LifeSpring Maternity Center',
-    date: 'July 12, 2026',
-    diagnosis: 'Viral Upper Respiratory Infection',
-    medicines: [
-      { name: 'Paracetamol Syrup', dosage: '250mg', frequency: 'Every 6 hours as needed', duration: '5 Days' },
-      { name: 'Cetirizine Drops', dosage: '5ml', frequency: 'Once at bedtime', duration: '7 Days' },
-    ],
-    notes: 'Ensure adequate hydration and warm water gargles.',
-  },
-  {
-    id: 'RX-52910',
-    doctorName: 'Dr. Rajesh Das',
-    specialization: 'Orthopedics',
-    hospitalName: 'Apex Ortho Clinic',
-    date: 'June 04, 2026',
-    diagnosis: 'Lower Back Strain',
-    medicines: [
-      { name: 'Aceclofenac + Paracetamol', dosage: '100mg/325mg', frequency: 'Twice daily after meals', duration: '5 Days' },
-      { name: 'Thiocolchicoside Gel', dosage: 'Topical', frequency: 'Apply gently 3 times a day', duration: '7 Days' },
-    ],
-    notes: 'Avoid heavy lifting and practice recommended lower back stretches.',
-  },
-];
-
-export default function PrescriptionsPage() {
-  const navigate = useNavigate();
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(MOCK_PRESCRIPTIONS);
-  const [loading, setLoading] = useState(false);
-=======
 type SortOrder = 'newest' | 'oldest';
 
 export default function PrescriptionsPage() {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
->>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    let mounted = true;
-    const fetchPrescriptions = async () => {
-      try {
-        setLoading(true);
-        const res = await axiosInstance.get('/prescriptions/me');
-        const rawItems = Array.isArray(res.data?.data)
-          ? res.data.data
-          : Array.isArray(res.data?.data?.items)
-          ? res.data.data.items
-          : Array.isArray(res.data)
-          ? res.data
-          : [];
-
-        if (rawItems.length > 0 && mounted) {
-          const mapped: Prescription[] = rawItems.map((item: any) => ({
-            id: item.id || `RX-${Math.floor(10000 + Math.random() * 90000)}`,
-            doctorName: item.doctor?.user?.fullName || item.doctorName || 'Dr. Medical Practitioner',
-            specialization: item.doctor?.specialization?.name || item.specialization || 'General Physician',
-            hospitalName: item.facility?.name || item.hospitalName || 'Healthcare Center',
-            date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
-            diagnosis: item.diagnosis || item.consultation?.symptoms || 'General Consultation',
-            medicines: Array.isArray(item.medications) 
-              ? item.medications.map((m: any) => ({
-                  name: m.medicineName || m.name || 'Prescribed Medicine',
-                  dosage: m.dosage || 'As directed',
-                  frequency: m.frequency || 'Once daily',
-                  duration: m.duration || '5 Days'
-                }))
-              : (Array.isArray(item.medicines) ? item.medicines : []),
-            notes: item.notes || item.instructions || '',
-            prescriptionUrl: item.fileUrl || item.prescriptionUrl
-          }));
-          setPrescriptions(mapped);
-        }
-      } catch {
-        // Fall back to default mock prescriptions
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    fetchPrescriptions();
-    return () => { mounted = false; };
-  }, []);
-
-  // Filter prescriptions based on search query
-  const filteredPrescriptions = prescriptions.filter(rx => 
-    rx.doctorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    rx.specialization.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    rx.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    rx.hospitalName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-=======
   const fetchPrescriptions = async () => {
     setIsLoading(true);
     setError(null);
@@ -204,7 +76,6 @@ export default function PrescriptionsPage() {
       alert(err?.response?.data?.message || 'Failed to download prescription PDF.');
     }
   };
->>>>>>> 75418c99e0f6181755f1deb96944f01de879ca23
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-2.5 pb-12 px-2 sm:px-4 pt-2 sm:pt-4 font-sans">
@@ -229,7 +100,7 @@ export default function PrescriptionsPage() {
             <button
               onClick={() => !isLoading && !error && setIsSortOpen(!isSortOpen)}
               disabled={isLoading || !!error}
-              className={`flex items-center justify-between gap-2 bg-slate-50 hover:bg-slate-100 border transition-all rounded-lg px-2.5 py-1.5 text-xs font-bold w-full sm:w-[125px] disabled:opacity-60 ${
+              className={`flex items-center justify-between gap-2 bg-slate-50 hover:bg-slate-100 border transition-all rounded-lg px-2.5 py-1.5 text-xs font-bold w-full sm:w-31.25 disabled:opacity-60 ${
                 isSortOpen ? 'border-indigo-600 ring-2 ring-indigo-600/20 text-indigo-600' : 'border-slate-200 text-slate-700'
               }`}
             >
@@ -256,20 +127,20 @@ export default function PrescriptionsPage() {
       {/* Content Area */}
       <div className="relative z-0">
         {isLoading ? (
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center min-h-[240px]">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center min-h-60">
             <Loader2 className="w-7 h-7 text-indigo-600 animate-spin mb-2.5" />
             <h3 className="font-extrabold text-sm text-slate-900">Fetching Prescriptions</h3>
             <p className="text-xs font-medium text-slate-500 mt-0.5">Please wait while we load your records...</p>
           </div>
         ) : error ? (
-          <div className="bg-white border border-rose-100 rounded-2xl p-6 text-center shadow-xs flex flex-col items-center min-h-[240px] justify-center">
+          <div className="bg-white border border-rose-100 rounded-2xl p-6 text-center shadow-xs flex flex-col items-center min-h-60 justify-center">
             <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center mb-3 border border-rose-100"><AlertTriangle className="w-6 h-6" /></div>
             <h3 className="font-extrabold text-sm text-slate-900">Failed to Load</h3>
             <p className="text-xs font-medium text-slate-500 mt-1 max-w-sm">{error}</p>
             <button onClick={fetchPrescriptions} className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs"><RefreshCcw className="w-3.5 h-3.5" /> Try Again</button>
           </div>
         ) : filteredPrescriptions.length === 0 ? (
-          <div className="bg-white border border-slate-200/80 border-dashed rounded-2xl p-8 text-center shadow-xs flex flex-col items-center min-h-[240px] justify-center">
+          <div className="bg-white border border-slate-200/80 border-dashed rounded-2xl p-8 text-center shadow-xs flex flex-col items-center min-h-60 justify-center">
             <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 border border-slate-100"><FileText className="w-6 h-6" /></div>
             <h3 className="font-extrabold text-sm text-slate-900">No Prescriptions Found</h3>
             <p className="text-xs font-medium text-slate-500 mt-1">{searchQuery ? `No matches for "${searchQuery}".` : "No prescriptions issued yet."}</p>

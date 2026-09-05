@@ -1,136 +1,139 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, User, LogOut } from 'lucide-react';
 import { useAppSelector } from '../../../../store/hooks';
 import { useAuth } from '../../../../features/auth/hooks/useAuth';
+import { ROUTES } from '../../../../constants/routes.constants';
+
+const getInitials = (name?: string) => {
+  if (!name) return 'GU';
+  const words = name.trim().split(/\s+/);
+  return words.length >= 2
+    ? (words[0][0] + words[1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+};
 
 export const DashboardHeader: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { logout } = useAuth();
-  
-  
-  // const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const navigate = useNavigate();
 
-  
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const menuContainerRef = useRef<HTMLDivElement>(null);
 
-  
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        menuContainerRef.current && 
+        menuContainerRef.current &&
         !menuContainerRef.current.contains(event.target as Node)
       ) {
-        // setIsNotificationsOpen(false);
         setIsProfileOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleNotifications = (e: React.MouseEvent) => {
-    e.stopPropagation(); 
-    // setIsNotificationsOpen((prev) => !prev);
-    setIsProfileOpen(false); 
-  };
-
-  const toggleProfile = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsProfileOpen((prev) => !prev);
-    console.log("sklmd")
-    // setIsNotificationsOpen(false); 
-  };
+  const fullName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email?.split('@')[0]
+    : 'Guest User';
 
   return (
-    <div className=" justify-between hidden lg:flex items-center py-2 relative z-30">
+    <header className="flex items-center justify-between py-2 sm:py-2.5 w-full relative z-30">
       {/* Brand Section */}
-      <div className="flex items-center gap-3">
+      <div 
+        onClick={() => navigate(ROUTES.PATIENT.DASHBOARD)}
+        className="flex items-center gap-2 sm:gap-2.5 cursor-pointer min-w-0"
+      >
         <img 
-          src="\LOGO.png" 
+          src="/LOGO.png" 
           alt="ArogyaGenie Logo" 
-          className="h-10 w-10 object-contain" 
+          className="h-7 w-7 sm:h-8 sm:w-8 object-contain shrink-0" 
         />
-        <div>
-          <h1 className="font-bold text-slate-900 text-lg leading-tight tracking-tight">ArogyaGenie</h1>
-          <p className="text-[11px] text-slate-500 font-medium">Your Health, Our Priority</p>
+        <div className="min-w-0 leading-none">
+          <h1 className="font-extrabold text-slate-900 text-sm sm:text-base tracking-tight truncate">
+            ArogyaGenie
+          </h1>
+          <p className="text-[10px] text-slate-400 font-medium hidden sm:block truncate mt-0.5">
+            Your Health, Our Priority
+          </p>
         </div>
       </div>
 
-   
-      <div className="flex items-center gap-3 relative" ref={menuContainerRef}>
-        
-       
+      {/* Right Controls */}
+      <div className="flex items-center gap-1.5 sm:gap-2 relative shrink-0" ref={menuContainerRef}>
+        {/* Notifications Quick-Link */}
         <button 
-          onClick={toggleNotifications}
-          className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none"
+          onClick={() => navigate('/patient/notifications')}
+          className="relative p-1.5 sm:p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors focus:outline-none"
           type="button"
+          title="Notifications"
         >
-          <Bell size={22} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+          <Bell size={18} className="sm:w-5 sm:h-5" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white" />
         </button>
 
+        {/* Profile Avatar & Dropdown */}
         <div className="relative">
-         
           <button 
-            onClick={toggleProfile}
-            className="focus:outline-none rounded-full block"
+            onClick={() => setIsProfileOpen((prev) => !prev)}
+            className="focus:outline-none rounded-full block active:scale-95 transition-transform"
             type="button"
+            title="Account Menu"
           >
-            <img 
-              src={user?.profilePicture || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80"} 
-              alt="User Profile" 
-              className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm hover:ring-2 hover:ring-slate-200 transition-all cursor-pointer"
-            />
-            
-           
+            {user?.profilePicture ? (
+              <img 
+                src={user.profilePicture} 
+                alt="Profile" 
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-1 ring-slate-200 hover:ring-indigo-400 transition-all cursor-pointer"
+              />
+            ) : (
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-xs transition-colors cursor-pointer">
+                {getInitials(fullName)}
+              </div>
+            )}
           </button>
 
-         
+          {/* Compact Profile Popover */}
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50 transform opacity-100 scale-100 transition-all duration-200">
-              {/* User Info Header */}
-              <div className="px-4 py-3 border-b border-slate-100 mb-1">
-                <p className="text-sm font-semibold text-slate-800 truncate">
-                  {/* {user?.name || */
-                   "Guest User"}
+            <div className="absolute right-0 mt-2 w-48 sm:w-52 bg-white rounded-xl shadow-xl border border-slate-200/90 py-1.5 z-50 text-left animate-in fade-in duration-100">
+              <div className="px-3 py-2 border-b border-slate-100">
+                <p className="text-xs font-bold text-slate-800 truncate">
+                  {fullName}
                 </p>
-                <p className="text-xs text-slate-500 truncate">
-                  {user?.email || "guest@arogyagenie.com"}
+                <p className="text-[10px] text-slate-400 truncate">
+                  {user?.email || 'guest@arogyagenie.com'}
                 </p>
               </div>
-              
-           
-              <button 
-                className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-2 transition-colors"
-                onClick={() => {
-                  console.log("Navigate to Profile");
-                  setIsProfileOpen(false); // Close menu after clicking
-                }}
-              >
-                <User size={16} />
-                My Profile
-              </button>
-              
-              
-              <button 
-                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors mt-1"
-                onClick={() => {
-                  logout();
-                  setIsProfileOpen(false);
-                }}
-              >
-                <LogOut size={16} />
-                Sign Out
-              </button>
+
+              <div className="py-1">
+                <button 
+                  className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 hover:text-indigo-600 flex items-center gap-2 transition-colors"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    navigate(ROUTES.PATIENT.PROFILE);
+                  }}
+                >
+                  <User size={14} className="text-slate-400" />
+                  <span>My Profile</span>
+                </button>
+
+                <button 
+                  className="w-full text-left px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    logout();
+                  }}
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
-
       </div>
-    </div>
+    </header>
   );
 };

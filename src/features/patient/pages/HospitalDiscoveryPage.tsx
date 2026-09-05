@@ -10,6 +10,7 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { HOSPITAL_DEPARTMENTS } from '../data/mockHospitals';
 import type { Hospital } from '../types/hospital';
 import { facilityApi, type FacilityType } from '../api/facilityApi';
+import {hospitalApi}from '../api/hospitalApi'
 
 export default function HospitalDiscoveryPage() {
   const dispatch = useAppDispatch();
@@ -48,13 +49,16 @@ export default function HospitalDiscoveryPage() {
         setIsLoading(true);
         setApiError(null);
 
-        const data = await facilityApi.getNearbyFacilities({
+        const data = await facilityApi.getNearbyFacilities (
+            {
           latitude: activeCoordinates.lat,
           longitude: activeCoordinates.lng,
           radiusKm,
-          type: 'HOSPITAL' as FacilityType,
-          limit: 50
-        });
+           type: 'HOSPITAL',
+          query: searchQuery || undefined,
+          
+        }
+        );
 
         if (isMounted) {
           const mappedHospitals = (data || []).map((facility: any) => ({
