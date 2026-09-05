@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Sparkles, X, Activity, Bot } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { HealthAssistantChat } from "./HealthAssistantChat";
+import { router } from "@/routes/router";
+import { ROUTES } from "@/constants/routes.constants";
 
 export function FloatingHealthAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,7 +12,7 @@ export function FloatingHealthAssistant() {
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  // Track location changes to hide chatbot on auth pages
+  // Track location changes to hide chatbot on auth and assistant pages
   useEffect(() => {
     const checkPath = () => {
       if (typeof window !== "undefined" && window.location.pathname !== currentPath) {
@@ -33,7 +35,14 @@ export function FloatingHealthAssistant() {
       }
     };
     const handleOpen = () => {
-      setIsOpen(true);
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+      if (isMobile) {
+        if (window.location.pathname !== ROUTES.PATIENT.ASSISTANT && window.location.pathname !== "/assistant") {
+          router.navigate(ROUTES.PATIENT.ASSISTANT);
+        }
+      } else {
+        setIsOpen(true);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("open-ai-assistant", handleOpen);
@@ -51,9 +60,22 @@ export function FloatingHealthAssistant() {
     currentPath.startsWith("/verify-email") ||
     currentPath.startsWith("/auth");
 
-  if (isAuthPage) {
+  const isAssistantPage =
+    currentPath === ROUTES.PATIENT.ASSISTANT ||
+    currentPath === "/assistant";
+
+  if (isAuthPage || isAssistantPage) {
     return null;
   }
+
+  const handleOrbClick = () => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    if (isMobile) {
+      router.navigate(ROUTES.PATIENT.ASSISTANT);
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   return (
     <>
@@ -142,7 +164,7 @@ export function FloatingHealthAssistant() {
         ) : (
           <motion.button
             type="button"
-            onClick={() => setIsOpen(true)}
+            onClick={handleOrbClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onFocus={() => setIsHovered(true)}

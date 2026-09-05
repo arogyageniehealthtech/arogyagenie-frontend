@@ -580,7 +580,7 @@ export default function PatientLayout() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const isAiChatPage = location.pathname === ROUTES.PATIENT.ASSISTANT;
+  const isAiChatPage = location.pathname === ROUTES.PATIENT.ASSISTANT || location.pathname === "/assistant";
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); 
@@ -645,7 +645,7 @@ export default function PatientLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans relative flex">
+    <div className={`font-sans relative flex ${isAiChatPage ? 'min-h-[100dvh] h-[100dvh] bg-[#060819] overflow-hidden' : 'min-h-screen bg-[#F8FAFC]'}`}>
 
       {/* --- LEFT SIDEBAR --- */}
       {!isAiChatPage && (
@@ -1071,8 +1071,14 @@ export default function PatientLayout() {
             {/* RIGHT SIDE: Quick Actions */}
             <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0 z-10">
               <button 
-                onClick={() => window.dispatchEvent(new Event('open-ai-assistant'))}
-                className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-lg sm:rounded-full transition-colors flex items-center gap-2 px-2 sm:px-3 lg:px-4 min-h-11 min-w-11 justify-center sm:justify-start shrink-0"
+                onClick={() => {
+                  if (typeof window !== "undefined" && window.innerWidth < 768) {
+                    navigate(ROUTES.PATIENT.ASSISTANT);
+                  } else {
+                    window.dispatchEvent(new Event('open-ai-assistant'));
+                  }
+                }}
+                className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-lg sm:rounded-full transition-colors flex items-center gap-2 px-2 sm:px-3 lg:px-4 min-h-11 min-w-11 justify-center sm:justify-start shrink-0 cursor-pointer"
                 title="Chat with AI Health Assistant"
               >
                 <Bot size={20} className="shrink-0" />
@@ -1201,7 +1207,7 @@ export default function PatientLayout() {
         )}
 
         {/* MAIN CONTENT AREA */}
-        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-screen' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
+        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-[100dvh] max-w-none p-0 overflow-hidden' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
           <Outlet />
         </main>
       </div>

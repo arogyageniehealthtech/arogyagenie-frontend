@@ -36,9 +36,10 @@ import {
   Pill,
   Stethoscope,
   Trash2,
+  ArrowLeft,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface ChatMessage {
   id: string;
@@ -278,9 +279,10 @@ How can I help you today?`;
 export interface HealthAssistantChatProps {
   className?: string;
   onClose?: () => void;
+  isFullPage?: boolean;
 }
 
-export function HealthAssistantChat({ className = "", onClose }: HealthAssistantChatProps = {}) {
+export function HealthAssistantChat({ className = "", onClose, isFullPage = false }: HealthAssistantChatProps = {}) {
   const [activeNavTab, setActiveNavTab] = useState<"chat" | "symptoms" | "health_tips" | "emergency">("chat");
   const [inputQuery, setInputQuery] = useState("");
   const [expandedMessageId, setExpandedMessageId] = useState<string | null>(null);
@@ -304,7 +306,8 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
   const askAssistant = useAskHealthAssistant();
   const { data: user } = useGetMe();
   const { data: assessments } = useListSymptomAssessments();
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   // Scroll to bottom on new messages
@@ -486,9 +489,24 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
       <CyberMedicalChatBackground />
 
       {/* ── HEADER (Matching Reference Image 2) ────────────────────────────── */}
-      <header className="relative z-20 px-3 sm:px-6 py-3 border-b border-indigo-950/70 flex items-center justify-between bg-[#07091d]/85 backdrop-blur-xl shrink-0 min-w-0">
+      <header className="relative z-20 px-2.5 sm:px-6 py-2.5 sm:py-3 border-b border-indigo-950/70 flex items-center justify-between bg-[#07091d]/85 backdrop-blur-xl shrink-0 min-w-0">
         {/* Left: AI Avatar & Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          {onClose && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8.5 px-2 -ml-1 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl flex items-center gap-1 shrink-0 cursor-pointer border border-indigo-500/20"
+              title="Back"
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-4 w-4 text-cyan-300" />
+              <span className="text-xs font-semibold hidden sm:inline">Back</span>
+            </Button>
+          )}
+
           <GlowingBotAvatar size="md" />
 
           <div className="min-w-0 flex-1">
@@ -530,7 +548,7 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
             type="button"
             size="sm"
             onClick={handleNewChat}
-            className="h-8 px-2 sm:px-3 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-bold text-xs shadow-[0_0_15px_rgba(168,85,247,0.35)] border border-purple-400/40 gap-1 transition-all"
+            className="h-8 px-2.5 sm:px-3 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-bold text-xs shadow-[0_0_15px_rgba(168,85,247,0.35)] border border-purple-400/40 gap-1 transition-all"
           >
             <span className="hidden sm:inline">New Chat</span>
             <span className="sm:hidden">New</span>
@@ -596,18 +614,7 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
                   onClick={() => {
                     setOptionsMenuOpen(false);
                     if (onClose) onClose();
-                    setLocation("/patient/timeline");
-                  }}
-                  className="w-full px-3 py-2 rounded-xl text-left text-slate-300 hover:text-white hover:bg-indigo-900/50 flex items-center gap-2"
-                >
-                  <Activity className="h-3.5 w-3.5 text-indigo-400" /> Health Timeline
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOptionsMenuOpen(false);
-                    if (onClose) onClose();
-                    setLocation("/patient/lab-reports");
+                    navigate("/patient/lab_report");
                   }}
                   className="w-full px-3 py-2 rounded-xl text-left text-slate-300 hover:text-white hover:bg-indigo-900/50 flex items-center gap-2"
                 >
@@ -617,8 +624,8 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
             )}
           </div>
 
-          {/* Close Button */}
-          {onClose && (
+          {/* Close Button (for desktop floating modal) */}
+          {onClose && !isFullPage && (
             <Button
               type="button"
               variant="ghost"
@@ -1006,7 +1013,7 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
                         type="button"
                         onClick={() => {
                           if (onClose) onClose();
-                          setLocation("/patient/lab-reports");
+                          navigate("/patient/lab_report");
                         }}
                         className="px-2.5 py-1.5 rounded-xl bg-[#11163b]/80 hover:bg-indigo-900/60 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 border border-indigo-500/25 transition-all cursor-pointer shrink-0"
                       >
@@ -1050,15 +1057,15 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
                   size="sm"
                   variant="ghost"
                   onClick={() => setActiveNavTab("chat")}
-                  className="text-xs text-purple-300 hover:text-white"
+                  className="text-xs text-purple-300 hover:text-white flex items-center gap-1"
                 >
-                  Back to Chat
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back to Chat
                 </Button>
               </div>
 
               <div className="bg-[#0e1233]/90 border border-indigo-500/30 rounded-2xl p-4 space-y-2">
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Select a common symptom category to quickly consult the AI, or open the interactive 2-stage clinical symptom assessment.
+                  Select a common symptom category to quickly consult the AI, or launch the interactive clinical symptom assessment directly in chat.
                 </p>
               </div>
 
@@ -1090,17 +1097,14 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
               <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/60 to-indigo-950/60 border border-purple-500/40 flex items-center justify-between gap-3">
                 <div>
                   <h4 className="font-bold text-xs text-white">Need a comprehensive assessment?</h4>
-                  <p className="text-[11px] text-slate-400">Launch the 2-stage interactive body area symptom checker</p>
+                  <p className="text-[11px] text-slate-400">Launch the interactive AI clinical symptom evaluation</p>
                 </div>
                 <Button
                   size="sm"
-                  onClick={() => {
-                    if (onClose) onClose();
-                    setLocation("/patient/symptom-check");
-                  }}
+                  onClick={() => handleSend(SYMPTOM_CHECK_QUERY)}
                   className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shrink-0 gap-1"
                 >
-                  Open Checker <ArrowRight className="h-3.5 w-3.5" />
+                  Start Checker <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </div>
 
@@ -1139,9 +1143,9 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
                   size="sm"
                   variant="ghost"
                   onClick={() => setActiveNavTab("chat")}
-                  className="text-xs text-purple-300 hover:text-white"
+                  className="text-xs text-purple-300 hover:text-white flex items-center gap-1"
                 >
-                  Back to Chat
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back to Chat
                 </Button>
               </div>
 
@@ -1211,9 +1215,9 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
                   size="sm"
                   variant="ghost"
                   onClick={() => setActiveNavTab("chat")}
-                  className="text-xs text-purple-300 hover:text-white"
+                  className="text-xs text-purple-300 hover:text-white flex items-center gap-1"
                 >
-                  Back to Chat
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back to Chat
                 </Button>
               </div>
 
@@ -1272,7 +1276,7 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
                 type="button"
                 onClick={() => {
                   if (onClose) onClose();
-                  setLocation("/patient/hospitals");
+                  navigate("/hospitals");
                 }}
                 className="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold text-xs h-11 rounded-2xl gap-2 shadow-md cursor-pointer"
               >
