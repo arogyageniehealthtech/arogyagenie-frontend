@@ -20,19 +20,7 @@ export interface LabBookingPayload {
 }
 
 export const diagnosticApi = {
-  // Fetch labs/diagnostic centres mapped precisely to backend Swagger /locations/nearby-facilities
-  getCentres: async (params?: DiagnosticSearchParams): Promise<DiagnosticCentre[]> => {
-    const response = await axiosClient.get('/locations/nearby-facilities', {
-      params: {
-        // latitude: params?.lat,
-        // longitude: params?.lng,
-        radiusKm: params?.radiusKm ?? 100,
-        type: 'LAB',
-        limit: 50
-      }
-    });
-    return response.data;
-  },
+
 
   // Fetch a specific lab's details and test catalog
   getCentreById: (id: string): Promise<DiagnosticCentre> => {

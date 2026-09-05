@@ -16,13 +16,6 @@ export const pharmacyApi = {
     });
   },
 
-  // 2. Fetch nearby pharmacies (Locations API)
-  getNearbyPharmacies: (params: PharmacySearchParams) => {
-    return axiosClient.get('/locations/nearby-facilities', { 
-      params: { ...params, type: 'PHARMACY' } 
-    });
-  },
-
   // 3. Create an order request (Broadcast to nearby)
   createOrderRequest: (payload: {
     deliveryAddressId: string;

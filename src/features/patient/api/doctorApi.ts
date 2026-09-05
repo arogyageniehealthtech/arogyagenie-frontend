@@ -16,7 +16,7 @@ export interface DoctorSearchParams {
 export interface AppointmentPayload {
   doctorId: string;
   facilityId?: string;
-  consultationType: "IN-PERSON" | "VIDEO";
+  consultationType: "IN_PERSON" | "VIDEO";
   date?: string;
   scheduledStart: string;
   scheduledEnd?: string;

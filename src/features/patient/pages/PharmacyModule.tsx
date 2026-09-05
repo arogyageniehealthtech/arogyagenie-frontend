@@ -7,16 +7,21 @@ import {
   MapPin, Star, Clock, 
   SlidersHorizontal, Tag
 } from 'lucide-react';
-import { useSelector, useDispatch } from 'react-redux';
 
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { 
   selectCartTotalItems, selectCartItems, selectCartTotalPrice, 
   updateQuantity, removeItem 
 } from '@/store/slices/cartSlice';
+import { fetchCurrentLocation } from '@/store/slices/locationSlice';
+import { useGeolocation } from '../hooks/useGeolocation';
 import { Button } from '@/components/ui/button';
 import { MedicineCard, MedicineCardSkeleton } from '../component/card.component/MedicineCard1';
 import { ROUTES } from '@/constants/routes.constants';
 import { pharmacyApi } from '../api/pharmacyApi';
+import { facilityApi } from '../api/facilityApi';
+
+const FALLBACK_COORDS = { lat: 22.5726, lng: 88.3639 };
 
 // Fallback Mocks
 const MOCK_MEDICINES = [
@@ -42,10 +47,14 @@ function useDebounce<T>(value: T, delay: number): T {
 
 function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const cartItems = useSelector(selectCartItems);
-  const rawTotal = useSelector(selectCartTotalPrice);
-  const cartCount = useSelector(selectCartTotalItems);
+  const dispatch = useAppDispatch();
+  const cartItems = useAppSelector(selectCartItems);
+  const rawTotal = useAppSelector(selectCartTotalPrice);
+  const cartCount = useAppSelector(selectCartTotalItems);
+  const locationState = useAppSelector((state) => state.location);
+
+  const { coords: browserCoords } = useGeolocation(locationState.coordinates ?? FALLBACK_COORDS);
+  const activeCoordinates = locationState.coordinates || browserCoords;
 
   const [step, setStep] = useState<'cart' | 'method' | 'specific' | 'loading' | 'quotes'>('cart');
   const [selId, setSelId] = useState<string | null>(null);
@@ -53,18 +62,29 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
   const [expId, setExpId] = useState<string | null>(null);
   const [nearbyPharmacies, setNearbyPharmacies] = useState<any[]>(MOCK_PHARMACIES);
 
-  // Fetch nearby pharmacies on mount
+  // Fetch nearby pharmacies on modal open using coordinates
   useEffect(() => {
     if (isOpen) {
       setStep('cart');
       setQuotes([]);
       setExpId(null);
-      // Mocking user location for demo (Kolkata)
-      pharmacyApi.getNearbyPharmacies({ latitude: 22.5726, longitude: 88.3639, radiusKm: 10 })
-        .then(res => setNearbyPharmacies(res.data?.length ? res.data : MOCK_PHARMACIES))
+
+      const lat = activeCoordinates?.lat || FALLBACK_COORDS.lat;
+      const lng = activeCoordinates?.lng || FALLBACK_COORDS.lng;
+
+      facilityApi.getNearbyFacilities({
+        latitude: lat,
+        longitude: lng,
+         type: 'PHARMACY',
+        radiusKm: 20,
+      })
+        .then((res: any) => {
+          const facilities = Array.isArray(res) ? res : res?.data;
+          setNearbyPharmacies(facilities?.length ? facilities : MOCK_PHARMACIES);
+        })
         .catch(() => setNearbyPharmacies(MOCK_PHARMACIES));
     }
-  }, [isOpen]);
+  }, [isOpen, activeCoordinates]);
 
   const startBidding = async (pharmacies: any[], isBroadcast = true) => {
     setStep('loading');
@@ -73,13 +93,11 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       // 1. Create Broadcast Request
       const itemsPayload = cartItems.map((item: any) => ({
         medicineId: item.medicineId,
-        medicineName: item.medicine.name,
+        medicineName: item.medicine?.name || 'Medicine',
         quantity: item.quantity,
-        strength: item.medicine.strength || 'Standard'
+        strength: item.medicine?.strength || 'Standard'
       }));
 
-      // Mock UUID for deliveryAddressId since it's required by the API upfront 
-      // (Actual address is confirmed at checkout)
       const mockAddressId = '00000000-0000-0000-0000-000000000000';
 
       const requestRes = await pharmacyApi.createOrderRequest({
@@ -89,27 +107,33 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       
       const requestId = requestRes.data?.id;
 
-      // 2. Poll for Offers (Simulated wait)
+      // 2. Poll for Offers
       setTimeout(async () => {
         try {
           const offersRes = await pharmacyApi.getOffers(requestId);
           const offers = offersRes.data;
           
           if (offers && offers.length > 0) {
-             const mappedQuotes = offers.map((o: any, i: number) => {
-                const finalTotal = o.items.reduce((acc: number, it: any) => acc + (it.price * (cartItems.find((ci:any) => ci.medicineId === it.medicineId)?.quantity || 1)), 0);
-                return {
-                   id: o.id, // Offer ID
-                   p: pharmacies[i % pharmacies.length] || pharmacies[0],
-                   items: o.items,
-                   finalTotal,
-                   origTotal: rawTotal,
-                   totalDisc: Math.round(((rawTotal - finalTotal) / rawTotal) * 100),
-                   eta: `${10 + i * 7} mins`, 
-                   isBest: i === 0
-                }
-             }).sort((a: any, b: any) => a.finalTotal - b.finalTotal);
-             setQuotes(mappedQuotes);
+            const mappedQuotes = offers.map((o: any, i: number) => {
+              const finalTotal = o.items.reduce(
+                (acc: number, it: any) => 
+                  acc + (it.price * (cartItems.find((ci: any) => ci.medicineId === it.medicineId)?.quantity || 1)), 
+                0
+              );
+              return {
+                id: o.id,
+                p: pharmacies[i % pharmacies.length] || pharmacies[0],
+                items: o.items,
+                finalTotal,
+                origTotal: rawTotal,
+                totalDisc: Math.round(((rawTotal - finalTotal) / rawTotal) * 100),
+                eta: `${10 + i * 7} mins`, 
+                isBest: i === 0
+              };
+            }).sort((a: any, b: any) => a.finalTotal - b.finalTotal);
+
+            setQuotes(mappedQuotes);
+            setStep('quotes');
           } else {
             throw new Error("No offers returned");
           }
@@ -119,7 +143,6 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       }, 2000);
 
     } catch (error) {
-      // Fallback to mock generation if backend API is not running
       generateMockQuotes(pharmacies, isBroadcast);
     }
   };
@@ -136,10 +159,11 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           return { ...item, price, disc, orig: item.unitPrice, medicineId: item.medicineId };
         });
         return {
-          id: `MOCK-OFFER-${Math.random().toString(36).slice(2,7)}`,
+          id: `MOCK-OFFER-${Math.random().toString(36).slice(2, 7)}`,
           p, items, finalTotal, origTotal: rawTotal,
           totalDisc: Math.round(((rawTotal - finalTotal) / rawTotal) * 100),
-          eta: `${10 + i * 7} mins`, isBest: i === 0 && isBroadcast
+          eta: `${10 + i * 7} mins`,
+          isBest: i === 0 && isBroadcast
         };
       }).sort((a, b) => a.finalTotal - b.finalTotal));
       setStep('quotes');
@@ -152,16 +176,16 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 10 }} 
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }} 
+        exit={{ opacity: 0, scale: 0.95, y: 10 }} 
         className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
       >
-        {/* Header - Navy Blue, Professional Text Buttons */}
+        {/* Header */}
         <div className="px-6 py-5 bg-[#13102F] relative flex items-center justify-center shrink-0 text-white border-0 outline-none ring-0 shadow-none">
           {step !== 'cart' && step !== 'loading' && (
             <button 
               onClick={() => setStep(step === 'quotes' ? 'method' : step === 'specific' ? 'method' : 'cart')} 
-              className="absolute left-4 px-3 py-1.5 text-slate-300 hover:text-white text-[11px] font-bold uppercase tracking-wider transition-colors"
+              className="absolute left-4 px-3 py-1.5 text-slate-300 hover:text-white text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
             >
               Back
             </button>
@@ -176,18 +200,17 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
           {step === 'cart' && (
             <button 
               onClick={onClose} 
-              className="absolute right-4 px-3 py-1.5 text-slate-300 hover:text-white text-[11px] font-bold uppercase tracking-wider transition-colors"
+              className="absolute right-4 px-3 py-1.5 text-slate-300 hover:text-white text-[11px] font-bold uppercase tracking-wider transition-colors cursor-pointer"
             >
               Cancel
             </button>
           )}
         </div>
 
-        {/* Body content */}
+        {/* Body */}
         <div className="p-5 overflow-y-auto flex-1 space-y-4 bg-slate-50/60">
           <AnimatePresence mode="wait">
-            
-            {/* CART */}
+            {/* STEP: CART */}
             {step === 'cart' && (
               <motion.div key="cart" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
                 {cartCount === 0 ? (
@@ -203,17 +226,17 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                     {cartItems.map((item: any) => (
                       <div key={item.medicineId} className="flex justify-between items-center p-3.5 bg-white rounded-2xl border border-slate-100 shadow-xs hover:border-indigo-100 transition-all">
                         <div className="min-w-0 pr-3">
-                          <h4 className="font-bold text-xs text-slate-900 truncate mb-0.5">{item.medicine.name}</h4>
+                          <h4 className="font-bold text-xs text-slate-900 truncate mb-0.5">{item.medicine?.name}</h4>
                           <p className="text-[11px] text-slate-400 font-medium">₹{item.unitPrice.toFixed(2)} per unit</p>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <span className="text-xs font-black text-indigo-950">₹{(item.unitPrice * item.quantity).toFixed(2)}</span>
                           <div className="flex items-center bg-slate-100/80 border border-slate-200/60 rounded-xl p-0.5">
-                            <button onClick={() => dispatch(updateQuantity({ medicineId: item.medicineId, quantity: item.quantity - 1 }))} className="w-6 h-6 flex justify-center items-center hover:bg-white rounded-lg text-slate-600 transition-colors"><Minus className="w-3 h-3" /></button>
+                            <button onClick={() => dispatch(updateQuantity({ medicineId: item.medicineId, quantity: item.quantity - 1 }))} className="w-6 h-6 flex justify-center items-center hover:bg-white rounded-lg text-slate-600 transition-colors cursor-pointer"><Minus className="w-3 h-3" /></button>
                             <span className="text-xs font-bold w-6 text-center text-slate-800">{item.quantity}</span>
-                            <button onClick={() => dispatch(updateQuantity({ medicineId: item.medicineId, quantity: item.quantity + 1 }))} className="w-6 h-6 flex justify-center items-center hover:bg-white rounded-lg text-slate-600 transition-colors"><Plus className="w-3 h-3" /></button>
+                            <button onClick={() => dispatch(updateQuantity({ medicineId: item.medicineId, quantity: item.quantity + 1 }))} className="w-6 h-6 flex justify-center items-center hover:bg-white rounded-lg text-slate-600 transition-colors cursor-pointer"><Plus className="w-3 h-3" /></button>
                           </div>
-                          <button onClick={() => dispatch(removeItem(item.medicineId))} className="p-1 text-slate-300 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => dispatch(removeItem(item.medicineId))} className="p-1 text-slate-300 hover:text-red-500 transition-colors cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </div>
                     ))}
@@ -222,10 +245,10 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
               </motion.div>
             )}
 
-            {/* METHOD */}
+            {/* STEP: METHOD */}
             {step === 'method' && (
               <motion.div key="method" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
-                <button onClick={() => startBidding(nearbyPharmacies, true)} className="w-full bg-white p-4 rounded-2xl border border-slate-200/80 hover:border-indigo-600 hover:shadow-md flex items-center gap-4 transition-all group text-left">
+                <button onClick={() => startBidding(nearbyPharmacies, true)} className="w-full bg-white p-4 rounded-2xl border border-slate-200/80 hover:border-indigo-600 hover:shadow-md flex items-center gap-4 transition-all group text-left cursor-pointer">
                   <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-all"><Store className="w-5 h-5" /></div>
                   <div className="flex-1">
                     <h3 className="font-bold text-sm text-slate-900 group-hover:text-indigo-600 transition-colors">Broadcast to All Pharmacies</h3>
@@ -234,7 +257,7 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                   <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
                 </button>
 
-                <button onClick={() => setStep('specific')} className="w-full bg-white p-4 rounded-2xl border border-slate-200/80 hover:border-blue-600 hover:shadow-md flex items-center gap-4 transition-all group text-left">
+                <button onClick={() => setStep('specific')} className="w-full bg-white p-4 rounded-2xl border border-slate-200/80 hover:border-blue-600 hover:shadow-md flex items-center gap-4 transition-all group text-left cursor-pointer">
                   <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all"><Store className="w-5 h-5" /></div>
                   <div className="flex-1">
                     <h3 className="font-bold text-sm text-slate-900 group-hover:text-blue-600 transition-colors">Choose Specific Store</h3>
@@ -245,7 +268,7 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
               </motion.div>
             )}
 
-            {/* SPECIFIC */}
+            {/* STEP: SPECIFIC */}
             {step === 'specific' && (
               <motion.div key="specific" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
                 {nearbyPharmacies.map(p => (
@@ -267,18 +290,18 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
               </motion.div>
             )}
 
-            {/* LOADING */}
+            {/* STEP: LOADING */}
             {step === 'loading' && (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-16 text-center space-y-3">
                 <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto text-indigo-600 animate-pulse">
-                  <Clock className="w-8 h-8 animate-spin-slow" />
+                  <Clock className="w-8 h-8" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">Broadcasting to Nearby Pharmacies...</h3>
                 <p className="text-xs text-slate-400 max-w-xs mx-auto">Gathering real-time competitive discounts and delivery estimates for your order.</p>
               </motion.div>
             )}
 
-            {/* QUOTES */}
+            {/* STEP: QUOTES */}
             {step === 'quotes' && (
               <motion.div key="quotes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
                 {quotes.map(q => {
@@ -305,7 +328,6 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                         </div>
                       </div>
 
-                      {/* DISCOUNT CONTAINER */}
                       <div className="mx-4 mb-3 p-3 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-between shadow-2xs">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs shrink-0">
@@ -343,11 +365,10 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                         )}
                       </AnimatePresence>
 
-                      {/* ACTION BUTTONS */}
                       <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50/90 border-t border-slate-100">
                         <button 
                           onClick={() => setExpId(expId === q.id ? null : q.id)} 
-                          className="h-10 bg-white hover:bg-slate-100 border border-slate-200/80 text-xs font-bold text-slate-700 rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-2xs"
+                          className="h-10 bg-white hover:bg-slate-100 border border-slate-200/80 text-xs font-bold text-slate-700 rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
                         >
                           <span>{expId === q.id ? 'Hide Breakdown' : 'View Breakdown'}</span> 
                           <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expId === q.id ? 'rotate-180' : ''}`} />
@@ -355,7 +376,7 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                         
                         <button 
                           onClick={() => navigate(ROUTES.PATIENT.CHECKOUT, { state: { quotation: q } })} 
-                          className="h-10 bg-gradient-to-r from-indigo-600 to-[#13102F] hover:from-indigo-700 hover:to-slate-900 text-white text-xs font-black uppercase tracking-wider rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98]"
+                          className="h-10 bg-linear-to-r from-indigo-600 to-[#13102F] hover:from-indigo-700 hover:to-slate-900 text-white text-xs font-black uppercase tracking-wider rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98] cursor-pointer"
                         >
                           <span>Order Now</span> 
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -373,12 +394,12 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
         {(step === 'cart' || step === 'specific') && (
           <div className="p-4 bg-white border-t border-slate-100 shrink-0">
             {step === 'cart' ? (
-              <Button disabled={cartCount === 0} onClick={() => setStep('method')} className="w-full h-11 text-xs rounded-2xl bg-[#13102F] hover:bg-slate-800 font-bold text-white shadow-md transition-all flex items-center justify-center gap-2">
+              <Button disabled={cartCount === 0} onClick={() => setStep('method')} className="w-full h-11 text-xs rounded-2xl bg-[#13102F] hover:bg-slate-800 font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
                 <span>Compare & Save (₹{rawTotal.toFixed(0)})</span> 
                 <ArrowRight className="w-4 h-4" />
               </Button>
             ) : (
-              <Button onClick={() => startBidding([nearbyPharmacies.find(p => p.id === selId) || nearbyPharmacies[0]], false)} disabled={!selId} className="w-full h-11 text-xs rounded-2xl bg-[#13102F] hover:bg-slate-800 font-bold text-white shadow-md transition-all flex items-center justify-center gap-2">
+              <Button onClick={() => startBidding([nearbyPharmacies.find(p => p.id === selId) || nearbyPharmacies[0]], false)} disabled={!selId} className="w-full h-11 text-xs rounded-2xl bg-[#13102F] hover:bg-slate-800 font-bold text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
                 <span>Request Custom Quote</span> 
                 <ArrowRight className="w-4 h-4" />
               </Button>
@@ -391,8 +412,10 @@ function CartBiddingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
 }
 
 export default function MedicinePage() {
+  const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
-  const cartItemsCount = useSelector(selectCartTotalItems);
+  const cartItemsCount = useAppSelector(selectCartTotalItems);
+  const locationState = useAppSelector((state) => state.location);
   
   const [localSearch, setLocalSearch] = useState(searchParams.get('q') || '');
   const debouncedSearch = useDebounce(localSearch, 400);
@@ -405,6 +428,12 @@ export default function MedicinePage() {
   const [medicines, setMedicines] = useState(MOCK_MEDICINES);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    if (!locationState.coordinates) {
+      dispatch(fetchCurrentLocation());
+    }
+  }, [dispatch, locationState.coordinates]);
+
   // Fetch medicines from API
   useEffect(() => {
     const newParams = new URLSearchParams(searchParams);
@@ -416,13 +445,12 @@ export default function MedicinePage() {
       .then(res => {
         let results = res.data?.data || res.data || [];
         if (selectedSpecialty !== 'all') {
-           results = results.filter((m: any) => m.medicineType?.toLowerCase() === selectedSpecialty.toLowerCase());
+          results = results.filter((m: any) => m.medicineType?.toLowerCase() === selectedSpecialty.toLowerCase());
         }
-        setMedicines(results.length > 0 ? results : MOCK_MEDICINES); // Fallback if API returns empty
+        setMedicines(results.length > 0 ? results : MOCK_MEDICINES);
         setIsLoading(false);
       })
       .catch(() => {
-        // Fallback to MOCK data on API error
         let results = [...MOCK_MEDICINES];
         if (debouncedSearch) {
           const query = debouncedSearch.toLowerCase();
@@ -437,14 +465,17 @@ export default function MedicinePage() {
   const specialties = useMemo(() => ['all', ...Array.from(new Set(MOCK_MEDICINES.map(p => p.medicineType)))], []);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => { if (filterRef.current && !filterRef.current.contains(e.target as Node)) setIsFilterOpen(false); };
+    const handleClickOutside = (e: MouseEvent) => { 
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-12 font-sans text-sm text-slate-800">
-      {/* Adjusted padding to remove extra top space since header is removed */}
       <main className="container mx-auto px-4 sm:px-6 pt-4 sm:pt-6 space-y-6 max-w-7xl">
         
         {/* Action Bar */}
@@ -459,12 +490,11 @@ export default function MedicinePage() {
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] text-xs font-medium text-slate-800 transition-all"
             />
           </div>
-          
 
           <div className="relative shrink-0" ref={filterRef}>
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)} 
-              className="flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl w-10 h-10 text-slate-700 transition-colors shadow-xs"
+              className="flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl w-10 h-10 text-slate-700 transition-colors shadow-xs cursor-pointer"
             >
               <SlidersHorizontal className="w-4 h-4" />
             </button>
@@ -476,7 +506,7 @@ export default function MedicinePage() {
                     <button 
                       key={spec} 
                       onClick={() => { setSelectedSpecialty(spec); setIsFilterOpen(false); }} 
-                      className={`w-full text-left px-3 py-2 text-xs font-bold rounded-xl transition-colors ${selectedSpecialty === spec ? 'bg-[#13102F] text-white shadow-xs' : 'hover:bg-slate-50 text-slate-700'}`}
+                      className={`w-full text-left px-3 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer ${selectedSpecialty === spec ? 'bg-[#13102F] text-white shadow-xs' : 'hover:bg-slate-50 text-slate-700'}`}
                     >
                       {spec === 'all' ? 'All Formats' : spec}
                     </button>
@@ -489,7 +519,7 @@ export default function MedicinePage() {
           <div className="shrink-0">
             <Button 
               onClick={() => setIsModalOpen(true)} 
-              className="bg-[#13102F] hover:bg-slate-800 text-white rounded-xl px-4 h-10 relative shadow-md text-xs font-bold transition-all flex items-center gap-2"
+              className="bg-[#13102F] hover:bg-slate-800 text-white rounded-xl px-4 h-10 relative shadow-md text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
               <span className="hidden sm:inline">My Cart</span>

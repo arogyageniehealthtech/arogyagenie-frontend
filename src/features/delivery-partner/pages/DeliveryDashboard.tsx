@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from 'react-redux';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, Loader2, AlertCircle, Zap, ArrowUpRight, DollarSign } from 'lucide-react';
+import { Loader2, AlertCircle, Zap, ArrowUpRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { deliveryApi } from '../api/deliveryApi.ts';
 import { toggleOnlineStatus } from '@/store/slices/deliverySlice';
@@ -43,7 +43,7 @@ export default function DeliveryDashboard() {
   if (l1 || l2) return <div className="flex h-dvh items-center justify-center bg-[#F0F6FF]"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>;
 
   return (
-    <div className="h-dvh max-w-6xl mx-auto flex flex-col gap-3 p-3 sm:p-4 bg-[#F0F6FF] overflow-hidden box-border text-slate-800 font-sans">
+    <div className="min-h-screen lg:h-dvh max-w-6xl mx-auto flex flex-col gap-3 p-3 sm:p-4 bg-[#F0F6FF] overflow-y-auto lg:overflow-hidden box-border text-slate-800 font-sans pb-24 lg:pb-4">
       
       {/* 1. Header & Quick Status Bar */}
       <div className="shrink-0 flex justify-between items-center bg-white/80 backdrop-blur-xl p-3 sm:p-3.5 rounded-2xl shadow-sm border border-blue-100">
@@ -61,7 +61,7 @@ export default function DeliveryDashboard() {
 
         <button 
           onClick={handleToggleStatus} 
-          className={`relative px-5 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 overflow-hidden transition-all shadow-sm ${isOnline ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-200 text-slate-700 border border-slate-300'}`}
+          className={`relative px-4 sm:px-5 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 overflow-hidden transition-all shadow-sm ${isOnline ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-200 text-slate-700 border border-slate-300'}`}
         >
           <Zap className="w-3.5 h-3.5 fill-current" />
           <span className="z-10 tracking-wider uppercase">{isOnline ? 'Online' : 'Offline'}</span>
@@ -88,72 +88,67 @@ export default function DeliveryDashboard() {
           { l: "Total Deliveries", v: pro.totalDeliveries || "0", badge: "On Track", color: "text-slate-900", bg: "from-white to-blue-50/30 border-blue-50" },
           { l: "Partner Rating", v: `${pro.rating || 'N/A'} ★`, badge: "Top 5%", color: "text-amber-600", bg: "from-white to-blue-50/30 border-blue-50" }
         ].map((x, i) => (
-          <div key={i} className={`bg-linear-to-br ${x.bg} backdrop-blur-xl border p-3 rounded-2xl shadow-sm flex justify-between items-center`}>
+          <div key={i} className={`bg-linear-to-br ${x.bg} backdrop-blur-xl border p-2.5 sm:p-3 rounded-2xl shadow-sm flex justify-between items-center`}>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{x.l}</p>
-              <h2 className={`text-base sm:text-lg font-black tracking-tight mt-0.5 ${x.color}`}>{x.v}</h2>
+              <h2 className={`text-sm sm:text-base lg:text-lg font-black tracking-tight mt-0.5 ${x.color}`}>{x.v}</h2>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100/60 text-blue-700 border border-blue-200/50">{x.badge}</span>
+            <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-blue-100/60 text-blue-700 border border-blue-200/50">{x.badge}</span>
           </div>
         ))}
       </div>
 
       {/* 3. Main Data Management Grid */}
-      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3">
+      <div className="flex-1 flex flex-col lg:flex-row gap-3 min-h-0">
         
-        {/* Weekly Trend Analytics Chart - Modern Split Header & Glassmorphism Card */}
-        <div className="flex-1 min-h-0 bg-linear-to-br from-slate-900 via-blue-950 to-indigo-950 text-white backdrop-blur-xl border border-blue-900/60 p-4 sm:p-5 rounded-2xl shadow-md flex flex-col justify-between">
+        {/* Weekly Trend Analytics Chart */}
+        <div className="w-full lg:flex-1 bg-linear-to-br from-[#0F172A] via-[#1E293B] to-[#1E3A8A] text-white backdrop-blur-xl border border-slate-800/80 p-3.5 sm:p-5 rounded-2xl shadow-md flex flex-col justify-between min-h-62.5 lg:min-h-0">
           
-          {/* Redesigned Header: Left Title + Right Floating Summary Badge */}
-          <div className="flex items-center justify-between shrink-0 mb-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-xs sm:text-sm font-black tracking-wide text-white uppercase">Revenue Trend</h3>
-                <p className="text-[10px] text-blue-300 font-medium">Performance over past 7 days</p>
-              </div>
+          {/* Header without icon */}
+          <div className="flex items-center justify-between shrink-0 gap-2 flex-wrap">
+            <div>
+              <h3 className="text-xs sm:text-sm font-black tracking-wide text-white uppercase">Revenue Trend</h3>
+              <p className="text-[10px] text-blue-300 font-medium">Performance over past 7 days</p>
             </div>
 
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10">
               <div className="text-right">
-                <span className="text-[9px] font-bold text-blue-300 uppercase block leading-none">Peak Day</span>
-                <span className="text-xs font-black text-white">Sat (₹1,450)</span>
+                <span className="text-[8px] font-bold text-blue-300 uppercase block leading-none">Peak</span>
+                <span className="text-[11px] font-black text-white">Sat (₹1,450)</span>
               </div>
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                <ArrowUpRight className="w-4 h-4" />
+              <div className="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <ArrowUpRight className="w-3 h-3" />
               </div>
             </div>
           </div>
 
-          {/* Expanded Chart Space */}
-          <div className="flex-1 min-h-0 w-full mt-2">
+          {/* Chart Container */}
+          <div className="w-full h-44 sm:h-52 lg:h-full lg:flex-1 min-h-40 mt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, left: -25, right: 0, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, left: -25, right: 5, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorValNew" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#38BDF8" stopOpacity={0.5}/>
+                    <stop offset="5%" stopColor="#38BDF8" stopOpacity={0.45}/>
                     <stop offset="95%" stopColor="#38BDF8" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94A3B8' }} dy={5} />
-                <Tooltip cursor={{ stroke: '#38BDF8', strokeWidth: 1 }} contentStyle={{ backgroundColor: '#0F172A', borderRadius: '12px', border: '1px solid #334155', fontSize: '12px', padding: '6px 10px', color: '#fff', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }} />
-                <Area type="monotone" dataKey="val" stroke="#38BDF8" strokeWidth={3.5} fillOpacity={1} fill="url(#colorValNew)" />
+                <Tooltip cursor={{ stroke: '#38BDF8', strokeWidth: 1 }} contentStyle={{ backgroundColor: '#0F172A', borderRadius: '12px', border: '1px solid #334155', fontSize: '11px', padding: '4px 8px', color: '#fff' }} />
+                <Area type="monotone" dataKey="val" stroke="#38BDF8" strokeWidth={3} fillOpacity={1} fill="url(#colorValNew)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Granular Management Metrics Panel */}
-        <div className="shrink-0 grid grid-cols-2 lg:grid-cols-1 gap-2 lg:w-64">
+        {/* Granular Metrics Panel */}
+        <div className="w-full lg:w-64 shrink-0 grid grid-cols-2 lg:grid-cols-1 gap-2">
           {[
             { l: "Avg / Order", v: `₹${ern?.avg}`, sub: "Optimized" },
             { l: "Distance Covered", v: `${ern?.dist} km`, sub: "Efficient" },
             { l: "Incentive Bonus", v: `₹${ern?.bonus}`, sub: "Unlocked", c: "text-emerald-600" },
             { l: "Monthly Payout", v: `₹${ern?.month?.toLocaleString()}`, sub: "Target Met" }
           ].map((x, i) => (
-            <div key={i} className="bg-white/90 backdrop-blur-xl border border-blue-100 p-2.5 sm:p-3 rounded-2xl flex justify-between items-center shadow-sm">
+            <div key={i} className="bg-white/90 backdrop-blur-xl border border-blue-100 p-2.5 sm:p-3 rounded-2xl flex justify-between items-center shadow-xs">
               <div className="min-w-0">
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">{x.l}</span>
                 <span className="text-[9px] text-slate-400 font-semibold">{x.sub}</span>

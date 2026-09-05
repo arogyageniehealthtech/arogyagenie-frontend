@@ -7,8 +7,10 @@ export interface NearbyFacilityParams {
   latitude: number;
   longitude: number;
   radiusKm?: number;
+  query?:string;
   type?: FacilityType;
   limit?: number;
+  testName?:string;
 }
 
 export interface Facility {
