@@ -249,12 +249,30 @@ const CyberMedicalChatBackground = memo(function CyberMedicalChatBackground() {
 import { AarogyaBot3D } from "./AarogyaBot3D";
 
 // Glowing Isolated Vector Robot Head Icon for header and message bubbles
-const GlowingBotAvatar = memo(function GlowingBotAvatar({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  const dim = size === "sm" ? "w-7 h-7" : size === "lg" ? "w-11 h-11" : "w-8 h-8";
+// Glowing Isolated Vector Robot Head Icon for header and message bubbles
+const GlowingBotAvatar = memo(function GlowingBotAvatar({ size = "md" }: { size?: "xs" | "sm" | "md" | "lg" }) {
+  const dim =
+    size === "xs"
+      ? "w-5 h-5 rounded-lg"
+      : size === "sm"
+      ? "w-5.5 h-5.5 sm:w-7 sm:h-7 rounded-xl sm:rounded-2xl"
+      : size === "lg"
+      ? "w-10 h-10 sm:w-11 sm:h-11 rounded-2xl"
+      : "w-7 h-7 sm:w-8 sm:h-8 rounded-xl sm:rounded-2xl";
+
+  const svgDim =
+    size === "xs"
+      ? "w-3 h-3"
+      : size === "sm"
+      ? "w-3.5 h-3.5 sm:w-4.5 sm:h-4.5"
+      : size === "lg"
+      ? "w-6 h-6 sm:w-7 sm:h-7"
+      : "w-4 h-4 sm:w-5 sm:h-5";
+
   return (
-    <div className={`relative ${dim} rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-cyan-400 p-[1.5px] shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.6)]`}>
-      <div className="w-full h-full rounded-[14px] bg-[#090b22] flex items-center justify-center overflow-hidden">
-        <svg viewBox="0 0 48 48" className="w-5 h-5 drop-shadow-[0_0_6px_rgba(56,189,248,0.9)]">
+    <div className={`relative ${dim} bg-gradient-to-tr from-purple-600 via-indigo-500 to-cyan-400 p-[1.2px] shrink-0 shadow-[0_0_12px_rgba(56,189,248,0.5)]`}>
+      <div className="w-full h-full rounded-[inherit] bg-[#090b22] flex items-center justify-center overflow-hidden">
+        <svg viewBox="0 0 48 48" className={`${svgDim} drop-shadow-[0_0_6px_rgba(56,189,248,0.9)]`}>
           <rect x="8" y="10" width="32" height="28" rx="12" fill="#15193d" stroke="#818cf8" strokeWidth="1.5" />
           <rect x="4" y="18" width="4" height="12" rx="2" fill="#38bdf8" />
           <rect x="40" y="18" width="4" height="12" rx="2" fill="#38bdf8" />
@@ -269,7 +287,7 @@ const GlowingBotAvatar = memo(function GlowingBotAvatar({ size = "md" }: { size?
   );
 });
 
-// Memoized Chat Message Bubble Component for high-performance typing & scrolling
+// Memoized Chat Message Bubble Component for high-density mobile & spacious desktop
 const ChatMessageItem = memo(function ChatMessageItem({
   msg,
   isExpanded,
@@ -281,15 +299,15 @@ const ChatMessageItem = memo(function ChatMessageItem({
 }) {
   return (
     <div
-      className={`flex gap-2 sm:gap-3 max-w-[95%] sm:max-w-[85%] min-w-0 ${
+      className={`flex gap-1.5 sm:gap-3 max-w-[96%] sm:max-w-[85%] min-w-0 ${
         msg.sender === "patient" ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
       }`}
     >
       {/* User / Bot Avatar */}
-      <div className="shrink-0">
+      <div className="shrink-0 mt-0.5 sm:mt-1">
         {msg.sender === "patient" ? (
-          <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
-            <User className="h-3 w-3 sm:h-4 sm:w-4" />
+          <div className="h-5 w-5 sm:h-7 sm:w-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
+            <User className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5" />
           </div>
         ) : (
           <GlowingBotAvatar size="sm" />
@@ -297,35 +315,35 @@ const ChatMessageItem = memo(function ChatMessageItem({
       </div>
 
       {/* Bubble Content */}
-      <div className="space-y-1.5 flex-1 min-w-0">
+      <div className="space-y-1 sm:space-y-1.5 flex-1 min-w-0">
         <div
-          className={`p-3 sm:p-4 rounded-3xl text-[13px] sm:text-sm leading-relaxed min-w-0 break-words ${
+          className={`px-2.5 py-2 sm:px-4 sm:py-3 rounded-2xl sm:rounded-3xl text-xs sm:text-sm leading-snug sm:leading-relaxed min-w-0 break-words ${
             msg.sender === "patient"
-              ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white rounded-tr-sm shadow-lg shadow-purple-950/40 font-medium"
+              ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white rounded-tr-sm shadow-md shadow-purple-950/40 font-medium"
               : msg.text.startsWith("🚨 EMERGENCY ALERT")
               ? "bg-red-950/90 border-2 border-red-500/80 text-red-100 rounded-tl-sm shadow-xl"
               : "bg-[#0d1030]/95 border border-indigo-500/30 text-slate-100 rounded-tl-sm shadow-md backdrop-blur-md"
           }`}
         >
           {msg.attachmentName && (
-            <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/30 border border-white/20 text-xs font-mono text-cyan-200 min-w-0">
-              <Paperclip className="h-3 w-3 shrink-0" />
+            <div className="mb-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/30 border border-white/20 text-[10px] sm:text-xs font-mono text-cyan-200 min-w-0">
+              <Paperclip className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
               <span className="truncate">{msg.attachmentName}</span>
             </div>
           )}
           <p className="whitespace-pre-wrap break-words">{msg.text}</p>
           {/* RAG Verification & Sources Drawer */}
           {msg.sender === "assistant" && (
-            <div className="mt-3 pt-2.5 border-t border-indigo-900/60 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-1.5">
+            <div className="mt-1.5 pt-1.5 sm:mt-2.5 sm:pt-2 border-t border-indigo-900/60 flex flex-wrap items-center justify-between gap-1 sm:gap-2 text-[10px] sm:text-xs">
+              <div className="flex items-center gap-1">
                 {msg.usedRag ? (
-                  <Badge className="bg-emerald-950/80 text-emerald-300 border-emerald-500/50 text-[10px] gap-1 font-semibold">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                    RAG Verified {msg.retrieval ? `(${msg.retrieval.resultsUsed}/${msg.retrieval.topK} Guidelines)` : ""}
+                  <Badge className="bg-emerald-950/80 text-emerald-300 border-emerald-500/50 text-[9px] sm:text-[10px] px-1.5 py-0.2 sm:px-2 sm:py-0.5 gap-1 font-semibold">
+                    <CheckCircle2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-emerald-400" />
+                    RAG Verified {msg.retrieval ? `(${msg.retrieval.resultsUsed}/${msg.retrieval.topK})` : ""}
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="text-[10px] text-slate-400 border-slate-700">
-                    Patient Health Context Grounded
+                  <Badge variant="outline" className="text-[9px] sm:text-[10px] px-1.5 py-0.2 text-slate-400 border-slate-700">
+                    Clinical Grounded
                   </Badge>
                 )}
               </div>
@@ -334,12 +352,12 @@ const ChatMessageItem = memo(function ChatMessageItem({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 text-[11px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/40 gap-1 font-semibold cursor-pointer"
+                  className="h-5 sm:h-6 px-1.5 sm:px-2 text-[10px] sm:text-[11px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/40 gap-1 font-semibold cursor-pointer"
                   onClick={() => onToggleEvidence(msg.id)}
                 >
-                  <BookOpen className="h-3 w-3" />
-                  {isExpanded ? "Hide Sources" : `Sources (${msg.sources.length})`}
-                  {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  <BookOpen className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                  {isExpanded ? "Hide" : `Sources (${msg.sources.length})`}
+                  {isExpanded ? <ChevronUp className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> : <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3" />}
                 </Button>
               )}
             </div>
@@ -348,21 +366,21 @@ const ChatMessageItem = memo(function ChatMessageItem({
 
         {/* Expandable Source Drawer */}
         {msg.sender === "assistant" && isExpanded && msg.sources && msg.sources.length > 0 && (
-          <div className="bg-[#0b0e24]/95 border border-indigo-500/40 p-3 rounded-2xl text-xs space-y-2 animate-in fade-in-50 duration-200">
-            <span className="font-bold text-cyan-300 flex items-center gap-1.5 pb-1 border-b border-indigo-900/60">
-              <FileText className="h-3.5 w-3.5 text-cyan-400" />
+          <div className="bg-[#0b0e24]/95 border border-indigo-500/40 p-2 sm:p-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs space-y-1.5 animate-in fade-in-50 duration-200">
+            <span className="font-bold text-cyan-300 flex items-center gap-1.5 pb-1 border-b border-indigo-900/60 text-[10px] sm:text-xs">
+              <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-cyan-400" />
               Retrieved Clinical Guidelines & Attributed Sources
             </span>
-            <div className="space-y-1.5">
+            <div className="space-y-1 sm:space-y-1.5">
               {msg.sources.map((src, idx) => (
-                <div key={idx} className="bg-[#14183d] p-2.5 rounded-xl border border-indigo-500/20 text-slate-200 space-y-0.5">
-                  <div className="font-bold text-white flex items-center justify-between">
+                <div key={idx} className="bg-[#14183d] p-2 sm:p-2.5 rounded-lg sm:rounded-xl border border-indigo-500/20 text-slate-200 space-y-0.5">
+                  <div className="font-bold text-white flex items-center justify-between text-[11px] sm:text-xs">
                     <span>{src.title || "Clinical Protocol"}</span>
-                    {src.documentId && <span className="font-mono text-[9px] text-cyan-300">{src.documentId}</span>}
+                    {src.documentId && <span className="font-mono text-[8px] sm:text-[9px] text-cyan-300">{src.documentId}</span>}
                   </div>
-                  {src.publisher && <p className="text-[11px] text-slate-400">Publisher: {src.publisher}</p>}
+                  {src.publisher && <p className="text-[10px] sm:text-[11px] text-slate-400">Publisher: {src.publisher}</p>}
                   {src.section && (
-                    <p className="text-[11px] text-indigo-300">
+                    <p className="text-[10px] sm:text-[11px] text-indigo-300">
                       Section: {src.section} {src.page ? `• Page ${src.page}` : ""}
                     </p>
                   )}
@@ -373,12 +391,12 @@ const ChatMessageItem = memo(function ChatMessageItem({
         )}
 
         {/* Timestamp & Status Icon */}
-        <div className={`flex items-center gap-1.5 text-[10px] text-slate-400 px-2 ${msg.sender === "patient" ? "justify-end" : "justify-start"}`}>
+        <div className={`flex items-center gap-1 text-[9px] sm:text-[10px] text-slate-400 px-1 sm:px-2 ${msg.sender === "patient" ? "justify-end" : "justify-start"}`}>
           <span>{msg.timestamp}</span>
           {msg.sender === "patient" && (
-            <CheckCheck className="h-3.5 w-3.5 text-purple-300" />
+            <CheckCheck className="h-3 w-3 text-purple-300" />
           )}
-          {msg.disclaimer && <span className="italic text-slate-500 ml-2">{msg.disclaimer}</span>}
+          {msg.disclaimer && <span className="italic text-slate-500 ml-1 sm:ml-2">{msg.disclaimer}</span>}
         </div>
       </div>
     </div>
@@ -857,49 +875,49 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
           {activeNavTab === "chat" && (
             <div className="flex-1 flex flex-col min-h-0 relative">
               {/* Message Thread */}
-              <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-4 sm:space-y-5 scrollbar-thin scrollbar-thumb-indigo-900/60">
+              <div className="flex-1 overflow-y-auto px-2.5 py-2 sm:p-6 space-y-2 sm:space-y-4 scrollbar-thin scrollbar-thumb-indigo-900/60">
                 {/* 1. Welcome Message & Quick Actions (Rendered as first item in thread) */}
-                <div className="space-y-4">
+                <div className="space-y-2 sm:space-y-4">
                   {/* Mobile/Tablet Lightweight Glowing Mascot Card */}
-                  <div className="hidden sm:flex lg:hidden flex-col items-center justify-center p-3 rounded-3xl bg-[#080b26]/80 border border-indigo-500/30 relative overflow-hidden shadow-lg">
-                    <div className="relative w-14 h-14 flex items-center justify-center mb-1">
-                      <GlowingBotAvatar size="lg" />
+                  <div className="hidden sm:flex lg:hidden flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl bg-[#080b26]/80 border border-indigo-500/30 relative overflow-hidden shadow-lg">
+                    <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center mb-1">
+                      <GlowingBotAvatar size="md" />
                     </div>
-                    <div className="text-center pb-1">
-                      <h3 className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-purple-300 via-indigo-200 to-cyan-300 bg-clip-text text-transparent">
+                    <div className="text-center pb-0.5">
+                      <h3 className="text-xs sm:text-sm font-extrabold tracking-tight bg-gradient-to-r from-purple-300 via-indigo-200 to-cyan-300 bg-clip-text text-transparent">
                         Arogyagenie <span className="text-purple-400">AI</span>
                       </h3>
-                      <p className="text-[11px] text-slate-400 font-medium">
+                      <p className="text-[10px] sm:text-[11px] text-slate-400 font-medium">
                         Always here to help you with your health 💜
                       </p>
                     </div>
                   </div>
 
                   {/* Welcome Message Card with embedded Symptom Checker */}
-                  <div className="flex gap-3 max-w-[98%] sm:max-w-[85%] min-w-0">
-                    <div className="shrink-0">
-                      <GlowingBotAvatar size="md" />
+                  <div className="flex gap-1.5 sm:gap-3 max-w-[98%] sm:max-w-[85%] min-w-0">
+                    <div className="shrink-0 mt-0.5 sm:mt-1">
+                      <GlowingBotAvatar size="sm" />
                     </div>
 
                     {/* Card Content */}
                     <div className="space-y-1 flex-1 min-w-0">
-                      <div className="p-3 sm:p-5 rounded-3xl rounded-tl-sm bg-[#0d1030]/90 border border-indigo-500/35 text-slate-100 shadow-[0_10px_30px_rgba(10,14,40,0.5)] backdrop-blur-xl space-y-4 min-w-0">
-                        <div className="space-y-2 text-sm sm:text-[15px] leading-relaxed break-words">
-                          <p className="font-bold text-white text-base">Hello! 👋</p>
+                      <div className="p-2.5 sm:p-5 rounded-2xl sm:rounded-3xl rounded-tl-sm bg-[#0d1030]/90 border border-indigo-500/35 text-slate-100 shadow-[0_10px_30px_rgba(10,14,40,0.5)] backdrop-blur-xl space-y-2 sm:space-y-4 min-w-0">
+                        <div className="space-y-1 sm:space-y-2 text-xs sm:text-[15px] leading-snug sm:leading-relaxed break-words">
+                          <p className="font-bold text-white text-xs sm:text-base">Hello! 👋</p>
                           <p>
                             I'm <strong className="text-white font-bold">Arogyagenie AI</strong>, your health assistant.
                           </p>
                           <p className="text-slate-300">
                             You can ask me about symptoms, medications, treatments, reports or any health related doubts.
                           </p>
-                          <p className="text-purple-300 font-bold pt-1">How can I help you today?</p>
+                          <p className="text-purple-300 font-bold pt-0.5 sm:pt-1">How can I help you today?</p>
                         </div>
 
                         {/* Long Rectangular Symptom Checker Button inside the chatbot */}
                         <button
                           type="button"
                           onClick={() => handleSend(SYMPTOM_CHECK_QUERY)}
-                          className="w-full p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-purple-950/70 via-indigo-950/60 to-[#0e1338]/90 hover:from-purple-900/90 hover:via-indigo-900/80 hover:to-indigo-950/90 border border-purple-500/40 hover:border-purple-400/80 text-white flex items-center justify-between gap-2 shadow-lg shadow-purple-950/30 transition-all duration-300 group cursor-pointer text-left hover:scale-[1.006] active:scale-[0.99] min-w-0"
+                          className="w-full p-2 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-purple-950/70 via-indigo-950/60 to-[#0e1338]/90 hover:from-purple-900/90 hover:via-indigo-900/80 hover:to-indigo-950/90 border border-purple-500/40 hover:border-purple-400/80 text-white flex items-center justify-between gap-1.5 sm:gap-2 shadow-lg shadow-purple-950/30 transition-all duration-300 group cursor-pointer text-left hover:scale-[1.006] active:scale-[0.99] min-w-0"
                         >
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             <div className="hidden sm:flex w-10 h-10 rounded-xl bg-purple-600/25 border border-purple-400/40 items-center justify-center text-purple-300 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0 shadow-inner">
@@ -910,21 +928,21 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                                 <span className="font-bold text-xs sm:text-base text-white group-hover:text-purple-200 transition-colors truncate">
                                   Check Symptoms
                                 </span>
-                                <span className="text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap shrink-0">
+                                <span className="text-[8px] sm:text-[10px] font-semibold px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 whitespace-nowrap shrink-0">
                                   AI Guided
                                 </span>
                               </div>
-                              <p className="text-[10px] sm:text-xs text-slate-300 truncate font-normal">
-                                Describe your symptoms and get AI clinical insights
+                              <p className="text-[9px] sm:text-xs text-slate-300 truncate font-normal">
+                                Describe symptoms & get AI clinical insights
                               </p>
                             </div>
                           </div>
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-purple-500/30 group-hover:border-purple-400 group-hover:bg-purple-600/30 flex items-center justify-center transition-all shrink-0">
-                            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 text-purple-300 group-hover:translate-x-0.5 transition-transform" />
+                          <div className="w-5 h-5 sm:w-8 sm:h-8 rounded-full border border-purple-500/30 group-hover:border-purple-400 group-hover:bg-purple-600/30 flex items-center justify-center transition-all shrink-0">
+                            <ArrowRight className="h-2.5 w-2.5 sm:h-4 sm:w-4 text-purple-300 group-hover:translate-x-0.5 transition-transform" />
                           </div>
                         </button>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-medium px-2 block">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 font-medium px-1 sm:px-2 block">
                         {messages[0]?.timestamp || "10:30 AM"}
                       </span>
                     </div>
@@ -943,10 +961,10 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
 
                 {/* Thinking / Typing State (Reference Image 2) */}
                 {askAssistant.isPending && (
-                  <div className="flex gap-3 mr-auto max-w-[85%]">
+                  <div className="flex gap-1.5 sm:gap-3 mr-auto max-w-[95%] sm:max-w-[85%]">
                     <GlowingBotAvatar size="sm" />
-                    <div className="bg-[#0d1030]/95 border border-indigo-500/35 p-3.5 rounded-3xl rounded-tl-sm text-xs text-cyan-300 flex items-center gap-2 shadow-lg backdrop-blur-md">
-                      <span>Let me understand your symptoms better. I'll ask you a few questions.</span>
+                    <div className="bg-[#0d1030]/95 border border-indigo-500/35 px-2.5 py-1.5 sm:p-3.5 rounded-2xl sm:rounded-3xl rounded-tl-sm text-xs text-cyan-300 flex items-center gap-1.5 sm:gap-2 shadow-lg backdrop-blur-md">
+                      <span className="text-xs">Analyzing symptoms & clinical data...</span>
                       <span className="flex gap-1 items-center">
                         <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
                         <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -960,19 +978,19 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
               </div>
 
               {/* ── INPUT COMPOSER (ChatGPT-Style Plus Menu + Input + Send) ──────────────────────── */}
-              <div className="p-2.5 sm:p-4 border-t border-indigo-950/70 bg-[#06081c]/90 relative z-20 shrink-0">
+              <div className="p-1.5 sm:p-4 border-t border-indigo-950/70 bg-[#06081c]/90 relative z-20 shrink-0">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSend();
                   }}
-                  className="bg-[#0b0e2b]/95 border border-indigo-500/40 focus-within:border-purple-400/80 focus-within:ring-2 focus-within:ring-purple-500/20 rounded-3xl p-2 sm:p-2.5 shadow-2xl transition-all flex flex-col min-w-0 relative"
+                  className="bg-[#0b0e2b]/95 border border-indigo-500/40 focus-within:border-purple-400/80 focus-within:ring-2 focus-within:ring-purple-500/20 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 shadow-2xl transition-all flex flex-col min-w-0 relative"
                 >
                   {/* File Attachment Pill if selected */}
                   {attachedFile && (
-                    <div className="flex items-center justify-between bg-purple-950/60 border border-purple-500/50 rounded-xl px-3 py-1.5 mb-1.5 text-xs text-purple-200 min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Paperclip className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+                    <div className="flex items-center justify-between bg-purple-950/60 border border-purple-500/50 rounded-xl px-2.5 py-1 mb-1 text-xs text-purple-200 min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Paperclip className="h-3 w-3 text-purple-400 shrink-0" />
                         <span className="truncate">{attachedFile.name} ({(attachedFile.size / 1024).toFixed(1)} KB)</span>
                       </div>
                       <button
@@ -980,26 +998,26 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                         onClick={() => setAttachedFile(null)}
                         className="text-purple-300 hover:text-white p-0.5 shrink-0 cursor-pointer"
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <X className="h-3 w-3" />
                       </button>
                     </div>
                   )}
 
                   {/* Input Row: [+] Button + Textarea + Send Button */}
-                  <div className="flex items-end gap-2 relative min-w-0">
+                  <div className="flex items-end gap-1.5 sm:gap-2 relative min-w-0">
                     {/* [+] Action Menu Trigger */}
                     <div className="relative shrink-0" ref={plusMenuRef}>
                       <button
                         type="button"
                         onClick={() => setIsPlusMenuOpen((prev) => !prev)}
-                        className={`h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
+                        className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
                           isPlusMenuOpen
                             ? "bg-purple-600 text-white rotate-45 border-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.6)]"
                             : "bg-[#141945]/90 hover:bg-indigo-900/60 text-slate-300 hover:text-white border-indigo-500/30"
                         }`}
                         title="Add attachment, voice, or report"
                       >
-                        <Plus className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200" />
+                        <Plus className="h-3.5 w-3.5 sm:h-5 sm:w-5 transition-transform duration-200" />
                       </button>
 
                       {/* Dropup Action Menu */}
@@ -1010,7 +1028,7 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 6, scale: 0.95 }}
                             transition={{ duration: 0.15, ease: "easeOut" }}
-                            className="absolute bottom-full left-0 mb-3 w-56 sm:w-60 bg-[#0e1236]/98 border border-indigo-500/40 backdrop-blur-2xl rounded-2xl shadow-2xl p-1.5 z-50 overflow-hidden space-y-1 text-left"
+                            className="absolute bottom-full left-0 mb-2 sm:mb-3 w-52 sm:w-60 bg-[#0e1236]/98 border border-indigo-500/40 backdrop-blur-2xl rounded-2xl shadow-2xl p-1.5 z-50 overflow-hidden space-y-1 text-left"
                             style={{
                               boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7), 0 0 20px rgba(99,102,241,0.25)"
                             }}
@@ -1032,14 +1050,14 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                                 setIsPlusMenuOpen(false);
                                 fileInputRef.current?.click();
                               }}
-                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-900/50 text-slate-200 hover:text-white text-xs font-semibold transition-colors cursor-pointer text-left group"
+                              className="w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl hover:bg-indigo-900/50 text-slate-200 hover:text-white text-xs font-semibold transition-colors cursor-pointer text-left group"
                             >
-                              <div className="h-7 w-7 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 border border-purple-500/30 group-hover:scale-105 transition-transform">
-                                <Paperclip className="h-3.5 w-3.5" />
+                              <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 border border-purple-500/30 group-hover:scale-105 transition-transform">
+                                <Paperclip className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                               </div>
                               <div className="min-w-0">
                                 <span className="block font-bold">Attach File</span>
-                                <span className="text-[10px] text-slate-400 font-normal">Photos, medical PDFs, notes</span>
+                                <span className="text-[9px] sm:text-[10px] text-slate-400 font-normal">Photos, medical PDFs, notes</span>
                               </div>
                             </button>
 
@@ -1050,22 +1068,22 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                                 setIsPlusMenuOpen(false);
                                 toggleVoiceInput();
                               }}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left group ${
+                              className={`w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer text-left group ${
                                 isListening
                                   ? "bg-red-950/80 text-red-200"
                                   : "hover:bg-indigo-900/50 text-slate-200 hover:text-white"
                               }`}
                             >
-                              <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 ${
+                              <div className={`h-6 w-6 sm:h-7 sm:w-7 rounded-lg flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 ${
                                 isListening
                                   ? "bg-red-500/30 text-red-300 border-red-500 animate-pulse"
                                   : "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
                               }`}>
-                                {isListening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                                {isListening ? <MicOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <Mic className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
                               </div>
                               <div className="min-w-0">
                                 <span className="block font-bold">{isListening ? "Stop Listening" : "Voice Input"}</span>
-                                <span className="text-[10px] text-slate-400 font-normal">{isListening ? "Recording voice..." : "Dictate your question"}</span>
+                                <span className="text-[9px] sm:text-[10px] text-slate-400 font-normal">{isListening ? "Recording voice..." : "Dictate your question"}</span>
                               </div>
                             </button>
 
@@ -1077,14 +1095,14 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                                 if (onClose) onClose();
                                 navigate("/patient/lab_report");
                               }}
-                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-indigo-900/50 text-slate-200 hover:text-white text-xs font-semibold transition-colors cursor-pointer text-left group"
+                              className="w-full flex items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl hover:bg-indigo-900/50 text-slate-200 hover:text-white text-xs font-semibold transition-colors cursor-pointer text-left group"
                             >
-                              <div className="h-7 w-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-500/30 group-hover:scale-105 transition-transform">
-                                <UploadCloud className="h-3.5 w-3.5" />
+                              <div className="h-6 w-6 sm:h-7 sm:w-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-500/30 group-hover:scale-105 transition-transform">
+                                <UploadCloud className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                               </div>
                               <div className="min-w-0">
                                 <span className="block font-bold">Upload Report</span>
-                                <span className="text-[10px] text-slate-400 font-normal">Analyze lab diagnostics</span>
+                                <span className="text-[9px] sm:text-[10px] text-slate-400 font-normal">Analyze lab diagnostics</span>
                               </div>
                             </button>
                           </motion.div>
@@ -1105,7 +1123,7 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                       }}
                       placeholder="Type your health question..."
                       disabled={askAssistant.isPending}
-                      className="w-full bg-transparent border-0 text-white placeholder:text-slate-500 focus:outline-none focus:ring-0 text-sm sm:text-[15px] resize-none max-h-24 min-h-[36px] py-1.5 sm:py-2 px-1 block min-w-0"
+                      className="w-full bg-transparent border-0 text-white placeholder:text-slate-500 focus:outline-none focus:ring-0 text-xs sm:text-[15px] resize-none max-h-24 min-h-[30px] sm:min-h-[36px] py-1 sm:py-2 px-1 block min-w-0"
                     />
 
                     {/* Circular Glowing Send Button */}
@@ -1113,19 +1131,19 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                       type="submit"
                       disabled={askAssistant.isPending || (!inputQuery.trim() && !attachedFile)}
                       aria-label="Send health question"
-                      className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.5)] shrink-0 transition-transform active:scale-95 disabled:opacity-30 cursor-pointer border border-purple-300/40"
+                      className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.5)] shrink-0 transition-transform active:scale-95 disabled:opacity-30 cursor-pointer border border-purple-300/40"
                     >
-                      <Send className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                      <Send className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5" />
                     </button>
                   </div>
                 </form>
               </div>
 
               {/* ── FOOTER: MEDICAL DISCLAIMER (Emergency SOS kept in sidebar) ── */}
-              <footer className="px-3 sm:px-6 py-2 border-t border-indigo-950/70 bg-[#040614]/95 flex items-start sm:items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-slate-400 text-center sm:text-left shrink-0">
+              <footer className="px-2.5 sm:px-6 py-1.5 sm:py-2 border-t border-indigo-950/70 bg-[#040614]/95 flex items-start sm:items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[11px] text-slate-400 text-left shrink-0">
                 <ShieldAlert className="h-3 w-3 sm:h-4 sm:w-4 text-purple-400 shrink-0 mt-0.5 sm:mt-0" />
                 <p className="leading-tight break-words min-w-0 text-left">
-                  Arogyagenie AI provides health information and guidance, not a diagnosis. For emergencies, contact emergency services or visit the nearest hospital.
+                  Arogyagenie AI provides health guidance, not a diagnosis. For emergencies, contact emergency services.
                 </p>
               </footer>
             </div>
