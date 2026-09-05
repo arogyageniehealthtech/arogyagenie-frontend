@@ -4,6 +4,7 @@ import {
   useAskHealthAssistant,
   useListSymptomAssessments,
   useGetMe,
+  resetConversation,
 } from "@/services/healthAssistantService";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -545,6 +546,8 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
   };
 
   const handleNewChat = () => {
+    // Reset the backend conversation session so the next message starts a fresh one
+    resetConversation();
     setMessages([
       {
         id: `welcome-${Date.now()}`,
