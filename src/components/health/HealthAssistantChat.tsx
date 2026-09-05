@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useAskHealthAssistant,
@@ -79,7 +79,7 @@ const HEALTH_FALLING_ELEMENTS = [
   { id: "sparkle-4", type: "sparkle", left: "92%", delay: 1.5, duration: 10, color: "#ffffff" },
 ];
 
-function CyberMedicalChatBackground() {
+const CyberMedicalChatBackground = memo(function CyberMedicalChatBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 select-none">
       <style>{`
@@ -244,12 +244,12 @@ function CyberMedicalChatBackground() {
       ))}
     </div>
   );
-}
+});
 
 import { AarogyaBot3D } from "./AarogyaBot3D";
 
 // Glowing Isolated Vector Robot Head Icon for header and message bubbles
-function GlowingBotAvatar({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+const GlowingBotAvatar = memo(function GlowingBotAvatar({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const dim = size === "sm" ? "w-7 h-7" : size === "lg" ? "w-11 h-11" : "w-8 h-8";
   return (
     <div className={`relative ${dim} rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-cyan-400 p-[1.5px] shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.6)]`}>
@@ -267,7 +267,123 @@ function GlowingBotAvatar({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
       </div>
     </div>
   );
-}
+});
+
+// Memoized Chat Message Bubble Component for high-performance typing & scrolling
+const ChatMessageItem = memo(function ChatMessageItem({
+  msg,
+  isExpanded,
+  onToggleEvidence,
+}: {
+  msg: ChatMessage;
+  isExpanded: boolean;
+  onToggleEvidence: (id: string) => void;
+}) {
+  return (
+    <div
+      className={`flex gap-2 sm:gap-3 max-w-[95%] sm:max-w-[85%] min-w-0 ${
+        msg.sender === "patient" ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
+      }`}
+    >
+      {/* User / Bot Avatar */}
+      <div className="shrink-0">
+        {msg.sender === "patient" ? (
+          <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
+            <User className="h-3 w-3 sm:h-4 sm:w-4" />
+          </div>
+        ) : (
+          <GlowingBotAvatar size="sm" />
+        )}
+      </div>
+
+      {/* Bubble Content */}
+      <div className="space-y-1.5 flex-1 min-w-0">
+        <div
+          className={`p-3 sm:p-4 rounded-3xl text-[13px] sm:text-sm leading-relaxed min-w-0 break-words ${
+            msg.sender === "patient"
+              ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white rounded-tr-sm shadow-lg shadow-purple-950/40 font-medium"
+              : msg.text.startsWith("🚨 EMERGENCY ALERT")
+              ? "bg-red-950/90 border-2 border-red-500/80 text-red-100 rounded-tl-sm shadow-xl"
+              : "bg-[#0d1030]/95 border border-indigo-500/30 text-slate-100 rounded-tl-sm shadow-md backdrop-blur-md"
+          }`}
+        >
+          {msg.attachmentName && (
+            <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/30 border border-white/20 text-xs font-mono text-cyan-200 min-w-0">
+              <Paperclip className="h-3 w-3 shrink-0" />
+              <span className="truncate">{msg.attachmentName}</span>
+            </div>
+          )}
+          <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+          {/* RAG Verification & Sources Drawer */}
+          {msg.sender === "assistant" && (
+            <div className="mt-3 pt-2.5 border-t border-indigo-900/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-1.5">
+                {msg.usedRag ? (
+                  <Badge className="bg-emerald-950/80 text-emerald-300 border-emerald-500/50 text-[10px] gap-1 font-semibold">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                    RAG Verified {msg.retrieval ? `(${msg.retrieval.resultsUsed}/${msg.retrieval.topK} Guidelines)` : ""}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] text-slate-400 border-slate-700">
+                    Patient Health Context Grounded
+                  </Badge>
+                )}
+              </div>
+
+              {msg.sources && msg.sources.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-[11px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/40 gap-1 font-semibold cursor-pointer"
+                  onClick={() => onToggleEvidence(msg.id)}
+                >
+                  <BookOpen className="h-3 w-3" />
+                  {isExpanded ? "Hide Sources" : `Sources (${msg.sources.length})`}
+                  {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Expandable Source Drawer */}
+        {msg.sender === "assistant" && isExpanded && msg.sources && msg.sources.length > 0 && (
+          <div className="bg-[#0b0e24]/95 border border-indigo-500/40 p-3 rounded-2xl text-xs space-y-2 animate-in fade-in-50 duration-200">
+            <span className="font-bold text-cyan-300 flex items-center gap-1.5 pb-1 border-b border-indigo-900/60">
+              <FileText className="h-3.5 w-3.5 text-cyan-400" />
+              Retrieved Clinical Guidelines & Attributed Sources
+            </span>
+            <div className="space-y-1.5">
+              {msg.sources.map((src, idx) => (
+                <div key={idx} className="bg-[#14183d] p-2.5 rounded-xl border border-indigo-500/20 text-slate-200 space-y-0.5">
+                  <div className="font-bold text-white flex items-center justify-between">
+                    <span>{src.title || "Clinical Protocol"}</span>
+                    {src.documentId && <span className="font-mono text-[9px] text-cyan-300">{src.documentId}</span>}
+                  </div>
+                  {src.publisher && <p className="text-[11px] text-slate-400">Publisher: {src.publisher}</p>}
+                  {src.section && (
+                    <p className="text-[11px] text-indigo-300">
+                      Section: {src.section} {src.page ? `• Page ${src.page}` : ""}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Timestamp & Status Icon */}
+        <div className={`flex items-center gap-1.5 text-[10px] text-slate-400 px-2 ${msg.sender === "patient" ? "justify-end" : "justify-start"}`}>
+          <span>{msg.timestamp}</span>
+          {msg.sender === "patient" && (
+            <CheckCheck className="h-3.5 w-3.5 text-purple-300" />
+          )}
+          {msg.disclaimer && <span className="italic text-slate-500 ml-2">{msg.disclaimer}</span>}
+        </div>
+      </div>
+    </div>
+  );
+});
 const SYMPTOM_CHECK_QUERY =
   "I'd like to evaluate some symptoms I've been experiencing. Can you ask me guiding questions to assess them?";
 
@@ -486,9 +602,9 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
     );
   };
 
-  const toggleEvidence = (msgId: string) => {
-    setExpandedMessageId(expandedMessageId === msgId ? null : msgId);
-  };
+  const toggleEvidence = useCallback((msgId: string) => {
+    setExpandedMessageId((prev) => (prev === msgId ? null : msgId));
+  }, []);
 
   return (
     <div
@@ -744,11 +860,10 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
               <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-4 sm:space-y-5 scrollbar-thin scrollbar-thumb-indigo-900/60">
                 {/* 1. Welcome Message & Quick Actions (Rendered as first item in thread) */}
                 <div className="space-y-4">
-                  {/* Mobile-Only Interactive 3D Bot Mascot Card (hidden on phones) */}
-                  <div className="hidden sm:flex lg:hidden flex-col items-center justify-center p-2 rounded-3xl bg-[#080b26]/70 border border-indigo-500/30 relative overflow-hidden backdrop-blur-md shadow-lg">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl bg-cyan-500/15 pointer-events-none" />
-                    <div className="relative w-32 h-36 sm:w-64 sm:h-72 flex items-center justify-center">
-                      <AarogyaBot3D className="w-full h-full" />
+                  {/* Mobile/Tablet Lightweight Glowing Mascot Card */}
+                  <div className="hidden sm:flex lg:hidden flex-col items-center justify-center p-3 rounded-3xl bg-[#080b26]/80 border border-indigo-500/30 relative overflow-hidden shadow-lg">
+                    <div className="relative w-14 h-14 flex items-center justify-center mb-1">
+                      <GlowingBotAvatar size="lg" />
                     </div>
                     <div className="text-center pb-1">
                       <h3 className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-purple-300 via-indigo-200 to-cyan-300 bg-clip-text text-transparent">
@@ -818,109 +933,12 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
 
                 {/* 3. Message Stream (Skipping the 1st welcome message since shown above) */}
                 {messages.slice(1).map((msg) => (
-                  <div
+                  <ChatMessageItem
                     key={msg.id}
-                    className={`flex gap-2 sm:gap-3 max-w-[95%] sm:max-w-[85%] min-w-0 ${
-                      msg.sender === "patient" ? "ml-auto flex-row-reverse" : "mr-auto flex-row"
-                    }`}
-                  >
-                    {/* User / Bot Avatar */}
-                    <div className="shrink-0">
-                      {msg.sender === "patient" ? (
-                        <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
-                          <User className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </div>
-                      ) : (
-                        <GlowingBotAvatar size="sm" />
-                      )}
-                    </div>
-
-                    {/* Bubble Content */}
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <div
-                        className={`p-3 sm:p-4 rounded-3xl text-[13px] sm:text-sm leading-relaxed min-w-0 break-words ${
-                          msg.sender === "patient"
-                            ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-indigo-700 text-white rounded-tr-sm shadow-lg shadow-purple-950/40 font-medium"
-                            : msg.text.startsWith("🚨 EMERGENCY ALERT")
-                            ? "bg-red-950/90 border-2 border-red-500/80 text-red-100 rounded-tl-sm shadow-xl"
-                            : "bg-[#0d1030]/95 border border-indigo-500/30 text-slate-100 rounded-tl-sm shadow-md backdrop-blur-md"
-                        }`}
-                      >
-                        {msg.attachmentName && (
-                          <div className="mb-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/30 border border-white/20 text-xs font-mono text-cyan-200 min-w-0">
-                            <Paperclip className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{msg.attachmentName}</span>
-                          </div>
-                        )}
-                        <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-                        {/* RAG Verification & Sources Drawer */}
-                        {msg.sender === "assistant" && (
-                          <div className="mt-3 pt-2.5 border-t border-indigo-900/60 flex flex-wrap items-center justify-between gap-2 text-xs">
-                            <div className="flex items-center gap-1.5">
-                              {msg.usedRag ? (
-                                <Badge className="bg-emerald-950/80 text-emerald-300 border-emerald-500/50 text-[10px] gap-1 font-semibold">
-                                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                                  RAG Verified {msg.retrieval ? `(${msg.retrieval.resultsUsed}/${msg.retrieval.topK} Guidelines)` : ""}
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-[10px] text-slate-400 border-slate-700">
-                                  Patient Health Context Grounded
-                                </Badge>
-                              )}
-                            </div>
-
-                            {msg.sources && msg.sources.length > 0 && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-2 text-[11px] text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/40 gap-1 font-semibold cursor-pointer"
-                                onClick={() => toggleEvidence(msg.id)}
-                              >
-                                <BookOpen className="h-3 w-3" />
-                                {expandedMessageId === msg.id ? "Hide Sources" : `Sources (${msg.sources.length})`}
-                                {expandedMessageId === msg.id ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Expandable Source Drawer */}
-                      {msg.sender === "assistant" && expandedMessageId === msg.id && msg.sources && msg.sources.length > 0 && (
-                        <div className="bg-[#0b0e24]/95 border border-indigo-500/40 p-3 rounded-2xl text-xs space-y-2 animate-in fade-in-50 duration-200">
-                          <span className="font-bold text-cyan-300 flex items-center gap-1.5 pb-1 border-b border-indigo-900/60">
-                            <FileText className="h-3.5 w-3.5 text-cyan-400" />
-                            Retrieved Clinical Guidelines & Attributed Sources
-                          </span>
-                          <div className="space-y-1.5">
-                            {msg.sources.map((src, idx) => (
-                              <div key={idx} className="bg-[#14183d] p-2.5 rounded-xl border border-indigo-500/20 text-slate-200 space-y-0.5">
-                                <div className="font-bold text-white flex items-center justify-between">
-                                  <span>{src.title || "Clinical Protocol"}</span>
-                                  {src.documentId && <span className="font-mono text-[9px] text-cyan-300">{src.documentId}</span>}
-                                </div>
-                                {src.publisher && <p className="text-[11px] text-slate-400">Publisher: {src.publisher}</p>}
-                                {src.section && (
-                                  <p className="text-[11px] text-indigo-300">
-                                    Section: {src.section} {src.page ? `• Page ${src.page}` : ""}
-                                  </p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Timestamp & Status Icon */}
-                      <div className={`flex items-center gap-1.5 text-[10px] text-slate-400 px-2 ${msg.sender === "patient" ? "justify-end" : "justify-start"}`}>
-                        <span>{msg.timestamp}</span>
-                        {msg.sender === "patient" && (
-                          <CheckCheck className="h-3.5 w-3.5 text-purple-300" />
-                        )}
-                        {msg.disclaimer && <span className="italic text-slate-500 ml-2">{msg.disclaimer}</span>}
-                      </div>
-                    </div>
-                  </div>
+                    msg={msg}
+                    isExpanded={expandedMessageId === msg.id}
+                    onToggleEvidence={toggleEvidence}
+                  />
                 ))}
 
                 {/* Thinking / Typing State (Reference Image 2) */}
