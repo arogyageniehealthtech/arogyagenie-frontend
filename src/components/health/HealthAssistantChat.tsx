@@ -451,8 +451,8 @@ export function HealthAssistantChat({ className = "", onClose }: HealthAssistant
             sender: "assistant",
             text: data.answer,
             usedRag: data.usedRag ?? false,
-            sources: (data.sources as any[]) ?? [],
-            retrieval: (data.retrieval as any) ?? undefined,
+            sources: ((data as any)?.sources as any[]) ?? [],
+            retrieval: (data as any)?.retrieval ?? undefined,
             disclaimer: data.disclaimer ?? "AarogyaGenie AI provides health guidance, not a diagnosis.",
             timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
           };

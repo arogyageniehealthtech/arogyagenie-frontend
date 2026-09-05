@@ -100,7 +100,7 @@ export default function PrescriptionsPage() {
             <button
               onClick={() => !isLoading && !error && setIsSortOpen(!isSortOpen)}
               disabled={isLoading || !!error}
-              className={`flex items-center justify-between gap-2 bg-slate-50 hover:bg-slate-100 border transition-all rounded-lg px-2.5 py-1.5 text-xs font-bold w-full sm:w-[125px] disabled:opacity-60 ${
+              className={`flex items-center justify-between gap-2 bg-slate-50 hover:bg-slate-100 border transition-all rounded-lg px-2.5 py-1.5 text-xs font-bold w-full sm:w-31.25 disabled:opacity-60 ${
                 isSortOpen ? 'border-indigo-600 ring-2 ring-indigo-600/20 text-indigo-600' : 'border-slate-200 text-slate-700'
               }`}
             >
@@ -127,20 +127,20 @@ export default function PrescriptionsPage() {
       {/* Content Area */}
       <div className="relative z-0">
         {isLoading ? (
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center min-h-[240px]">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center shadow-xs flex flex-col items-center justify-center min-h-60">
             <Loader2 className="w-7 h-7 text-indigo-600 animate-spin mb-2.5" />
             <h3 className="font-extrabold text-sm text-slate-900">Fetching Prescriptions</h3>
             <p className="text-xs font-medium text-slate-500 mt-0.5">Please wait while we load your records...</p>
           </div>
         ) : error ? (
-          <div className="bg-white border border-rose-100 rounded-2xl p-6 text-center shadow-xs flex flex-col items-center min-h-[240px] justify-center">
+          <div className="bg-white border border-rose-100 rounded-2xl p-6 text-center shadow-xs flex flex-col items-center min-h-60 justify-center">
             <div className="w-12 h-12 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center mb-3 border border-rose-100"><AlertTriangle className="w-6 h-6" /></div>
             <h3 className="font-extrabold text-sm text-slate-900">Failed to Load</h3>
             <p className="text-xs font-medium text-slate-500 mt-1 max-w-sm">{error}</p>
             <button onClick={fetchPrescriptions} className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs"><RefreshCcw className="w-3.5 h-3.5" /> Try Again</button>
           </div>
         ) : filteredPrescriptions.length === 0 ? (
-          <div className="bg-white border border-slate-200/80 border-dashed rounded-2xl p-8 text-center shadow-xs flex flex-col items-center min-h-[240px] justify-center">
+          <div className="bg-white border border-slate-200/80 border-dashed rounded-2xl p-8 text-center shadow-xs flex flex-col items-center min-h-60 justify-center">
             <div className="w-12 h-12 bg-slate-50 text-slate-400 rounded-xl flex items-center justify-center mb-3 border border-slate-100"><FileText className="w-6 h-6" /></div>
             <h3 className="font-extrabold text-sm text-slate-900">No Prescriptions Found</h3>
             <p className="text-xs font-medium text-slate-500 mt-1">{searchQuery ? `No matches for "${searchQuery}".` : "No prescriptions issued yet."}</p>

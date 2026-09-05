@@ -49,11 +49,13 @@ export interface Pharmacy {
   image?: string;
   address: string;
   distance: number;
+  distanceKm?: number;
   status: string;      // e.g., 'OPEN' or 'CLOSED'
   verified: boolean;
   lat: number;
   lng: number;
   category: 'pharmacy';
+  phone?: string;
   
   // Optional extra properties used in the card UI if provided by the backend
   rating?: number;

@@ -361,7 +361,23 @@ export const useUpdateDoctorProfile = () => {
         licenseAuthority: data.licenseAuthority,
         languages: data.languages,
       };
-      return doctorService.updateMyProfile(backendPayload);
+
+      const profileRes = await doctorService.updateMyProfile(backendPayload);
+
+      if (data.consultationFee !== undefined) {
+        try {
+          const affs = await doctorService.getFacilityAffiliations();
+          if (affs && affs.length > 0) {
+            await doctorService.updateFacilityAffiliation(affs[0].id, {
+              consultationFee: Number(data.consultationFee),
+            });
+          }
+        } catch (e) {
+          console.warn("Could not sync consultation fee to facility affiliation:", e);
+        }
+      }
+
+      return profileRes;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: getGetDoctorProfileQueryKey() });

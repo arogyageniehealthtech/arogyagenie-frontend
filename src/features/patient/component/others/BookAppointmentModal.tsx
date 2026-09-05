@@ -3,7 +3,7 @@ import {
   X, Video, Building2, ChevronLeft, ChevronRight, 
   Calendar as CalendarIcon, Clock, Loader2 
 } from 'lucide-react';
-import appointmentApi from '../../api/appointmentApi';
+import { doctorApi } from '../../api/doctorApi';
 
 interface BookAppointmentModalProps {
   doctor: any;
@@ -72,10 +72,10 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
       const startDateObj = new Date(scheduledStart);
       const scheduledEnd = new Date(startDateObj.getTime() + 30 * 60000).toISOString();
 
-      await appointmentApi.createAppointment({
+      await doctorApi.bookAppointment({
         doctorId: doctor.id,
         facilityId: selectedAffiliation.facilityId,
-        type : selectedAffiliation.consultationModes === 'IN_PERSON' ? 'VIDEO' : 'IN_PERSON',
+        type: selectedAffiliation.consultationModes === 'IN_PERSON' ? 'VIDEO' : 'IN_PERSON',
         scheduledStart,
         scheduledEnd,
       });
