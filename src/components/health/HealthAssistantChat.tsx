@@ -1143,7 +1143,7 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
               </div>
 
               {/* ── FOOTER: MEDICAL DISCLAIMER (Emergency SOS kept in sidebar) ── */}
-              <footer className="px-2.5 sm:px-6 py-1.5 sm:py-2 border-t border-indigo-950/70 bg-[#040614]/95 flex items-start sm:items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[11px] text-slate-400 text-left shrink-0">
+              <footer className="px-2.5 sm:px-6 py-1.5 sm:py-2 border-t border-indigo-950/70 bg-[#040614]/95 flex items-start sm:items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[11px] text-slate-400 text-left shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:pb-2">
                 <ShieldAlert className="h-3 w-3 sm:h-4 sm:w-4 text-purple-400 shrink-0 mt-0.5 sm:mt-0" />
                 <p className="leading-tight break-words min-w-0 text-left">
                   Arogyagenie AI provides health guidance, not a diagnosis. For emergencies, contact emergency services.

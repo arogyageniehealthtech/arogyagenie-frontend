@@ -69,7 +69,7 @@ export default function PatientLayout() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const isAiChatPage = location.pathname === ROUTES.PATIENT.ASSISTANT || location.pathname === "/assistant";
+  const isAiChatPage = location.pathname === ROUTES.PATIENT.ASSISTANT || location.pathname === "/assistant" || location.pathname.endsWith("/assistant");
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -653,35 +653,37 @@ export default function PatientLayout() {
         )}
 
         {/* MAIN CONTENT AREA */}
-        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-[100dvh] max-w-none p-0 overflow-hidden pb-[calc(54px+env(safe-area-inset-bottom))] sm:pb-0' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
+        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-[100dvh] max-w-none p-0 overflow-hidden' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
           <Outlet />
         </main>
       </div>
 
       {/* --- MOBILE-ONLY BOTTOM TAB BAR --- */}
-      <nav className="fixed bottom-0 left-0 right-0 z-80 sm:hidden bg-[#13102F] border-t border-[#1e1a45] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-stretch justify-between px-1">
-          {bottomNavItems.map((item) => {
-            const active = isRouteActive(item.to);
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0"
-              >
-                <Icon size={20} strokeWidth={active ? 2.5 : 2} className={`shrink-0 ${active ? 'text-indigo-400' : 'text-slate-400'}`} />
-                <span className={`text-[9px] font-semibold truncate max-w-full ${active ? 'text-indigo-400' : 'text-slate-400'}`}>
-                  {item.label}
-                </span>
-              </NavLink>
-            );
-          })}
-        </div>
-      </nav>
+      {!isAiChatPage && (
+        <nav className="fixed bottom-0 left-0 right-0 z-80 sm:hidden bg-[#13102F] border-t border-[#1e1a45] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)]">
+          <div className="flex items-stretch justify-between px-1">
+            {bottomNavItems.map((item) => {
+              const active = isRouteActive(item.to);
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0"
+                >
+                  <Icon size={20} strokeWidth={active ? 2.5 : 2} className={`shrink-0 ${active ? 'text-indigo-400' : 'text-slate-400'}`} />
+                  <span className={`text-[9px] font-semibold truncate max-w-full ${active ? 'text-indigo-400' : 'text-slate-400'}`}>
+                    {item.label}
+                  </span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       {/* Floating AI Health Assistant Orb (Inside Router context) */}
-      <FloatingHealthAssistant />
+      {!isAiChatPage && <FloatingHealthAssistant />}
     </div>
   );
 }

@@ -15,7 +15,8 @@ export function FloatingHealthAssistant() {
 
   const isAssistantPage =
     location.pathname === ROUTES.PATIENT.ASSISTANT ||
-    location.pathname === "/assistant";
+    location.pathname === "/assistant" ||
+    location.pathname.endsWith("/assistant");
 
   // Close on Escape key press, and open on custom trigger event
   useEffect(() => {
