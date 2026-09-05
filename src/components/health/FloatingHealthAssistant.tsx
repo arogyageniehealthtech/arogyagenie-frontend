@@ -1,31 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Sparkles, X } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { HealthAssistantChat } from "./HealthAssistantChat";
-import { router } from "@/routes/router";
 import { ROUTES } from "@/constants/routes.constants";
 
 export function FloatingHealthAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [currentPath, setCurrentPath] = useState(() => (typeof window !== "undefined" ? window.location.pathname : ""));
+  const navigate = useNavigate();
+  const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  // Track location changes to hide chatbot on auth and assistant pages
-  useEffect(() => {
-    const checkPath = () => {
-      if (typeof window !== "undefined" && window.location.pathname !== currentPath) {
-        setCurrentPath(window.location.pathname);
-      }
-    };
-    window.addEventListener("popstate", checkPath);
-    const interval = setInterval(checkPath, 200);
-    return () => {
-      window.removeEventListener("popstate", checkPath);
-      clearInterval(interval);
-    };
-  }, [currentPath]);
+  const isAssistantPage =
+    location.pathname === ROUTES.PATIENT.ASSISTANT ||
+    location.pathname === "/assistant";
 
   // Close on Escape key press, and open on custom trigger event
   useEffect(() => {
@@ -38,8 +28,8 @@ export function FloatingHealthAssistant() {
       const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
       if (isMobile) {
         setIsOpen(false);
-        if (window.location.pathname !== ROUTES.PATIENT.ASSISTANT && window.location.pathname !== "/assistant") {
-          router.navigate(ROUTES.PATIENT.ASSISTANT);
+        if (!isAssistantPage) {
+          navigate(ROUTES.PATIENT.ASSISTANT);
         }
       } else {
         setIsOpen(true);
@@ -51,21 +41,9 @@ export function FloatingHealthAssistant() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("open-ai-assistant", handleOpen);
     };
-  }, [isOpen]);
+  }, [isOpen, isAssistantPage, navigate]);
 
-  const isAuthPage =
-    currentPath.startsWith("/login") ||
-    currentPath.startsWith("/register") ||
-    currentPath.startsWith("/forgot-password") ||
-    currentPath.startsWith("/reset-password") ||
-    currentPath.startsWith("/verify-email") ||
-    currentPath.startsWith("/auth");
-
-  const isAssistantPage =
-    currentPath === ROUTES.PATIENT.ASSISTANT ||
-    currentPath === "/assistant";
-
-  if (isAuthPage || isAssistantPage) {
+  if (isAssistantPage) {
     return null;
   }
 
@@ -75,8 +53,8 @@ export function FloatingHealthAssistant() {
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     if (isMobile) {
       setIsOpen(false);
-      if (window.location.pathname !== ROUTES.PATIENT.ASSISTANT && window.location.pathname !== "/assistant") {
-        router.navigate(ROUTES.PATIENT.ASSISTANT);
+      if (!isAssistantPage) {
+        navigate(ROUTES.PATIENT.ASSISTANT);
       }
     } else {
       setIsOpen((prev) => !prev);
