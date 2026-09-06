@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, MapPin } from 'lucide-react';
 
-export type SheetSnapState = 'min' | 'peek' | 'half' | 'full';
+export type SheetSnapState = 'min' | 'half' | 'full';
 
 interface MapBottomSheetProps {
   children: React.ReactNode;
@@ -24,62 +24,164 @@ export default function MapBottomSheet({
   snapState: externalSnapState,
   onSnapChange,
 }: MapBottomSheetProps) {
-  // Default snap state is 'half' so 2-3 cards are immediately visible on load
+  // Snap state tracking (default: 'half')
   const [internalSnap, setInternalSnap] = useState<SheetSnapState>('half');
   const snap = externalSnapState !== undefined ? externalSnapState : internalSnap;
 
-  const setSnap = (newSnap: SheetSnapState) => {
+  const setSnapState = useCallback((newSnap: SheetSnapState) => {
     setInternalSnap(newSnap);
     if (onSnapChange) {
       onSnapChange(newSnap);
     }
+  }, [onSnapChange]);
+
+  // Viewport height tracking for pixel-perfect snap heights
+  const [vh, setVh] = useState<number>(() => (typeof window !== 'undefined' ? window.innerHeight : 800));
+
+  useEffect(() => {
+    const handleResize = () => setVh(window.innerHeight);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Snap offsets from top of sheet container:
+  // - SNAP_FULL: 0px (sheet fully expanded covering ~88vh)
+  // - SNAP_HALF: ~38% offset (sheet displays ~50vh from bottom)
+  // - SNAP_MIN: ~68% offset (sheet displays ~20vh from bottom)
+  const SNAP_FULL = 0;
+  const SNAP_HALF = Math.round(vh * 0.38);
+  const SNAP_MIN = Math.round(vh * 0.68);
+
+  const y = useMotionValue(SNAP_HALF);
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  // Gesture tracking refs
+  const touchStartY = useRef<number>(0);
+  const touchStartX = useRef<number>(0);
+  const startTranslateY = useRef<number>(SNAP_HALF);
+  const isDraggingSheet = useRef<boolean>(false);
+  const dragStartTime = useRef<number>(0);
+
+  // Animate to snap point when snap state changes
+  useEffect(() => {
+    const targetY = snap === 'full' ? SNAP_FULL : snap === 'min' ? SNAP_MIN : SNAP_HALF;
+    animate(y, targetY, { type: 'spring', damping: 30, stiffness: 320 });
+  }, [snap, SNAP_FULL, SNAP_HALF, SNAP_MIN, y]);
+
+  const snapTo = useCallback((targetSnap: SheetSnapState) => {
+    setSnapState(targetSnap);
+    const targetY = targetSnap === 'full' ? SNAP_FULL : targetSnap === 'min' ? SNAP_MIN : SNAP_HALF;
+    animate(y, targetY, { type: 'spring', damping: 30, stiffness: 320 });
+  }, [SNAP_FULL, SNAP_HALF, SNAP_MIN, setSnapState, y]);
+
+  // Handle Touch Start anywhere on the mobile bottom sheet
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    const touch = e.touches[0];
+    touchStartY.current = touch.clientY;
+    touchStartX.current = touch.clientX;
+    startTranslateY.current = y.get();
+    dragStartTime.current = Date.now();
+    isDraggingSheet.current = false;
   };
 
-  // Drag tracking refs
-  const dragStartY = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
+  // Handle Touch Move with nested scroll coordination
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - touchStartY.current;
+    const deltaX = touch.clientX - touchStartX.current;
 
-  // Height configurations for mobile bottom sheet
-  // min/peek: ~18vh (~130px), half (DEFAULT): ~52vh (~380px), full: ~88vh
-  const getSheetStyle = () => {
-    switch (snap) {
-      case 'min':
-      case 'peek':
-        return 'h-[18vh] sm:h-[20vh]';
-      case 'half':
-        return 'h-[52vh] sm:h-[54vh]';
-      case 'full':
-        return 'h-[88vh] sm:h-[90vh]';
-      default:
-        return 'h-[52vh] sm:h-[54vh]';
+    // Ignore if horizontal swipe is dominant
+    if (Math.abs(deltaX) > Math.abs(deltaY) && !isDraggingSheet.current) {
+      return;
+    }
+
+    const currentScrollTop = listRef.current?.scrollTop || 0;
+
+    // Nested Scroll Coordination Logic:
+    if (snap === 'full') {
+      // When fully expanded:
+      // If user is at top of list (scrollTop <= 0) and dragging DOWN (deltaY > 0), drag the sheet down
+      if (currentScrollTop <= 0 && deltaY > 0) {
+        isDraggingSheet.current = true;
+        const newY = Math.max(SNAP_FULL, startTranslateY.current + deltaY);
+        y.set(newY);
+        if (e.cancelable) e.preventDefault();
+      } else {
+        // Allow native list scroll
+        isDraggingSheet.current = false;
+      }
+    } else {
+      // When in 'half' or 'min' mode:
+      // Swiping up or down anywhere on the sheet moves the sheet
+      if (Math.abs(deltaY) > 6 || isDraggingSheet.current) {
+        isDraggingSheet.current = true;
+        let newY = startTranslateY.current + deltaY;
+        // Rubber-band resistance when pulling higher than SNAP_FULL
+        if (newY < SNAP_FULL) {
+          newY = SNAP_FULL + (newY - SNAP_FULL) * 0.25;
+        }
+        y.set(newY);
+        if (e.cancelable) e.preventDefault();
+      }
     }
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    dragStartY.current = e.touches[0].clientY;
-    isDragging.current = true;
-  };
-
+  // Handle Touch End with velocity and distance thresholds
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isDragging.current) return;
-    const deltaY = e.changedTouches[0].clientY - dragStartY.current;
-    isDragging.current = false;
+    e.stopPropagation();
+    if (!isDraggingSheet.current) return;
+    isDraggingSheet.current = false;
 
-    // Upward drag (negative deltaY) expands
-    if (deltaY < -35) {
-      if (snap === 'min' || snap === 'peek') setSnap('half');
-      else if (snap === 'half') setSnap('full');
-    } 
-    // Downward drag (positive deltaY) collapses
-    else if (deltaY > 35) {
-      if (snap === 'full') setSnap('half');
-      else if (snap === 'half') setSnap('min');
+    const touch = e.changedTouches[0];
+    const deltaY = touch.clientY - touchStartY.current;
+    const duration = Math.max(1, Date.now() - dragStartTime.current);
+    const velocity = deltaY / duration; // px/ms
+
+    const currentY = y.get();
+
+    if (snap === 'half') {
+      if (deltaY < -40 || velocity < -0.3) {
+        // Swiped UP -> Expand to Full
+        snapTo('full');
+      } else if (deltaY > 60 || velocity > 0.4) {
+        // Swiped DOWN -> Collapse to Min
+        snapTo('min');
+      } else {
+        snapTo('half');
+      }
+    } else if (snap === 'full') {
+      if (deltaY > 40 || velocity > 0.3) {
+        // Swiped DOWN from full -> Return to Half
+        snapTo('half');
+      } else {
+        snapTo('full');
+      }
+    } else if (snap === 'min') {
+      if (deltaY < -40 || velocity < -0.3) {
+        // Swiped UP from min -> Return to Half
+        snapTo('half');
+      } else {
+        snapTo('min');
+      }
+    } else {
+      if (currentY < SNAP_HALF * 0.5) {
+        snapTo('full');
+      } else if (currentY > SNAP_HALF * 1.4) {
+        snapTo('min');
+      } else {
+        snapTo('half');
+      }
     }
   };
 
   const toggleExpand = () => {
-    if (snap === 'full') setSnap('half');
-    else setSnap('full');
+    if (snap === 'full') {
+      snapTo('half');
+    } else {
+      snapTo('full');
+    }
   };
 
   return (
@@ -88,35 +190,37 @@ export default function MapBottomSheet({
       {/* MOBILE BOTTOM SHEET (visible on < lg screens)                            */}
       {/* ========================================================================= */}
       <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 pointer-events-none pb-[env(safe-area-inset-bottom)]">
-        {/* Backdrop for full expansion */}
+        {/* Semi-transparent backdrop when fully expanded */}
         <AnimatePresence>
           {snap === 'full' && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.3 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSnap('half')}
+              onClick={() => snapTo('half')}
               className="fixed inset-0 bg-slate-900 pointer-events-auto z-0"
             />
           )}
         </AnimatePresence>
 
+        {/* DRAGGABLE FULL BOTTOM SHEET CONTAINER */}
         <motion.div
-          layout
-          transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className={`relative z-10 pointer-events-auto w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.18)] border-t border-slate-200 flex flex-col transition-all duration-300 ${getSheetStyle()}`}
+          style={{ y }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          className="relative z-10 pointer-events-auto w-full h-[88vh] bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.18)] border-t border-slate-200 flex flex-col overflow-hidden select-none touch-pan-y"
         >
-          {/* DRAG HANDLE BAR */}
+          {/* DRAG HANDLE & HEADER BAR */}
           <div
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
             onClick={toggleExpand}
-            className="w-full pt-2.5 pb-2 px-4 flex flex-col items-center justify-center cursor-pointer select-none shrink-0 group active:bg-slate-50/50 rounded-t-3xl bg-white"
+            className="w-full pt-2.5 pb-2 px-4 flex flex-col items-center justify-center cursor-pointer select-none shrink-0 group active:bg-slate-50/60 rounded-t-3xl bg-white border-b border-slate-100"
           >
             {/* Pill drag indicator */}
             <div className="w-10 h-1.5 bg-slate-300 group-hover:bg-[#5B21B6] rounded-full transition-colors mb-1.5" />
 
-            {/* Compact Header Summary Bar */}
+            {/* Compact Header Summary */}
             <div className="w-full flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-5 h-5 rounded-full bg-purple-50 text-[#5B21B6] flex items-center justify-center font-black text-[11px] shrink-0 shadow-2xs border border-purple-100">
@@ -130,12 +234,12 @@ export default function MapBottomSheet({
                   </h3>
                   <p className="text-[10px] text-slate-500 font-medium truncate flex items-center gap-1">
                     <MapPin className="w-2.5 h-2.5 text-[#5B21B6] shrink-0" />
-                    <span>Within {radiusKm} KM • {snap === 'full' ? 'Swipe down to minimize' : 'Swipe up for full list'}</span>
+                    <span>Within {radiusKm} KM • {snap === 'full' ? 'Swipe down to collapse' : 'Swipe up to expand'}</span>
                   </p>
                 </div>
               </div>
 
-              {/* Snap State Toggle Icon */}
+              {/* Snap State Toggle Button */}
               <button
                 type="button"
                 onClick={(e) => {
@@ -154,17 +258,19 @@ export default function MapBottomSheet({
             </div>
           </div>
 
-          {/* SCROLLABLE CARDS CONTENT (Solid white background filling all remaining area) */}
+          {/* SCROLLABLE CARDS & EMPTY SPACE CONTENT */}
           <div
-            className={`flex-1 bg-white overflow-y-auto px-2.5 sm:px-4 pb-8 pt-1 space-y-2.5 custom-scrollbar overscroll-contain min-h-0 flex flex-col ${
-              snap === 'min' || snap === 'peek' ? 'overflow-hidden pointer-events-none opacity-40' : 'opacity-100'
+            ref={listRef}
+            className={`flex-1 bg-white overflow-y-auto px-2.5 sm:px-4 pb-20 pt-2.5 space-y-2.5 custom-scrollbar overscroll-contain min-h-0 flex flex-col ${
+              snap === 'min' ? 'overflow-hidden pointer-events-none opacity-40' : 'opacity-100'
             }`}
           >
-            <div className="flex-1 w-full bg-white flex flex-col">
+            <div className="w-full bg-white flex flex-col gap-2.5">
               {children}
             </div>
-            {/* Extra solid white fill ensuring even with 1 doctor card the lower area is completely solid white */}
-            <div className="w-full flex-1 min-h-16 bg-white" />
+            
+            {/* Draggable Solid White Empty Space Layer (Ensures smooth drag even with 1 result) */}
+            <div className="flex-1 w-full min-h-36 bg-white" />
           </div>
         </motion.div>
       </div>
@@ -192,10 +298,10 @@ export default function MapBottomSheet({
 
         {/* Scrollable Results List */}
         <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar bg-white flex flex-col">
-          <div className="flex-1 w-full bg-white flex flex-col">
+          <div className="w-full bg-white flex flex-col gap-2.5">
             {children}
           </div>
-          <div className="w-full flex-1 min-h-16 bg-white" />
+          <div className="flex-1 w-full min-h-16 bg-white" />
         </div>
       </div>
     </>
