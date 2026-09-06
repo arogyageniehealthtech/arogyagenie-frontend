@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, X, Loader2, Building2, ChevronDown, Navigation, Map as MapIcon, Plus, Minus, Eye, BedDouble } from 'lucide-react'; 
+import { Search, MapPin, X, Loader2, Building2, ChevronDown, Navigation, Map as MapIcon, Plus, Minus, Maximize2 } from 'lucide-react'; 
 import { useAppSelector, useAppDispatch } from '../../../store/hooks'; 
 import { fetchCurrentLocation, setCustomLocation } from '@/store/slices/locationSlice';
 import CustomSelect from '../component/common/CustomSelect';
 import MapContainer, { type MapLocation } from '../component/common/MapContainer';
-import MapBottomSheet, { type SheetSnapState } from '../component/common/MapBottomSheet';
+import ExpandedMapModal from '../component/common/ExpandedMapModal';
 import HospitalCard from '../component/card.component/HospitalCard';
 import BookBedModal from '../component/others/BookBedModal';
 import { EmptyNearbyHealthcare } from '../component/common/EmptyNearbyHealthcare';
@@ -220,7 +220,7 @@ const CustomLocationModal = ({
 };
 
 // ============================================================================
-// MAIN HOSPITAL DISCOVERY PAGE COMPONENT (MAP-FIRST + BOTTOM SHEET OVERLAY)
+// MAIN HOSPITAL DISCOVERY PAGE COMPONENT
 // ============================================================================
 
 export default function HospitalDiscoveryPage() {
@@ -231,7 +231,7 @@ export default function HospitalDiscoveryPage() {
   const [bookingHospital, setBookingHospital] = useState<Hospital | null>(null);
   const [viewingHospital, setViewingHospital] = useState<Hospital | null>(null);
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | number | null>(null);
-  const [sheetSnap, setSheetSnap] = useState<SheetSnapState>('half');
+  const [isMapExpanded, setIsMapExpanded] = useState<boolean>(false);
   
   const [showLocationOptions, setShowLocationOptions] = useState(false);
   const [showCustomLocationModal, setShowCustomLocationModal] = useState(false);
@@ -364,9 +364,6 @@ export default function HospitalDiscoveryPage() {
 
   const handleSelectLocation = (id: string | number) => {
     setSelectedHospitalId(id);
-    if (sheetSnap === 'min' || sheetSnap === 'peek') {
-      setSheetSnap('half');
-    }
     const cardEl = cardRefs.current[String(id)];
     if (cardEl) {
       cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -382,12 +379,12 @@ export default function HospitalDiscoveryPage() {
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-60px)] lg:h-[calc(100vh-90px)] overflow-hidden flex flex-col font-sans bg-[#F8FAFC]">
+    <div className="relative w-full min-h-[calc(100vh-60px)] lg:min-h-[calc(100vh-90px)] flex flex-col font-sans bg-[#F8FAFC]">
       
       {/* ========================================================================= */}
-      {/* TOP FLOATING SEARCH & CONTROLS BAR                                        */}
+      {/* TOP COMPACT SEARCH & CONTROLS BAR (Mobile & Desktop)                      */}
       {/* ========================================================================= */}
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-2 sm:px-4 pt-1.5 sm:pt-2 shrink-0">
+      <div className="sticky top-0 z-20 w-full max-w-7xl mx-auto px-2 sm:px-4 pt-1.5 pb-1 bg-[#F8FAFC]/90 backdrop-blur-md shrink-0">
         <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 p-1.5 sm:p-2 flex flex-col md:flex-row items-stretch md:items-center gap-1.5 transition-all">
           
           {/* Top Row on Mobile: Search + Location Button */}
@@ -483,27 +480,63 @@ export default function HospitalDiscoveryPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MAIN CONTENT AREA: MAP DOMINANT + BOTTOM SHEET OVERLAY                    */}
+      {/* MAIN NORMAL CONTENT AREA (Compact Map Preview + Hospitals Nearby Cards)  */}
       {/* ========================================================================= */}
-      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 flex flex-col lg:flex-row gap-3 items-stretch min-h-0">
+      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 flex flex-col lg:flex-row gap-4 items-stretch min-h-0">
         
-        {/* BOTTOM SHEET / SIDEBAR */}
-        <MapBottomSheet
-          resultCount={hospitals.length}
-          itemNoun="Hospital"
-          radiusKm={radiusKm}
-          isLoading={isLoading}
-          snapState={sheetSnap}
-          onSnapChange={setSheetSnap}
-          activeLocationName={locationState.addressString || undefined}
-        >
+        {/* LEFT COLUMN: Controls Context + Cards List (Mobile & Desktop) */}
+        <div className="flex-1 flex flex-col min-w-0">
+          
+          {/* COMPACT MAP PREVIEW (Mobile: Limited height ~140px) */}
+          <div 
+            onClick={() => setIsMapExpanded(true)}
+            className="w-full h-36 sm:h-44 lg:hidden rounded-2xl overflow-hidden border border-slate-200/90 shadow-2xs relative cursor-pointer group shrink-0 transition-transform active:scale-[0.99]"
+            title="Tap to open expanded map"
+          >
+            <MapContainer
+              category="hospital"
+              locations={mapLocations}
+              radiusKm={radiusKm}
+              centerCoordinates={activeCoordinates ? { lat: activeCoordinates.lat, lng: activeCoordinates.lng } : undefined}
+              selectedLocationId={selectedHospitalId}
+            />
+
+            {/* Clickable Overlay Trigger */}
+            <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-slate-900/20 transition-colors flex flex-col justify-between p-2.5 pointer-events-auto">
+              <div className="self-end px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-lg shadow-sm border border-slate-200/80 text-[11px] font-black text-[#5B21B6] flex items-center gap-1">
+                <Maximize2 className="w-3 h-3" />
+                <span>Fullscreen Map</span>
+              </div>
+
+              <div className="self-start px-2.5 py-1 bg-slate-900/75 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white flex items-center gap-1 shadow-sm">
+                <MapPin className="w-3 h-3 text-purple-400" />
+                <span>Tap to explore {hospitals.length} hospitals on map</span>
+              </div>
+            </div>
+          </div>
+
+          {/* HOSPITALS NEARBY SECTION HEADER (Starts immediately below compact map preview) */}
+          <div className="flex items-center justify-between mt-2.5 mb-2 px-1 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-2 h-2 rounded-full bg-[#5B21B6] shrink-0" />
+              <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight truncate">
+                Hospitals Nearby <span className="text-[#5B21B6]">({hospitals.length})</span>
+              </h2>
+            </div>
+
+            <span className="text-[11px] font-bold text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md shrink-0">
+              Within {radiusKm} KM
+            </span>
+          </div>
+
+          {/* HOSPITAL CARDS SCROLLABLE LIST */}
           {isLoading ? (
-            <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-xs flex flex-col items-center justify-center">
+            <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-xs flex flex-col items-center justify-center my-2">
               <Loader2 className="w-6 h-6 animate-spin text-[#5B21B6] mb-2" />
               <p className="text-xs text-slate-500 font-medium">Fetching nearby hospitals from API...</p>
             </div>
           ) : apiError ? (
-            <div className="bg-white border border-rose-200 p-6 rounded-2xl text-center shadow-sm">
+            <div className="bg-white border border-rose-200 p-6 rounded-2xl text-center shadow-sm my-2">
               <Building2 className="w-6 h-6 text-rose-500 mx-auto mb-2" />
               <h3 className="text-sm font-bold text-slate-900 mb-1">Unable to Load Hospitals</h3>
               <p className="text-xs text-slate-500 mb-3">{apiError}</p>
@@ -518,7 +551,7 @@ export default function HospitalDiscoveryPage() {
               onChangeLocation={() => setShowCustomLocationModal(true)}
             />
           ) : (
-            <div className="flex flex-col gap-2.5 pb-2">
+            <div className="flex flex-col gap-2.5 pb-24 sm:pb-8">
               {hospitals.map((hospital) => {
                 const isSelected = String(hospital.id) === String(selectedHospitalId);
                 return (
@@ -540,21 +573,64 @@ export default function HospitalDiscoveryPage() {
               })}
             </div>
           )}
-        </MapBottomSheet>
 
-        {/* MAP CONTAINER */}
-        <div className="flex-1 w-full h-full relative rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm z-0">
-          <MapContainer 
+        </div>
+
+        {/* RIGHT COLUMN ON DESKTOP: Interactive Sticky Map with Fullscreen Trigger */}
+        <div className="hidden lg:flex lg:w-[48%] xl:w-[50%] h-[calc(100vh-140px)] sticky top-18 rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm relative shrink-0">
+          <MapContainer
             category="hospital"
-            locations={mapLocations} 
-            radiusKm={radiusKm} 
-            centerCoordinates={activeCoordinates}
+            locations={mapLocations}
+            radiusKm={radiusKm}
+            centerCoordinates={activeCoordinates ? { lat: activeCoordinates.lat, lng: activeCoordinates.lng } : undefined}
             selectedLocationId={selectedHospitalId}
             onSelectLocation={handleSelectLocation}
           />
+          
+          <button
+            onClick={() => setIsMapExpanded(true)}
+            className="absolute top-3 right-3 z-20 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/90 text-xs font-black text-[#5B21B6] hover:bg-purple-50 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span>Fullscreen Map</span>
+          </button>
         </div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* EXPANDED MAP MODAL (Full Map Exploration with Back Button)                */}
+      {/* ========================================================================= */}
+      <ExpandedMapModal
+        isOpen={isMapExpanded}
+        onClose={() => setIsMapExpanded(false)}
+        title="Hospitals Interactive Map"
+        itemNoun="Hospital"
+        category="hospital"
+        locations={mapLocations}
+        radiusKm={radiusKm}
+        centerCoordinates={activeCoordinates}
+        selectedLocationId={selectedHospitalId}
+        onSelectLocation={handleSelectLocation}
+        resultCount={hospitals.length}
+        isLoading={isLoading}
+      >
+        <div className="flex flex-col gap-2.5 pb-2">
+          {hospitals.map((hospital) => (
+            <HospitalCard 
+              key={hospital.id} 
+              hospital={hospital} 
+              onBook={() => {
+                setIsMapExpanded(false);
+                setBookingHospital(hospital);
+              }} 
+              onViewDetails={() => {
+                setViewingHospital(hospital);
+              }} 
+            />
+          ))}
+        </div>
+      </ExpandedMapModal>
 
       {/* Book Bed Modal */}
       {bookingHospital && <BookBedModal hospital={bookingHospital} onClose={() => setBookingHospital(null)} />}

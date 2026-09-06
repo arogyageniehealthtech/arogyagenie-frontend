@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, X, Loader2, ChevronDown, Navigation, Map as MapIcon, Plus, Minus, Filter, Stethoscope } from 'lucide-react'; 
+import { Search, MapPin, X, Loader2, ChevronDown, Navigation, Map as MapIcon, Plus, Minus, Maximize2, Stethoscope } from 'lucide-react'; 
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'; 
 import { fetchCurrentLocation, setCustomLocation } from '@/store/slices/locationSlice';
 import CustomSelect from '../component/common/CustomSelect';
 import MapContainer, { type MapLocation } from '../component/common/MapContainer';
-import MapBottomSheet, { type SheetSnapState } from '../component/common/MapBottomSheet';
+import ExpandedMapModal from '../component/common/ExpandedMapModal';
 import DoctorCard from '../component/card.component/DoctorCard';
 import BookAppointmentModal from '../component/others/BookAppointmentModal';
 import { EmptyNearbyHealthcare } from '../component/common/EmptyNearbyHealthcare';
@@ -212,7 +212,7 @@ const CustomLocationModal = ({
 };
 
 // ============================================================================
-// MAIN DOCTOR DISCOVERY PAGE COMPONENT (MAP-FIRST + BOTTOM SHEET OVERLAY)
+// MAIN DOCTOR DISCOVERY PAGE COMPONENT (COMPACT PREVIEW + EXPANDED MAP)
 // ============================================================================
 
 export default function DoctorDiscoveryPage() {
@@ -224,7 +224,7 @@ export default function DoctorDiscoveryPage() {
   const [radiusKm, setRadiusKm] = useState<number>(10);
   const [bookingDoctor, setBookingDoctor] = useState<Doctor | null>(null);
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | number | null>(null);
-  const [sheetSnap, setSheetSnap] = useState<SheetSnapState>('half');
+  const [isMapExpanded, setIsMapExpanded] = useState<boolean>(false);
   
   const [showLocationOptions, setShowLocationOptions] = useState(false);
   const [showCustomLocationModal, setShowCustomLocationModal] = useState(false);
@@ -244,7 +244,6 @@ export default function DoctorDiscoveryPage() {
 
   // Priority: Location set in Redux -> Browser Geolocation -> Fallback
   const activeCoordinates = locationState.coordinates || browserCoords;
-  const hasLocationError = Boolean(locationState.error || locationError);
 
   const [filteredDoctors, setDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -373,13 +372,9 @@ export default function DoctorDiscoveryPage() {
     setShowCustomLocationModal(false);
   };
 
-  // When marker is tapped on map, highlight doctor and scroll into view in bottom sheet
+  // When marker is tapped on map, highlight doctor and scroll into view
   const handleSelectLocation = (id: string | number) => {
     setSelectedDoctorId(id);
-    if (sheetSnap === 'min' || sheetSnap === 'peek') {
-      setSheetSnap('half');
-    }
-    // Scroll matching card into view if present
     const cardEl = cardRefs.current[String(id)];
     if (cardEl) {
       cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -396,12 +391,12 @@ export default function DoctorDiscoveryPage() {
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-60px)] lg:h-[calc(100vh-90px)] overflow-hidden flex flex-col font-sans bg-[#F8FAFC]">
+    <div className="relative w-full min-h-[calc(100vh-60px)] lg:min-h-[calc(100vh-90px)] flex flex-col font-sans bg-[#F8FAFC]">
       
       {/* ========================================================================= */}
-      {/* TOP FLOATING SEARCH & CONTROLS BAR (Mobile & Desktop)                     */}
+      {/* TOP COMPACT SEARCH & CONTROLS BAR (Mobile & Desktop)                      */}
       {/* ========================================================================= */}
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-2 sm:px-4 pt-1.5 sm:pt-2 shrink-0">
+      <div className="sticky top-0 z-20 w-full max-w-7xl mx-auto px-2 sm:px-4 pt-1.5 pb-1 bg-[#F8FAFC]/90 backdrop-blur-md shrink-0">
         <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 p-1.5 sm:p-2 flex flex-col md:flex-row items-stretch md:items-center gap-1.5 transition-all">
           
           {/* Top Row on Mobile: Search + Location Button */}
@@ -497,22 +492,58 @@ export default function DoctorDiscoveryPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MAIN CONTENT AREA: MAP DOMINANT (Full Screen) + BOTTOM SHEET OVERLAY      */}
+      {/* MAIN NORMAL CONTENT AREA (Compact Map Preview + Doctor Nearby Cards)     */}
       {/* ========================================================================= */}
-      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 flex flex-col lg:flex-row gap-3 items-stretch min-h-0">
+      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 flex flex-col lg:flex-row gap-4 items-stretch min-h-0">
         
-        {/* DESKTOP SIDEBAR + MOBILE BOTTOM SHEET */}
-        <MapBottomSheet
-          resultCount={safeDoctorList.length}
-          itemNoun="Doctor"
-          radiusKm={radiusKm}
-          isLoading={isLoading}
-          snapState={sheetSnap}
-          onSnapChange={setSheetSnap}
-          activeLocationName={locationState.addressString || undefined}
-        >
+        {/* LEFT COLUMN: Controls Context + Cards List (Mobile & Desktop) */}
+        <div className="flex-1 flex flex-col min-w-0">
+          
+          {/* COMPACT MAP PREVIEW (Mobile & Small screens: Limited height ~140px) */}
+          <div 
+            onClick={() => setIsMapExpanded(true)}
+            className="w-full h-36 sm:h-44 lg:hidden rounded-2xl overflow-hidden border border-slate-200/90 shadow-2xs relative cursor-pointer group shrink-0 transition-transform active:scale-[0.99]"
+            title="Tap to open expanded map"
+          >
+            <MapContainer
+              category="doctor"
+              locations={mapLocations}
+              radiusKm={radiusKm}
+              centerCoordinates={activeCoordinates ? { lat: activeCoordinates.lat, lng: activeCoordinates.lng } : undefined}
+              selectedLocationId={selectedDoctorId}
+            />
+
+            {/* Clickable Overlay Trigger */}
+            <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-slate-900/20 transition-colors flex flex-col justify-between p-2.5 pointer-events-auto">
+              <div className="self-end px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-lg shadow-sm border border-slate-200/80 text-[11px] font-black text-[#5B21B6] flex items-center gap-1">
+                <Maximize2 className="w-3 h-3" />
+                <span>Fullscreen Map</span>
+              </div>
+
+              <div className="self-start px-2.5 py-1 bg-slate-900/75 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white flex items-center gap-1 shadow-sm">
+                <MapPin className="w-3 h-3 text-purple-400" />
+                <span>Tap to explore {safeDoctorList.length} doctors on map</span>
+              </div>
+            </div>
+          </div>
+
+          {/* DOCTORS NEARBY SECTION HEADER (Starts immediately below compact map preview) */}
+          <div className="flex items-center justify-between mt-2.5 mb-2 px-1 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-2 h-2 rounded-full bg-[#5B21B6] shrink-0" />
+              <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight truncate">
+                Doctors Nearby <span className="text-[#5B21B6]">({safeDoctorList.length})</span>
+              </h2>
+            </div>
+
+            <span className="text-[11px] font-bold text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md shrink-0">
+              Within {radiusKm} KM
+            </span>
+          </div>
+
+          {/* DOCTOR CARDS SCROLLABLE LIST */}
           {isLoading ? (
-            <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-xs flex flex-col items-center justify-center">
+            <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-xs flex flex-col items-center justify-center my-2">
               <Loader2 className="w-6 h-6 animate-spin text-[#5B21B6] mb-2" />
               <p className="text-xs text-slate-500 font-medium">Fetching verified doctors from server...</p>
             </div>
@@ -526,7 +557,7 @@ export default function DoctorDiscoveryPage() {
               onChangeLocation={() => setShowCustomLocationModal(true)}
             />
           ) : (
-            <div className="flex flex-col gap-2.5 pb-2">
+            <div className="flex flex-col gap-2.5 pb-24 sm:pb-8">
               {safeDoctorList.map((doctor) => {
                 const isSelected = String(doctor.id) === String(selectedDoctorId);
                 return (
@@ -547,10 +578,11 @@ export default function DoctorDiscoveryPage() {
               })}
             </div>
           )}
-        </MapBottomSheet>
 
-        {/* INTERACTIVE FULL-HEIGHT MAP CONTAINER (Dominates initial viewport) */}
-        <div className="flex-1 w-full h-full relative rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm z-0">
+        </div>
+
+        {/* RIGHT COLUMN ON DESKTOP: Interactive Sticky Map with Fullscreen Trigger */}
+        <div className="hidden lg:flex lg:w-[48%] xl:w-[50%] h-[calc(100vh-140px)] sticky top-18 rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm relative shrink-0">
           <MapContainer
             category="doctor"
             locations={mapLocations}
@@ -559,9 +591,48 @@ export default function DoctorDiscoveryPage() {
             selectedLocationId={selectedDoctorId}
             onSelectLocation={handleSelectLocation}
           />
+          
+          <button
+            onClick={() => setIsMapExpanded(true)}
+            className="absolute top-3 right-3 z-20 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/90 text-xs font-black text-[#5B21B6] hover:bg-purple-50 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span>Fullscreen Map</span>
+          </button>
         </div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* EXPANDED MAP MODAL (Full Map Exploration with Back Button)                */}
+      {/* ========================================================================= */}
+      <ExpandedMapModal
+        isOpen={isMapExpanded}
+        onClose={() => setIsMapExpanded(false)}
+        title="Doctors Interactive Map"
+        itemNoun="Doctor"
+        category="doctor"
+        locations={mapLocations}
+        radiusKm={radiusKm}
+        centerCoordinates={activeCoordinates}
+        selectedLocationId={selectedDoctorId}
+        onSelectLocation={handleSelectLocation}
+        resultCount={safeDoctorList.length}
+        isLoading={isLoading}
+      >
+        <div className="flex flex-col gap-2.5 pb-2">
+          {safeDoctorList.map((doctor) => (
+            <DoctorCard 
+              key={doctor.id} 
+              doctor={doctor} 
+              onBook={() => {
+                setIsMapExpanded(false);
+                setBookingDoctor(doctor);
+              }} 
+            />
+          ))}
+        </div>
+      </ExpandedMapModal>
 
       {/* Booking Modal */}
       {bookingDoctor && <BookAppointmentModal doctor={bookingDoctor} onClose={() => setBookingDoctor(null)} />}

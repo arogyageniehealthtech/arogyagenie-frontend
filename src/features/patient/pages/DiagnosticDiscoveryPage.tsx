@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, type ChangeEvent } from 'react';
-import { Search, MapPin, X, Loader2, Microscope, UploadCloud, FileText, AlertCircle, ChevronDown, Navigation, Map as MapIcon, Plus, Minus, Eye, CheckCircle2 } from 'lucide-react';
+import { Search, MapPin, X, Loader2, Microscope, UploadCloud, FileText, AlertCircle, ChevronDown, Navigation, Map as MapIcon, Plus, Minus, Maximize2, CheckCircle2 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks'; 
 import CustomSelect from '../component/common/CustomSelect';
 import MapContainer, { type MapLocation } from '../component/common/MapContainer';
-import MapBottomSheet, { type SheetSnapState } from '../component/common/MapBottomSheet';
+import ExpandedMapModal from '../component/common/ExpandedMapModal';
 import LabCard from '../component/card.component/LabCard';
 import BookLabModal from '../component/others/BookLabModal';
 import { useGeolocation } from '../hooks/useGeolocation';
@@ -227,7 +227,7 @@ const CustomLocationModal = ({
 };
 
 // ============================================================================
-// MAIN DIAGNOSTIC DISCOVERY PAGE COMPONENT (MAP-FIRST + BOTTOM SHEET OVERLAY)
+// MAIN DIAGNOSTIC DISCOVERY PAGE COMPONENT
 // ============================================================================
 
 export default function DiagnosticDiscoveryPage() {
@@ -254,7 +254,7 @@ export default function DiagnosticDiscoveryPage() {
   const [viewingCentre, setViewingCentre] = useState<DiagnosticCentre | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedCentreId, setSelectedCentreId] = useState<string | number | null>(null);
-  const [sheetSnap, setSheetSnap] = useState<SheetSnapState>('half');
+  const [isMapExpanded, setIsMapExpanded] = useState<boolean>(false);
   
   // Location Dropdown & Custom Modal states
   const [showLocationOptions, setShowLocationOptions] = useState(false);
@@ -417,9 +417,6 @@ export default function DiagnosticDiscoveryPage() {
 
   const handleSelectLocation = (id: string | number) => {
     setSelectedCentreId(id);
-    if (sheetSnap === 'min' || sheetSnap === 'peek') {
-      setSheetSnap('half');
-    }
     const cardEl = cardRefs.current[String(id)];
     if (cardEl) {
       cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -435,12 +432,12 @@ export default function DiagnosticDiscoveryPage() {
   };
 
   return (
-    <div className="relative w-full h-[calc(100vh-60px)] lg:h-[calc(100vh-90px)] overflow-hidden flex flex-col font-sans bg-[#F8FAFC]">
+    <div className="relative w-full min-h-[calc(100vh-60px)] lg:min-h-[calc(100vh-90px)] flex flex-col font-sans bg-[#F8FAFC]">
       
       {/* ========================================================================= */}
-      {/* TOP FLOATING SEARCH & CONTROLS BAR                                        */}
+      {/* TOP COMPACT SEARCH & CONTROLS BAR (Mobile & Desktop)                      */}
       {/* ========================================================================= */}
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-2 sm:px-4 pt-1.5 sm:pt-2 shrink-0">
+      <div className="sticky top-0 z-20 w-full max-w-7xl mx-auto px-2 sm:px-4 pt-1.5 pb-1 bg-[#F8FAFC]/90 backdrop-blur-md shrink-0">
         <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 p-1.5 sm:p-2 flex flex-col md:flex-row items-stretch md:items-center gap-1.5 transition-all">
           
           {/* Top Row on Mobile: Search + Location Button */}
@@ -541,47 +538,82 @@ export default function DiagnosticDiscoveryPage() {
               </button>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* MAIN CONTENT AREA: MAP DOMINANT + BOTTOM SHEET OVERLAY                    */}
+      {/* MAIN NORMAL CONTENT AREA (Compact Map Preview + Diagnostic Labs Nearby)  */}
       {/* ========================================================================= */}
-      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 flex flex-col lg:flex-row gap-3 items-stretch min-h-0">
+      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 flex flex-col lg:flex-row gap-4 items-stretch min-h-0">
         
-        {/* BOTTOM SHEET / SIDEBAR */}
-        <MapBottomSheet
-          resultCount={filteredCentres.length}
-          itemNoun="Diagnostic Lab"
-          radiusKm={radiusKm}
-          isLoading={isLoadingApi}
-          snapState={sheetSnap}
-          onSnapChange={setSheetSnap}
-          activeLocationName={locationState.addressString || undefined}
-        >
+        {/* LEFT COLUMN: Controls Context + Cards List (Mobile & Desktop) */}
+        <div className="flex-1 flex flex-col min-w-0">
+          
+          {/* COMPACT MAP PREVIEW (Mobile: Limited height ~140px) */}
+          <div 
+            onClick={() => setIsMapExpanded(true)}
+            className="w-full h-36 sm:h-44 lg:hidden rounded-2xl overflow-hidden border border-slate-200/90 shadow-2xs relative cursor-pointer group shrink-0 transition-transform active:scale-[0.99]"
+            title="Tap to open expanded map"
+          >
+            <MapContainer
+              category="lab"
+              locations={mapLocations}
+              radiusKm={radiusKm}
+              centerCoordinates={activeCoordinates ? { lat: activeCoordinates.lat, lng: activeCoordinates.lng } : undefined}
+              selectedLocationId={selectedCentreId}
+            />
+
+            {/* Clickable Overlay Trigger */}
+            <div className="absolute inset-0 bg-slate-900/10 group-hover:bg-slate-900/20 transition-colors flex flex-col justify-between p-2.5 pointer-events-auto">
+              <div className="self-end px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-lg shadow-sm border border-slate-200/80 text-[11px] font-black text-[#5B21B6] flex items-center gap-1">
+                <Maximize2 className="w-3 h-3" />
+                <span>Fullscreen Map</span>
+              </div>
+
+              <div className="self-start px-2.5 py-1 bg-slate-900/75 backdrop-blur-sm rounded-lg text-[10px] font-bold text-white flex items-center gap-1 shadow-sm">
+                <MapPin className="w-3 h-3 text-purple-400" />
+                <span>Tap to explore {filteredCentres.length} labs on map</span>
+              </div>
+            </div>
+          </div>
+
+          {/* DIAGNOSTIC LABS NEARBY SECTION HEADER (Starts immediately below compact map preview) */}
+          <div className="flex items-center justify-between mt-2.5 mb-2 px-1 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-2 h-2 rounded-full bg-[#5B21B6] shrink-0" />
+              <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight truncate">
+                Diagnostic Labs Nearby <span className="text-[#5B21B6]">({filteredCentres.length})</span>
+              </h2>
+            </div>
+
+            <span className="text-[11px] font-bold text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md shrink-0">
+              Within {radiusKm} KM
+            </span>
+          </div>
+
           {prescriptionUrl && (
-            <div className="bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl flex items-center justify-between text-[11px] font-bold text-emerald-800 mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <div className="bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl flex items-center justify-between text-xs font-bold text-emerald-800 mb-2.5">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>Prescription document attached</span>
               </div>
               <button 
                 onClick={() => setPrescriptionUrl(null)} 
-                className="text-rose-600 hover:underline text-[10px] cursor-pointer font-bold"
+                className="text-rose-600 hover:underline text-xs cursor-pointer font-bold"
               >
                 Remove
               </button>
             </div>
           )}
 
+          {/* LAB CARDS SCROLLABLE LIST */}
           {isLoadingApi ? (
-            <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-xs flex flex-col items-center justify-center">
+            <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-xs flex flex-col items-center justify-center my-2">
               <Loader2 className="w-6 h-6 animate-spin text-[#5B21B6] mb-2" />
               <p className="text-xs text-slate-500 font-medium">Fetching diagnostic labs from API...</p>
             </div>
           ) : apiError ? (
-            <div className="bg-white border border-rose-200 p-6 rounded-2xl text-center shadow-sm">
+            <div className="bg-white border border-rose-200 p-6 rounded-2xl text-center shadow-sm my-2">
               <AlertCircle className="w-6 h-6 text-rose-500 mx-auto mb-2" />
               <h3 className="text-sm font-bold text-slate-900 mb-1">Unable to Load Labs</h3>
               <p className="text-xs text-slate-500 mb-3">{apiError}</p>
@@ -596,7 +628,7 @@ export default function DiagnosticDiscoveryPage() {
               onChangeLocation={() => setShowCustomLocationModal(true)}
             />
           ) : (
-            <div className="flex flex-col gap-2.5 pb-2">
+            <div className="flex flex-col gap-2.5 pb-24 sm:pb-8">
               {filteredCentres.map((centre) => {
                 const isSelected = String(centre.id) === String(selectedCentreId);
                 return (
@@ -618,21 +650,64 @@ export default function DiagnosticDiscoveryPage() {
               })}
             </div>
           )}
-        </MapBottomSheet>
 
-        {/* MAP CONTAINER */}
-        <div className="flex-1 w-full h-full relative rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm z-0">
-          <MapContainer 
+        </div>
+
+        {/* RIGHT COLUMN ON DESKTOP: Interactive Sticky Map with Fullscreen Trigger */}
+        <div className="hidden lg:flex lg:w-[48%] xl:w-[50%] h-[calc(100vh-140px)] sticky top-18 rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm relative shrink-0">
+          <MapContainer
             category="lab"
-            locations={mapLocations} 
-            radiusKm={radiusKm} 
-            centerCoordinates={activeCoordinates}
+            locations={mapLocations}
+            radiusKm={radiusKm}
+            centerCoordinates={activeCoordinates ? { lat: activeCoordinates.lat, lng: activeCoordinates.lng } : undefined}
             selectedLocationId={selectedCentreId}
             onSelectLocation={handleSelectLocation}
           />
+          
+          <button
+            onClick={() => setIsMapExpanded(true)}
+            className="absolute top-3 right-3 z-20 px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl shadow-md border border-slate-200/90 text-xs font-black text-[#5B21B6] hover:bg-purple-50 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+            <span>Fullscreen Map</span>
+          </button>
         </div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* EXPANDED MAP MODAL (Full Map Exploration with Back Button)                */}
+      {/* ========================================================================= */}
+      <ExpandedMapModal
+        isOpen={isMapExpanded}
+        onClose={() => setIsMapExpanded(false)}
+        title="Diagnostic Labs Interactive Map"
+        itemNoun="Diagnostic Lab"
+        category="lab"
+        locations={mapLocations}
+        radiusKm={radiusKm}
+        centerCoordinates={activeCoordinates}
+        selectedLocationId={selectedCentreId}
+        onSelectLocation={handleSelectLocation}
+        resultCount={filteredCentres.length}
+        isLoading={isLoadingApi}
+      >
+        <div className="flex flex-col gap-2.5 pb-2">
+          {filteredCentres.map((centre) => (
+            <LabCard 
+              key={centre.id} 
+              centre={centre} 
+              onBook={() => {
+                setIsMapExpanded(false);
+                setBookingCentre(centre);
+              }} 
+              onViewDetails={() => {
+                setViewingCentre(centre);
+              }} 
+            />
+          ))}
+        </div>
+      </ExpandedMapModal>
 
       {/* Booking Modal */}
       {bookingCentre && <BookLabModal centre={bookingCentre} onClose={() => setBookingCentre(null)} />}
@@ -649,24 +724,25 @@ export default function DiagnosticDiscoveryPage() {
             </button>
 
             <h2 className="text-lg font-black text-slate-900 mb-1">{viewingCentre.name}</h2>
-            <p className="text-xs font-bold text-purple-600 mb-4">Diagnostic & Testing Centre</p>
+            <p className="text-xs font-bold text-indigo-600 mb-4">Diagnostic & Pathology Centre</p>
 
             <div className="space-y-2 text-xs text-slate-600 mb-5">
               <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="font-semibold text-slate-500">Distance:</span>
-                <span className="font-bold text-slate-800">{viewingCentre.distanceKm} km away</span>
+                <span className="font-semibold text-slate-500">Established:</span>
+                <span className="font-bold text-slate-800">{viewingCentre.establishedYear}</span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-100">
-                <span className="font-semibold text-slate-500">Rating:</span>
-                <span className="font-bold text-slate-800">⭐ {viewingCentre.rating || 4.8} ({viewingCentre.reviewCount || 45} reviews)</span>
+                <span className="font-semibold text-slate-500">Distance:</span>
+                <span className="font-bold text-slate-800">{viewingCentre.distanceKm ? `${viewingCentre.distanceKm} km away` : 'Nearby'}</span>
               </div>
               <div className="pt-1">
-                <span className="font-semibold text-slate-500 block mb-1.5">Available Tests:</span>
-                <div className="max-h-36 overflow-y-auto pr-1 flex flex-wrap gap-1.5 custom-scrollbar">
-                  {viewingCentre.availableTests?.map((test, idx) => (
-                    <span key={idx} className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md text-[11px] font-bold border border-purple-100 inline-block">
-                      {test.name} (₹{test.rate})
-                    </span>
+                <span className="font-semibold text-slate-500 block mb-1.5">Available Tests & Pricing:</span>
+                <div className="max-h-36 overflow-y-auto pr-1 space-y-1 custom-scrollbar">
+                  {viewingCentre.availableTests?.map((test: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                      <span className="font-bold text-slate-800">{test.name}</span>
+                      <span className="font-black text-indigo-600">₹{test.rate}</span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -686,91 +762,79 @@ export default function DiagnosticDiscoveryPage() {
         </div>
       )}
 
-      {/* Prescription Upload Modal */}
+      {/* Upload Prescription Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-slate-100">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
             <button 
-              onClick={() => { setShowUploadModal(false); setSelectedFile(null); setUploadError(null); }}
+              onClick={() => setShowUploadModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full bg-slate-100 cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#5B21B6] flex items-center justify-center shrink-0">
+            <h2 className="text-base font-black text-slate-900 mb-1">Upload Prescription</h2>
+            <p className="text-xs text-slate-500 mb-4">Upload a doctor's prescription (PNG, JPG, or PDF max 5MB)</p>
+
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-purple-200 hover:border-[#5B21B6] rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-purple-50/50 hover:bg-purple-50/80 transition-all text-center"
+            >
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileSelect} 
+                accept=".jpg,.jpeg,.png,.pdf" 
+                className="hidden" 
+              />
+              <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-[#5B21B6]">
                 <UploadCloud className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">Upload Prescription</h3>
-                <p className="text-xs text-slate-500">Supported formats: JPG, PNG, PDF (Max 5MB)</p>
-              </div>
+              <p className="text-xs font-bold text-slate-700">Click to browse file</p>
+              <p className="text-[10px] text-slate-400">Supported: PDF, JPG, PNG (Max 5MB)</p>
             </div>
 
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileSelect} 
-              accept=".pdf,image/png,image/jpeg,image/jpg" 
-              className="hidden" 
-            />
-
-            {!selectedFile ? (
-              <div 
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-300 hover:border-[#5B21B6] rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer bg-slate-50 hover:bg-indigo-50/40 transition-all group"
-              >
-                <UploadCloud className="w-10 h-10 text-slate-400 group-hover:text-[#5B21B6] transition-colors mb-2" />
-                <p className="text-xs font-bold text-slate-700 group-hover:text-[#5B21B6]">
-                  Click to select prescription document
-                </p>
-                <p className="text-[11px] text-slate-400 mt-1">or drag and drop your file here</p>
-              </div>
-            ) : (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-100 text-[#5B21B6] flex items-center justify-center shrink-0">
-                    <FileText className="w-5 h-5" />
-                  </div>
-                  <div className="truncate">
-                    <p className="text-xs font-bold text-slate-800 truncate">{selectedFile.name}</p>
-                    <p className="text-[10px] text-slate-400">{(selectedFile.size / 1024).toFixed(1)} KB</p>
-                  </div>
+            {selectedFile && (
+              <div className="mt-3 p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <FileText className="w-4 h-4 text-[#5B21B6] shrink-0" />
+                  <span className="text-xs font-semibold text-slate-700 truncate">{selectedFile.name}</span>
                 </div>
-
-                {!isUploading && (
-                  <button onClick={() => setSelectedFile(null)} className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+                <button 
+                  onClick={() => setSelectedFile(null)} 
+                  className="text-slate-400 hover:text-rose-500 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             )}
 
             {uploadError && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-100 font-medium">
+              <div className="mt-2.5 p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-600 text-xs font-medium flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{uploadError}</span>
               </div>
             )}
 
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => { setShowUploadModal(false); setSelectedFile(null); }}
-                className="w-1/2 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+            <div className="mt-4 flex gap-2">
+              <button 
+                onClick={() => setShowUploadModal(false)}
+                className="flex-1 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer"
               >
                 Cancel
               </button>
-              <button
-                disabled={!selectedFile || isUploading}
+              <button 
                 onClick={handleUploadPrescription}
-                className="w-1/2 py-3 rounded-xl bg-[#5B21B6] hover:bg-[#4c1d95] text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer shadow-md"
+                disabled={!selectedFile || isUploading}
+                className="flex-1 py-2 text-xs font-bold text-white bg-linear-to-r from-[#5B21B6] to-indigo-600 hover:from-[#4c1d95] hover:to-indigo-700 rounded-xl shadow-md transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Uploading...</span>
                   </>
                 ) : (
-                  'Confirm Upload'
+                  <span>Upload & Attach</span>
                 )}
               </button>
             </div>
@@ -783,7 +847,6 @@ export default function DiagnosticDiscoveryPage() {
         isOpen={showCustomLocationModal}
         onClose={() => setShowCustomLocationModal(false)}
         onSubmit={handleCustomLocationSubmit}
-        isLoading={isLocating}
       />
     </div>
   );
