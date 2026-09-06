@@ -22,12 +22,17 @@ export const patientApi = {
   // 2. Create Core Profile (Required first time)
   createProfile: async (payload: CorePatientProfile) => {
     const response = await axiosInstance.post('/patients', payload);
+    console.log("/",response.data?.data);
+    
     return response.data?.data || response.data;
   },
-
+  
   // 3. Update Core Profile
   updateProfile: async (payload: Partial<CorePatientProfile>) => {
+    console.log(payload);
+    
     const response = await axiosInstance.patch('/patients/me', payload);
+    console.log("update",response.data?.data);
     return response.data?.data || response.data;
   },
 
