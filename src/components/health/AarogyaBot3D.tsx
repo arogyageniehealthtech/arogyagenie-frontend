@@ -10,11 +10,11 @@ interface AarogyaBot3DProps {
  * matching the rich futuristic holographic projection disc in Reference Image 2.
  */
 function createCyberHudCanvasTexture(): THREE.CanvasTexture {
-  const size = 2048;
+  const size = 512;
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { willReadFrequently: false });
 
   if (!ctx) {
     return new THREE.CanvasTexture(canvas);
@@ -253,12 +253,12 @@ export function AarogyaBot3D({ className = "" }: AarogyaBot3DProps) {
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
     camera.position.set(0, 2.0, 5.8);
     camera.lookAt(0, 0.05, 0);
-
-    // 2. WebGL Renderer
+  // 2. WebGL Renderer
     const renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true,
-      powerPreference: "high-performance",
+      powerPreference: "low-power",
+      precision: "mediump",
     });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -638,54 +638,70 @@ export function AarogyaBot3D({ className = "" }: AarogyaBot3DProps) {
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
 
-    // 9. Animation Loop
+    // 9. Animation Loop with Visibility & Intersection Optimization
     let animationFrameId: number;
     let clock = new THREE.Clock();
+    let isVisible = true;
 
     const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      const time = clock.getElapsedTime();
+      if (isVisible && !document.hidden) {
+        const time = clock.getElapsedTime();
 
-      // Smooth Levitation Floating in Mid-Air
-      botBodyGroup.position.y = 0.38 + Math.sin(time * 2.2) * 0.08;
+        // Smooth Levitation Floating in Mid-Air
+        botBodyGroup.position.y = 0.38 + Math.sin(time * 2.2) * 0.08;
 
-      // Gentle wave on right arm
-      armRGroup.rotation.z = Math.sin(time * 3.2) * 0.16 - 0.10;
+        // Gentle wave on right arm
+        armRGroup.rotation.z = Math.sin(time * 3.2) * 0.16 - 0.10;
 
-      // Pulsing Heartbeat on Chest
-      const heartbeat = (Math.sin(time * 4.5) > 0.6 ? 1.30 : 1.0) + Math.sin(time * 9.0) * 0.06;
-      heartMesh.scale.set(0.85 * heartbeat, 0.85 * heartbeat, 0.85);
-      chestPointLight.intensity = 1.8 * heartbeat;
+        // Pulsing Heartbeat on Chest
+        const heartbeat = (Math.sin(time * 4.5) > 0.6 ? 1.30 : 1.0) + Math.sin(time * 9.0) * 0.06;
+        heartMesh.scale.set(0.85 * heartbeat, 0.85 * heartbeat, 0.85);
+        chestPointLight.intensity = 1.8 * heartbeat;
 
-      // High-Tech Concentric HUD Rotations
-      hudPlaneMesh.rotation.z = time * 0.25;
-      hudPlaneMesh2.rotation.z = -time * 0.40;
-      outerRingMesh.rotation.z = time * 0.45;
-      segmentGroup.rotation.z = -time * 0.65;
-      midRingMesh.rotation.z = time * 0.80;
-      nodeGroup.rotation.z = time * 0.80;
-      coreRingMesh.rotation.z = -time * 1.20;
-      particlePoints.rotation.z = time * 0.25;
+        // High-Tech Concentric HUD Rotations
+        hudPlaneMesh.rotation.z = time * 0.25;
+        hudPlaneMesh2.rotation.z = -time * 0.40;
+        outerRingMesh.rotation.z = time * 0.45;
+        segmentGroup.rotation.z = -time * 0.65;
+        midRingMesh.rotation.z = time * 0.80;
+        nodeGroup.rotation.z = time * 0.80;
+        coreRingMesh.rotation.z = -time * 1.20;
+        particlePoints.rotation.z = time * 0.25;
 
-      // Pulsing Antenna Bulbs ("Horns")
-      const bulbGlow = 0.88 + Math.sin(time * 3.2) * 0.22;
-      purpleGlowMat.color.setRGB(0.75 * bulbGlow, 0.52 * bulbGlow, 0.98 * bulbGlow);
+        // Pulsing Antenna Bulbs ("Horns")
+        const bulbGlow = 0.88 + Math.sin(time * 3.2) * 0.22;
+        purpleGlowMat.color.setRGB(0.75 * bulbGlow, 0.52 * bulbGlow, 0.98 * bulbGlow);
 
-      // Smooth Head Tracking toward pointer
-      if (!isTrackingRef.current) {
-        targetRotY = 0;
-        targetRotX = 0;
+        // Smooth Head Tracking toward pointer
+        if (!isTrackingRef.current) {
+          targetRotY = 0;
+          targetRotX = 0;
+        }
+        currentRotY += (targetRotY - currentRotY) * 0.08;
+        currentRotX += (targetRotX - currentRotX) * 0.08;
+        botHeadGroup.rotation.y = currentRotY;
+        botHeadGroup.rotation.x = currentRotX;
+        botBodyGroup.rotation.y = currentRotY * 0.35;
+
+        renderer.render(scene, camera);
       }
-      currentRotY += (targetRotY - currentRotY) * 0.08;
-      currentRotX += (targetRotX - currentRotX) * 0.08;
-      botHeadGroup.rotation.y = currentRotY;
-      botHeadGroup.rotation.x = currentRotX;
-      botBodyGroup.rotation.y = currentRotY * 0.35;
-
-      renderer.render(scene, camera);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     animate();
+
+    // Pause rendering when tab is hidden or element is offscreen
+    const handleVisibilityChange = () => {
+      isVisible = !document.hidden;
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      if (entries[0]) {
+        isVisible = entries[0].isIntersecting;
+      }
+    });
+    intersectionObserver.observe(container);
 
     // 10. Resize Observer
     const updateSize = () => {
@@ -702,6 +718,8 @@ export function AarogyaBot3D({ className = "" }: AarogyaBot3DProps) {
     window.addEventListener("resize", updateSize);
 
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      intersectionObserver.disconnect();
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("resize", updateSize);

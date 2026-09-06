@@ -20,8 +20,8 @@ export const API_BASE_URL = cleanedBaseUrl;
 
 // Create central Axios instance with credentials enabled for cookies
 export const axiosInstance: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL, // Use the env-resolved URL (VITE_API_BASE_URL or VITE_API_URL)
 
-  baseURL: "https://arogyagenie-backend-1.onrender.com/api/v1",
   timeout: 60000, // 60s to accommodate Render cold-starts and queue processing
   withCredentials: true, // Allows cross-origin authentication cookies
   headers: {

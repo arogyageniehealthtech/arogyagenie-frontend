@@ -1,29 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Sparkles, X, Activity, Bot } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { HealthAssistantChat } from "./HealthAssistantChat";
+import { ROUTES } from "@/constants/routes.constants";
 
 export function FloatingHealthAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [currentPath, setCurrentPath] = useState(() => (typeof window !== "undefined" ? window.location.pathname : ""));
+  const navigate = useNavigate();
+  const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  // Track location changes to hide chatbot on auth pages
-  useEffect(() => {
-    const checkPath = () => {
-      if (typeof window !== "undefined" && window.location.pathname !== currentPath) {
-        setCurrentPath(window.location.pathname);
-      }
-    };
-    window.addEventListener("popstate", checkPath);
-    const interval = setInterval(checkPath, 200);
-    return () => {
-      window.removeEventListener("popstate", checkPath);
-      clearInterval(interval);
-    };
-  }, [currentPath]);
+  const isAssistantPage =
+    location.pathname === ROUTES.PATIENT.ASSISTANT ||
+    location.pathname === "/assistant" ||
+    location.pathname.endsWith("/assistant");
 
   // Close on Escape key press, and open on custom trigger event
   useEffect(() => {
@@ -33,7 +26,15 @@ export function FloatingHealthAssistant() {
       }
     };
     const handleOpen = () => {
-      setIsOpen(true);
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+      if (isMobile) {
+        setIsOpen(false);
+        if (!isAssistantPage) {
+          navigate(ROUTES.PATIENT.ASSISTANT);
+        }
+      } else {
+        setIsOpen(true);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("open-ai-assistant", handleOpen);
@@ -41,23 +42,29 @@ export function FloatingHealthAssistant() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("open-ai-assistant", handleOpen);
     };
-  }, [isOpen]);
+  }, [isOpen, isAssistantPage, navigate]);
 
-  const isAuthPage =
-    currentPath.startsWith("/login") ||
-    currentPath.startsWith("/register") ||
-    currentPath.startsWith("/forgot-password") ||
-    currentPath.startsWith("/reset-password") ||
-    currentPath.startsWith("/verify-email") ||
-    currentPath.startsWith("/auth");
-
-  if (isAuthPage) {
+  if (isAssistantPage) {
     return null;
   }
 
+  const handleOrbClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    if (isMobile) {
+      setIsOpen(false);
+      if (!isAssistantPage) {
+        navigate(ROUTES.PATIENT.ASSISTANT);
+      }
+    } else {
+      setIsOpen((prev) => !prev);
+    }
+  };
+
   return (
     <>
-      {/* ── Floating Chat Panel (Emerges from Orb) ────────────────────────── */}
+      {/* ── Desktop Floating Chat Panel (Hidden on Mobile) ────────────────────────── */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -85,7 +92,7 @@ export function FloatingHealthAssistant() {
               damping: 28,
               mass: 0.9,
             }}
-            className="fixed z-75 flex flex-col overflow-hidden bg-[#060819] border-0 sm:border border-indigo-500/40 shadow-2xl transition-all inset-x-0 top-0 bottom-14 sm:inset-auto sm:right-6 sm:bottom-6 sm:w-155 md:w-205 lg:w-247.5 xl:w-270 sm:h-170 lg:h-185 rounded-none sm:rounded-[32px] max-w-none sm:max-w-[calc(100vw-2rem)] max-h-none sm:max-h-[calc(100vh-5rem)]"
+            className="hidden sm:flex fixed z-75 flex-col overflow-hidden bg-[#060819] border border-indigo-500/40 shadow-2xl transition-all sm:right-6 sm:bottom-6 sm:w-155 md:w-205 lg:w-247.5 xl:w-270 sm:h-170 lg:h-185 rounded-[32px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)]"
             style={{
               boxShadow:
                 "0 30px 100px -10px rgba(88, 28, 135, 0.5), 0 20px 50px -10px rgba(30, 27, 75, 0.7), 0 0 0 1px rgba(129, 140, 248, 0.3)",
@@ -142,7 +149,7 @@ export function FloatingHealthAssistant() {
         ) : (
           <motion.button
             type="button"
-            onClick={() => setIsOpen(true)}
+            onClick={handleOrbClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onFocus={() => setIsHovered(true)}

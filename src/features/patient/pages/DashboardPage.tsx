@@ -11,7 +11,8 @@ import {
   TestTube,
   Sparkles,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "@/constants/routes.constants";
 import { HealthSummaryCard } from "../../../components/health/HealthSummaryCard";
 import { HealthEpisodeTracker } from "../../../components/health/HealthEpisodeTracker";
 import { LabTrendVisualizer } from "../../../components/health/LabTrendVisualizer";
@@ -38,7 +39,7 @@ function DashboardSkeleton() {
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
-            className="rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-md border border-slate-100 flex flex-col justify-between min-h-[76px] sm:min-h-[84px] md:min-h-[100px]"
+            className="rounded-xl md:rounded-2xl p-3 md:p-4 bg-white shadow-md border border-slate-100 flex flex-col justify-between min-h-19 sm:min-h-21 md:min-h-25"
           >
             <SkeletonBlock className="h-6 md:h-7 w-10 md:w-14 mb-1.5" />
             <SkeletonBlock className="h-3.5 md:h-4 w-16 md:w-24" />
@@ -61,9 +62,9 @@ interface StatCardProps {
 
 function StatCard({ label, value, gradient, href }: StatCardProps) {
   return (
-    <Link href={href} className="w-full">
+    <Link to={href} className="w-full">
       <div
-        className="card-hover relative bg-white rounded-xl md:rounded-2xl p-3 sm:p-3.5 md:p-4 lg:p-5 cursor-pointer group overflow-hidden border border-slate-200/80 shadow-md hover:shadow-lg transition-all duration-200 h-full min-h-[76px] sm:min-h-[86px] md:min-h-[104px] lg:min-h-[114px] flex flex-col justify-between"
+        className="card-hover relative bg-white rounded-xl md:rounded-2xl p-3 sm:p-3.5 md:p-4 lg:p-5 cursor-pointer group overflow-hidden border border-slate-200/80 shadow-md hover:shadow-lg transition-all duration-200 h-full min-h-19 sm:min-h-21.5 md:min-h-26 lg:min-h-28.5 flex flex-col justify-between"
       >
         <div
           className="absolute top-0 left-0 right-0 h-1 md:h-1.5 rounded-t-xl md:rounded-t-2xl"
@@ -75,7 +76,7 @@ function StatCard({ label, value, gradient, href }: StatCardProps) {
           <div className="text-xl sm:text-2xl font-black tracking-tight text-black leading-none mb-1">
             {value}
           </div>
-          <div className="text-xs sm:text-sm font-bold text-black leading-tight w-full text-center px-0.5 break-words line-clamp-2">
+          <div className="text-xs sm:text-sm font-bold text-black leading-tight w-full text-center px-0.5 wrap-break-word line-clamp-2">
             {label}
           </div>
         </div>
@@ -121,7 +122,7 @@ function SectionHeading({
         {subtitle && <p className="text-[11px] md:text-xs text-slate-500 hidden md:block mt-0.5">{subtitle}</p>}
       </div>
       {actionLabel && actionHref && (
-        <Link href={actionHref}>
+        <Link to={actionHref}>
           <span
             className="text-xs md:text-sm font-semibold flex items-center gap-1 md:gap-1.5 transition-colors hover:opacity-80"
             style={{ color: "hsl(238,53%,49%)" }}
@@ -137,7 +138,7 @@ function SectionHeading({
 // ─── Quick Action Button ──────────────────────────────────────────────────────
 function QuickAction({ label, icon: Icon, href }: { label: string; icon: React.ElementType; href: string }) {
   return (
-    <Link href={href}>
+    <Link to={href}>
       <div
         className="flex items-center justify-center gap-1 md:gap-1.5 px-2 md:px-2.5 lg:px-3 py-1 md:py-1.5 rounded-lg text-[9px] sm:text-[10px] md:text-[11px] font-medium transition-all duration-150 cursor-pointer hover:opacity-90 active:scale-95 text-center shrink-0"
         style={{
@@ -156,6 +157,7 @@ function QuickAction({ label, icon: Icon, href }: { label: string; icon: React.E
 
 // ─── Main Dashboard Component ─────────────────────────────────────────────────
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const { data: dashboard, isLoading } = useGetPatientDashboard();
   const [orders, setOrders] = useState<MedicineOrderItem[]>([]);
 
@@ -277,7 +279,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="hidden md:flex md:col-span-5 lg:col-span-4 justify-end w-full">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3.5 lg:p-4 border border-white/15 flex items-center gap-3.5 shadow-md w-full max-w-[260px] lg:max-w-xs">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3.5 lg:p-4 border border-white/15 flex items-center gap-3.5 shadow-md w-full max-w-65 lg:max-w-xs">
               <div className="relative h-16 w-16 lg:h-18 lg:w-18 shrink-0 flex items-center justify-center">
                 <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
                   <path
@@ -320,7 +322,7 @@ export default function DashboardPage() {
           className="mt-3 md:mt-4 lg:mt-5 p-3 md:p-3.5 lg:p-4 rounded-xl md:rounded-2xl border border-indigo-400/25 backdrop-blur-md relative overflow-hidden group transition-all duration-300 cursor-pointer md:cursor-default"
           onClick={() => {
             if (window.innerWidth < 768) {
-              window.dispatchEvent(new CustomEvent("open-ai-assistant"));
+              navigate(ROUTES.PATIENT.ASSISTANT);
             }
           }}
           style={{
@@ -356,7 +358,8 @@ export default function DashboardPage() {
 
             <button
               type="button"
-              className="md:hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold text-white shrink-0 pointer-events-none shadow-xs"
+              onClick={() => navigate(ROUTES.PATIENT.ASSISTANT)}
+              className="md:hidden inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[9px] font-bold text-white shrink-0 cursor-pointer shadow-xs"
               style={{
                 background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 50%, #06B6D4 100%)",
                 border: "1px solid rgba(255, 255, 255, 0.35)",
@@ -438,7 +441,7 @@ export default function DashboardPage() {
               <h3 className="font-bold text-slate-900 text-sm md:text-base">Recent Appointments</h3>
               <p className="text-xs text-slate-500 mt-0.5 hidden md:block">Latest scheduled consultations</p>
             </div>
-            <Link href="/patient/appointments">
+            <Link to="/patient/appointments">
               <span
                 className="text-xs md:text-sm font-semibold flex items-center gap-1 md:gap-1.5 hover:opacity-80 transition-opacity"
                 style={{ color: "hsl(238,53%,49%)" }}
@@ -511,7 +514,7 @@ export default function DashboardPage() {
               <h3 className="font-bold text-slate-900 text-sm md:text-base">Medicine Reminders</h3>
               <p className="text-xs text-slate-500 mt-0.5 hidden md:block">Active prescriptions & schedules</p>
             </div>
-            <Link href="/patient/medical-history">
+            <Link to="/patient/medical-history">
               <span
                 className="text-xs md:text-sm font-semibold flex items-center gap-1 md:gap-1.5 hover:opacity-80 transition-opacity"
                 style={{ color: "hsl(238,53%,49%)" }}

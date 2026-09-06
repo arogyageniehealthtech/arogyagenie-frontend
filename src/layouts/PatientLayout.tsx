@@ -1,26 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Home, 
-  Stethoscope, 
-  Building2, 
-  Microscope, 
+import {
+  Home,
+  Stethoscope,
+  Building2,
+  Microscope,
   User,
   LogOut,
-  Menu, 
+  Menu,
   Bell,
   Pill,
   MapPin,
-  ChevronDown
+  ChevronDown,
+  Bot
 } from 'lucide-react';
 import { ROUTES } from '../constants/routes.constants';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import type { NotificationItem } from '../types/Notification.types';
 import { INITIAL_NOTIFICATIONS } from '../data/notification.data';
 import { logoutUser } from "../store/slices/authSlice";
+import { FloatingHealthAssistant } from '../components/health/FloatingHealthAssistant';
 
 const getInitials = (name?: string) => {
-  if (!name) return "GU"; 
+  if (!name) return "GU";
   const words = name.trim().split(/\s+/);
   if (words.length >= 2) {
     return (words[0][0] + words[1][0]).toUpperCase();
@@ -29,7 +31,7 @@ const getInitials = (name?: string) => {
 };
 
 const getCategoryLabel = (category: string) => {
-  switch(category) {
+  switch (category) {
     case 'appointments': return 'Appointment';
     case 'orders': return 'Pharmacy';
     case 'reports': return 'Diagnostic';
@@ -67,13 +69,13 @@ export default function PatientLayout() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const isAiChatPage = location.pathname === ROUTES.PATIENT.ASSISTANT;
+  const isAiChatPage = location.pathname === ROUTES.PATIENT.ASSISTANT || location.pathname === "/assistant" || location.pathname.endsWith("/assistant");
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
-  
+
   const [isDoctorOpen, setIsDoctorOpen] = useState(
     location.pathname.includes('doctor') || location.pathname.includes('appointment') || location.pathname.includes('prescription')
   );
@@ -133,20 +135,20 @@ export default function PatientLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans relative flex">
+    <div className={`font-sans relative flex ${isAiChatPage ? 'min-h-dvh h-dvh bg-[#060819] overflow-hidden' : 'min-h-screen bg-[#F8FAFC]'}`}>
 
       {/* --- LEFT SIDEBAR --- */}
       {!isAiChatPage && (
         <>
           <div 
-            className={`fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${
+            className={`fixed inset-0 z-100 bg-slate-900/50 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${
               isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
             }`}
             onClick={() => setIsSidebarOpen(false)}
           />
 
           <aside 
-            className={`fixed top-0 left-0 z-[110] h-full bg-[#13102F] shadow-2xl border-r border-[#1e1a45] transform transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) will-change-transform flex flex-col ${
+            className={`fixed top-0 left-0 z-110 h-full bg-[#13102F] shadow-2xl border-r border-[#1e1a45] transform transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) will-change-transform flex flex-col ${
               isSidebarOpen 
                 ? 'translate-x-0 w-56 sm:w-64' 
                 : `-translate-x-full lg:translate-x-0 ${isSidebarCollapsed ? 'lg:w-18' : 'w-64'}`
@@ -161,7 +163,7 @@ export default function PatientLayout() {
                 >
                   <Menu size={20} />
                 </button>
-                
+
                 <button
                   onClick={() => setIsSidebarOpen(false)}
                   className="lg:hidden p-1.5 text-slate-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
@@ -185,8 +187,7 @@ export default function PatientLayout() {
               <NavLink
                 to={ROUTES.PATIENT.DASHBOARD}
                 onClick={() => setIsSidebarOpen(false)}
-                className={`group w-full transition-all font-semibold flex ${
-                  isSidebarCollapsed
+                className={`group w-full transition-all font-semibold flex ${isSidebarCollapsed
                     ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
                     : 'items-center gap-2 sm:gap-3 px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
                 } ${
@@ -206,8 +207,7 @@ export default function PatientLayout() {
                     if (isSidebarCollapsed) setIsSidebarCollapsed(false);
                     else setIsDoctorOpen(!isDoctorOpen);
                   }}
-                  className={`group w-full transition-all font-semibold flex ${
-                    isSidebarCollapsed
+                  className={`group w-full transition-all font-semibold flex ${isSidebarCollapsed
                       ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
                       : 'items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
                   } ${
@@ -337,8 +337,7 @@ export default function PatientLayout() {
                     if (isSidebarCollapsed) setIsSidebarCollapsed(false);
                     else setIsDiagnosticsOpen(!isDiagnosticsOpen);
                   }}
-                  className={`group w-full transition-all font-semibold flex ${
-                    isSidebarCollapsed
+                  className={`group w-full transition-all font-semibold flex ${isSidebarCollapsed
                       ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
                       : 'items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
                   } ${
@@ -406,8 +405,7 @@ export default function PatientLayout() {
                     if (isSidebarCollapsed) setIsSidebarCollapsed(false);
                     else setIsMedicineOpen(!isMedicineOpen);
                   }}
-                  className={`group w-full transition-all font-semibold flex ${
-                    isSidebarCollapsed
+                  className={`group w-full transition-all font-semibold flex ${isSidebarCollapsed
                       ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
                       : 'items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
                   } ${
@@ -504,7 +502,7 @@ export default function PatientLayout() {
 
             {/* Left Side: Mobile Menu Button + Brand */}
             <div className="flex items-center gap-2 sm:gap-3 z-10 min-w-0">
-              <button 
+              <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="lg:hidden p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
                 title="Open navigation menu"
@@ -540,11 +538,10 @@ export default function PatientLayout() {
               <div className="relative" ref={notificationRef}>
                 <button 
                   onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-                  className={`relative p-2 rounded-xl sm:rounded-full transition-all duration-200 min-h-10 min-w-10 sm:min-h-11 sm:min-w-11 flex items-center justify-center shrink-0 ${
-                    isNotificationOpen 
-                      ? 'bg-indigo-500/20 text-indigo-300 ring-2 ring-indigo-500/40 lg:bg-indigo-50 lg:text-indigo-600 lg:ring-indigo-200' 
+                  className={`relative p-2 rounded-xl sm:rounded-full transition-all duration-200 min-h-10 min-w-10 sm:min-h-11 sm:min-w-11 flex items-center justify-center shrink-0 ${isNotificationOpen
+                      ? 'bg-indigo-500/20 text-indigo-300 ring-2 ring-indigo-500/40 lg:bg-indigo-50 lg:text-indigo-600 lg:ring-indigo-200'
                       : 'text-slate-300 hover:bg-white/10 lg:text-slate-600 lg:hover:bg-slate-100'
-                  }`}
+                    }`}
                   title="Notifications"
                 >
                   <Bell size={18} strokeWidth={2.2} className={isNotificationOpen ? 'fill-indigo-400/20 lg:fill-indigo-100' : ''} />
@@ -558,13 +555,13 @@ export default function PatientLayout() {
 
                 {isNotificationOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 bg-slate-950/20 sm:hidden z-40" 
+                    <div
+                      className="fixed inset-0 bg-slate-950/20 sm:hidden z-40"
                       onClick={() => setIsNotificationOpen(false)}
                     />
 
                     {/* Perfectly anchored & aligned dropdown */}
-                    <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden text-left flex flex-col max-h-[50vh] sm:max-h-[340px] animate-in fade-in duration-100">
+                    <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden text-left flex flex-col max-h-[50vh] sm:max-h-85 animate-in fade-in duration-100">
                       
                       {/* Centered & Slightly Enlarged Notification Header */}
                       <div className="bg-[#13102F] px-3 py-2.5 shrink-0 flex items-center justify-center border-b border-[#1e1a45]">
@@ -586,12 +583,11 @@ export default function PatientLayout() {
                           </div>
                         ) : (
                           notifications.map((item) => (
-                            <div 
+                            <div
                               key={item.id}
                               onClick={() => handleMarkAsRead(item.id)}
-                              className={`group relative py-2 px-3 flex items-start justify-between gap-2.5 cursor-pointer transition-colors ${
-                                item.read ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/90 hover:bg-slate-100/80'
-                              }`}
+                              className={`group relative py-2 px-3 flex items-start justify-between gap-2.5 cursor-pointer transition-colors ${item.read ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/90 hover:bg-slate-100/80'
+                                }`}
                             >
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-1 mb-1">
@@ -616,7 +612,7 @@ export default function PatientLayout() {
                                 ) : (
                                   <span className="h-1.5 w-1.5" />
                                 )}
-                                <button 
+                                <button
                                   onClick={(e) => handleDeleteNotification(item.id, e)}
                                   className="text-[9px] text-slate-400 hover:text-rose-600 p-0.5 rounded transition-all opacity-80 sm:opacity-0 sm:group-hover:opacity-100"
                                   title="Delete"
@@ -632,7 +628,7 @@ export default function PatientLayout() {
                       {/* Footer */}
                       <div className="px-3 py-1.5 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between shrink-0 text-[10px] text-slate-600">
                         {unreadCount > 0 ? (
-                          <button 
+                          <button
                             onClick={handleMarkAllAsRead}
                             className="font-semibold text-slate-600 hover:text-indigo-600 transition-colors"
                           >
@@ -642,7 +638,7 @@ export default function PatientLayout() {
                           <span className="text-slate-400">All read</span>
                         )}
 
-                        <button 
+                        <button
                           onClick={() => {
                             setIsNotificationOpen(false);
                             navigate('/patient/notifications');
@@ -657,8 +653,8 @@ export default function PatientLayout() {
                 )}
               </div>
 
-              {/* Slightly Decreased Profile Image Size Placed at Top Right Corner */}
-              <button 
+              {/* Mobile Profile Image */}
+              <button
                 onClick={() => navigate(ROUTES.PATIENT.PROFILE)}
                 className="flex items-center cursor-pointer rounded-full active:scale-95 transition-transform"
                 title="View Profile"
@@ -676,14 +672,14 @@ export default function PatientLayout() {
         )}
 
         {/* MAIN CONTENT AREA */}
-        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-screen' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
+        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-dvh max-w-none p-0 overflow-hidden' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
           <Outlet />
         </main>
       </div>
 
       {/* --- MOBILE-ONLY BOTTOM TAB BAR --- */}
       {!isAiChatPage && (
-        <nav className="fixed bottom-0 left-0 right-0 z-80 sm:hidden bg-[#13102F] border-t border-[#1e1a45] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.35)]">
+        <nav className="fixed bottom-0 left-0 right-0 z-80 sm:hidden bg-[#13102F] border-t border-[#1e1a45] shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)]">
           <div className="flex items-stretch justify-between px-1">
             {bottomNavItems.map((item) => {
               const active = isRouteActive(item.to);
@@ -704,6 +700,9 @@ export default function PatientLayout() {
           </div>
         </nav>
       )}
+
+      {/* Floating AI Health Assistant Orb (Inside Router context) */}
+      {!isAiChatPage && <FloatingHealthAssistant />}
     </div>
   );
 }

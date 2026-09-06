@@ -30,6 +30,10 @@ export const doctorApi = {
     console.log(params)
     const response = await axiosClient.get(ROUTES.PATIENT.DOCTOR, { params });
     return response.data;
+  // getDoctors: async (params?: DoctorSearchParams): Promise<Doctor[]> => {
+  //   const response = await axiosClient.get(ROUTES.PATIENT.DOCTOR, { params });
+  //   const data = response.data?.data !== undefined ? response.data.data : response.data;
+  //   return Array.isArray(data) ? data : [];
   },
 
   // Get a single doctor's full profile

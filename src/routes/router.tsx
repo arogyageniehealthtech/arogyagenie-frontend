@@ -36,6 +36,7 @@ const PatientVideoConsultationPage = lazy(() => import("../features/patient/page
 const LabBookingPage = lazy(() => import("../features/patient/pages/LabBookingsPage.tsx"));
 const BedBookingsPage = lazy(() => import("../features/patient/pages/BedBookingsPage.tsx")); 
 const MyorderPage = lazy(() => import("../features/patient/pages/MyorderPage.tsx")); 
+const AiAssistantPage = lazy(() => import("../features/patient/pages/AiAssistantPage.tsx"));
 // ==========================================INVITATION===================================================
 // const AcceptInvitationPage = lazy(() => import("../features/organisation-admin/pages/AcceptInvitationPage.tsx"));
 // =====================================DOCTOR========================================================
@@ -151,7 +152,8 @@ export const router = createBrowserRouter([
               { path: ROUTES.PATIENT.MEDICINE_ORDERS, element: withSuspense(<MyorderPage />) },
               { path: ROUTES.PATIENT.PHARMACY_SELECT, element: withSuspense(<PharmacySelectionPage />) },
               { path: ROUTES.PATIENT.CHECKOUT, element: withSuspense(<CheckoutPage />) },
-              { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
+              { path: ROUTES.PATIENT.ASSISTANT, element: withSuspense(<AiAssistantPage />) },
+              { path: "/assistant", element: withSuspense(<AiAssistantPage />) },
               { path: ROUTES.PATIENT.PROFILE, element: withSuspense(<ProfilePage />) },
             ],
           },

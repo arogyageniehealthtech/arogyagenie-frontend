@@ -10,7 +10,6 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { store } from './store/index.ts';
 import { useAppDispatch } from './store/hooks.ts';
 import { initializeAuth } from './store/slices/authSlice.ts';
-import { FloatingHealthAssistant } from './components/health/FloatingHealthAssistant';
 import {PartnerProviderContext} from '@/features/partner/context/PartnerContext.tsx'
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,7 +63,6 @@ export default function App() {
                 error: { iconTheme: { primary: '#FF4D4F', secondary: '#FFFFFF' } },
               }} 
             />
-            <FloatingHealthAssistant />
           </QueryClientProvider>
         </ReduxProvider>
       </ErrorBoundary>

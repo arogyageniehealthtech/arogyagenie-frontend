@@ -14,6 +14,8 @@ import { useGeolocation } from '../hooks/useGeolocation';
 import { facilityApi } from '../api/facilityApi';
 import { pharmacyApi } from '../api/pharmacyApi';
 import { fetchCurrentLocation, setCustomLocation } from '@/store/slices/locationSlice';
+import { LocationBanner } from '../component/common/LocationBanner';
+import { EmptyNearbyHealthcare } from '../component/common/EmptyNearbyHealthcare';
 import { ROUTES } from '@/constants/routes.constants';
 
 const FALLBACK_COORDS = { lat: 22.5726, lng: 88.3639 };
@@ -256,6 +258,7 @@ export default function PharmacyDiscoveryPage() {
 
   const { coords: browserCoords, isLocating, error: locationError, fetchLocation } = useGeolocation(locationState.coordinates ?? FALLBACK_COORDS);
   const activeCoordinates = locationState.coordinates || browserCoords;
+  const hasLocationError = Boolean(locationState.error || locationError);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -281,26 +284,29 @@ export default function PharmacyDiscoveryPage() {
         const list = Array.isArray(response) ? response : response?.data || [];
 
         if (isSubscribed) {
-          const mapped: PharmacyFacility[] = (list.length > 0 ? list : MOCK_PHARMACIES).map((p: any) => ({
-            id: p.id || p._id,
+          const mapped: PharmacyFacility[] = list.map((p: any) => ({
+            id: String(p.id || p._id),
             name: p.name,
-            address: formatAddress(p.address),
-            distanceKm: p.distanceKm != null ? Number(Number(p.distanceKm).toFixed(2)) : 1.5,
+            address: typeof p.address === 'object'
+              ? [p.address?.line1, p.address?.city, p.address?.state].filter(Boolean).join(', ')
+              : (p.address || 'Address available upon order'),
+            distanceKm: p.distanceKm != null ? Number(Number(p.distanceKm).toFixed(1)) : undefined,
             rating: p.rating ?? 4.7,
-            reviewCount: p.reviewCount ?? 110,
+            reviewCount: p.reviewCount ?? 85,
             verified: p.verified ?? true,
             isOpen24Hours: p.isOpen24Hours ?? true,
             phone: p.phone || '+91 33 2200 0000',
             deliveryTimeMins: p.deliveryTimeMins ?? 30,
-            lat: p.lat ?? p.latitude ?? (typeof p.address === 'object' ? p.address?.latitude : null),
-            lng: p.lng ?? p.longitude ?? (typeof p.address === 'object' ? p.address?.longitude : null),
+            lat: p.lat != null ? Number(p.lat) : (p.address?.latitude ? Number(p.address.latitude) : undefined),
+            lng: p.lng != null ? Number(p.lng) : (p.address?.longitude ? Number(p.address.longitude) : undefined),
           }));
 
           setAllPharmacies(mapped);
         }
-      } catch {
+      } catch (err: any) {
         if (isSubscribed) {
-          setAllPharmacies(MOCK_PHARMACIES);
+          setAllPharmacies([]);
+          setApiError(err?.response?.data?.message || 'Failed to fetch pharmacies from server.');
         }
       } finally {
         if (isSubscribed) setIsLoadingApi(false);
@@ -434,6 +440,19 @@ export default function PharmacyDiscoveryPage() {
           </div>
         </section>
 
+        {/* LOCATION STATUS BANNER */}
+        <LocationBanner
+          locationName={locationState.addressString || (activeCoordinates ? "Current Live Coordinates" : "Current Location")}
+          isCustomLocation={locationState.isUsingCustom}
+          isLocating={isLocating || locationState.isLoading}
+          hasLocationError={hasLocationError}
+          errorMessage={locationState.error || locationError}
+          radiusKm={radiusKm}
+          onRetryLocation={fetchLocation}
+          onChangeLocation={() => setShowCustomLocationModal(true)}
+          serviceCategory="pharmacies"
+        />
+
         {prescriptionUrl && (
           <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl flex items-center justify-between text-xs font-bold text-emerald-800">
             <span className="flex items-center gap-1.5"><Check className="w-4 h-4" /> Prescription attached to order inquiry session.</span>
@@ -447,7 +466,7 @@ export default function PharmacyDiscoveryPage() {
           <div className="w-full lg:w-5/12 xl:w-[42%] shrink-0 space-y-2.5">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-xs font-black uppercase tracking-wider text-slate-500">
-                {isLoadingApi ? 'Locating Pharmacies...' : `${filteredPharmacies.length} Pharmacies Nearby`}
+                {isLoadingApi ? 'Locating Pharmacies...' : `${filteredPharmacies.length} Pharmacies within ${radiusKm} KM`}
               </h2>
               <button onClick={() => navigate(ROUTES.PATIENT.MEDICINE)} className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1">
                 Browse Full Catalog <ArrowRight className="w-3.5 h-3.5" />
@@ -460,13 +479,14 @@ export default function PharmacyDiscoveryPage() {
                 <p className="text-xs text-slate-500 font-medium">Querying nearby licensed stores...</p>
               </div>
             ) : filteredPharmacies.length === 0 ? (
-              <div className="bg-white border border-slate-200 p-10 rounded-2xl text-center shadow-xs">
-                <Store className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                <h3 className="text-sm font-bold text-slate-900">No partner pharmacies in this radius</h3>
-                <button onClick={() => { setSearchQuery(''); setRadiusKm(32); setSelectedFilter(null); }} className="mt-2 text-xs font-bold text-indigo-600 hover:underline">
-                  Expand search radius
-                </button>
-              </div>
+              <EmptyNearbyHealthcare
+                serviceName="licensed pharmacies"
+                radiusKm={radiusKm}
+                message={`No physical pharmacies were found within ${radiusKm} KM of your location.`}
+                hasActiveFilters={Boolean(searchQuery || selectedFilter)}
+                onResetSearch={() => { setSearchQuery(''); setRadiusKm(32); setSelectedFilter(null); }}
+                onChangeLocation={() => setShowCustomLocationModal(true)}
+              />
             ) : (
               <div className="flex flex-col gap-2.5">
                 {filteredPharmacies.map((pharmacy) => (

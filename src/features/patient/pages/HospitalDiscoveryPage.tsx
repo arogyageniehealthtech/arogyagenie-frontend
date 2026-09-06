@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Search, MapPin, X, Loader2, Building2 } from 'lucide-react'; 
+import { useState, useEffect, useRef } from 'react';
+import { Search, MapPin, X, Loader2, Building2, ChevronDown, Navigation, Map as MapIcon } from 'lucide-react'; 
 import { useAppSelector, useAppDispatch } from '../../../store/hooks'; 
-import { fetchCurrentLocation } from '@/store/slices/locationSlice';
+import { fetchCurrentLocation, setCustomLocation } from '@/store/slices/locationSlice';
 import CustomSelect from '../component/common/CustomSelect';
 import MapContainer from '../component/common/MapContainer';
 import HospitalCard from '../component/card.component/HospitalCard';
 import BookBedModal from '../component/others/BookBedModal';
+import { LocationBanner } from '../component/common/LocationBanner';
+import { EmptyNearbyHealthcare } from '../component/common/EmptyNearbyHealthcare';
 import { useGeolocation } from '../hooks/useGeolocation';
 import type { Hospital } from '../types/hospital';
 import { facilityApi } from '../api/facilityApi';
@@ -22,6 +24,204 @@ const MOCK_HOSPITAL_DEPARTMENTS = [
   "Oncology"
 ];
 
+const FALLBACK_COORDS = { lat: 22.5726, lng: 88.3639 };
+
+// ============================================================================
+// LOCATION OPTIONS DROPDOWN COMPONENT
+// ============================================================================
+
+interface LocationOptionsDropdownProps {
+  isOpen: boolean;
+  isLocating: boolean;
+  onCurrentLocation: () => void;
+  onCustomLocation: () => void;
+  onClose: () => void;
+}
+
+const LocationOptionsDropdown = ({
+  isOpen,
+  isLocating,
+  onCurrentLocation,
+  onCustomLocation,
+  onClose,
+}: LocationOptionsDropdownProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div 
+        className="fixed inset-0 z-40 bg-transparent"
+        onClick={onClose}
+      />
+
+      <div 
+        className="absolute top-full mt-2 right-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl shadow-purple-950/5 border border-slate-100 overflow-hidden z-50 w-56 p-1.5 transition-all animate-in fade-in zoom-in-95 duration-150"
+      >
+        <div className="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100/80 mb-1">
+          Select Location Source
+        </div>
+
+        <button
+          onClick={() => {
+            onCurrentLocation();
+            onClose();
+          }}
+          disabled={isLocating}
+          className="w-full px-3 py-2.5 flex items-center gap-3 text-left rounded-xl hover:bg-purple-50/80 transition-all disabled:opacity-70 group text-xs font-bold text-slate-700 hover:text-[#5B21B6]"
+        >
+          <div className="w-8 h-8 rounded-lg bg-purple-50 group-hover:bg-[#5B21B6] flex items-center justify-center transition-colors text-[#5B21B6] group-hover:text-white shrink-0 shadow-xs">
+            {isLocating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Navigation className="w-4 h-4" />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span>Current Location</span>
+            <span className="text-[10px] font-normal text-slate-400">Use GPS or device sensor</span>
+          </div>
+        </button>
+
+        <button
+          onClick={() => {
+            onCustomLocation();
+            onClose();
+          }}
+          className="w-full px-3 py-2.5 flex items-center gap-3 text-left rounded-xl hover:bg-purple-50/80 transition-all group text-xs font-bold text-slate-700 hover:text-[#5B21B6]"
+        >
+          <div className="w-8 h-8 rounded-lg bg-purple-50 group-hover:bg-[#5B21B6] flex items-center justify-center transition-colors text-[#5B21B6] group-hover:text-white shrink-0 shadow-xs">
+            <MapIcon className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col">
+            <span>Custom Location</span>
+            <span className="text-[10px] font-normal text-slate-400">Search city or address</span>
+          </div>
+        </button>
+      </div>
+    </>
+  );
+};
+
+// ============================================================================
+// CUSTOM LOCATION MODAL COMPONENT (SEARCH & SUGGESTIONS ONLY)
+// ============================================================================
+
+interface CustomLocationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (coordinates: { lat: number; lng: number; address: string }) => void;
+}
+
+const CustomLocationModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+}: CustomLocationModalProps) => {
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  if (!isOpen) return null;
+
+  const handleSearch = (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    const mockResults = [
+      { id: 1, name: 'Delhi, India', state: 'National Capital Territory', lat: 28.7041, lng: 77.1025 },
+      { id: 2, name: 'Mumbai, India', state: 'Maharashtra', lat: 19.0760, lng: 72.8777 },
+      { id: 3, name: 'Bangalore, India', state: 'Karnataka', lat: 12.9716, lng: 77.5946 },
+      { id: 4, name: 'Kolkata, India', state: 'West Bengal', lat: 22.5726, lng: 88.3639 },
+      { id: 5, name: 'Hyderabad, India', state: 'Telangana', lat: 17.3850, lng: 78.4867 },
+      { id: 6, name: 'Chennai, India', state: 'Tamil Nadu', lat: 13.0827, lng: 80.2707 },
+    ].filter(item => 
+      item.name.toLowerCase().includes(query.toLowerCase()) || 
+      item.state.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    setSearchResults(mockResults);
+  };
+
+  const handleSearchResultClick = (result: any) => {
+    onSubmit({ lat: result.lat, lng: result.lng, address: `${result.name}, ${result.state}` });
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setSearchResults([]);
+    onClose();
+  };
+
+  return (
+    <>
+      <div 
+        className="fixed inset-0 bg-black/50 z-50 backdrop-blur-xs"
+        onClick={handleClose}
+      />
+
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div 
+          className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="sticky top-0 bg-white px-4 md:px-6 py-4 border-b border-slate-200 flex items-center justify-between z-10">
+            <div>
+              <h2 className="text-lg md:text-xl font-bold text-slate-900">Set Custom Location</h2>
+              <p className="text-xs md:text-sm text-slate-600 mt-0.5">Type to search for your area or city</p>
+            </div>
+            <button
+              onClick={handleClose}
+              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-slate-600" />
+            </button>
+          </div>
+
+          <div className="p-4 md:p-6 space-y-4 overflow-y-auto flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search city, area, pincode..."
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full px-4 py-2.5 pl-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B21B6] focus:border-transparent text-sm"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Suggested Locations</p>
+              <div className="space-y-1">
+                {(searchResults.length > 0 ? searchResults : [
+                  { id: 4, name: 'Kolkata', state: 'West Bengal', lat: 22.5726, lng: 88.3639 },
+                  { id: 3, name: 'Bangalore', state: 'Karnataka', lat: 12.9716, lng: 77.5946 },
+                  { id: 1, name: 'Delhi', state: 'NCT', lat: 28.7041, lng: 77.1025 },
+                  { id: 2, name: 'Mumbai', state: 'Maharashtra', lat: 19.0760, lng: 72.8777 },
+                ]).map((result) => (
+                  <button
+                    key={result.id}
+                    onClick={() => handleSearchResultClick(result)}
+                    className="w-full text-left px-3 py-2.5 hover:bg-purple-50 rounded-lg transition-colors flex items-start gap-2.5 group"
+                  >
+                    <MapPin className="w-4 h-4 text-slate-400 group-hover:text-[#5B21B6] shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-xs font-semibold text-slate-800 group-hover:text-[#5B21B6]">{result.name}</div>
+                      <div className="text-[11px] text-slate-500">{result.state}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ============================================================================
+// MAIN HOSPITAL DISCOVERY PAGE COMPONENT
+// ============================================================================
+
 export default function HospitalDiscoveryPage() {
   const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,8 +230,11 @@ export default function HospitalDiscoveryPage() {
   const [bookingHospital, setBookingHospital] = useState<Hospital | null>(null);
   const [viewingHospital, setViewingHospital] = useState<Hospital | null>(null);
   
+  const [showLocationOptions, setShowLocationOptions] = useState(false);
+  const [showCustomLocationModal, setShowCustomLocationModal] = useState(false);
+  const locationButtonRef = useRef<HTMLButtonElement | null>(null);
+
   const locationState = useAppSelector((state) => state.location);
-  const FALLBACK_COORDS = { lat: 22.5726, lng: 88.3639 };
 
   useEffect(() => {
     if (!locationState.coordinates) {
@@ -39,12 +242,19 @@ export default function HospitalDiscoveryPage() {
     }
   }, [dispatch, locationState.coordinates]);
 
-  const { coords: activeCoordinates, isLocating, error: locationError, fetchLocation } = useGeolocation(locationState.coordinates ?? FALLBACK_COORDS);
+  const { coords: browserCoords, isLocating, error: locationError, fetchLocation } = useGeolocation(
+    locationState.coordinates ?? FALLBACK_COORDS
+  );
+
+  const activeCoordinates = locationState.coordinates || browserCoords;
+  const hasLocationError = Boolean(locationState.error || locationError);
+
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [allHospitals, setAllHospitals] = useState<Hospital[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // Fetch Hospitals from Backend API with radiusKm (32 KM default) and type='HOSPITAL'
   useEffect(() => {
     let isMounted = true;
 
@@ -136,6 +346,11 @@ export default function HospitalDiscoveryPage() {
       category: 'hospital' as const,
     }));
 
+  const handleCustomLocationSubmit = (coordinates: { lat: number; lng: number; address: string }) => {
+    dispatch(setCustomLocation(coordinates));
+    setShowCustomLocationModal(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col font-sans relative bg-[#F1F5F9]">
       <div className="relative z-10 flex flex-col flex-1">
@@ -210,7 +425,7 @@ export default function HospitalDiscoveryPage() {
             <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  {isLoading ? 'Searching hospitals...' : `${hospitals.length} ${hospitals.length === 1 ? 'Result' : 'Results'} Found`}
+                  {isLoading ? 'Searching hospitals...' : `${hospitals.length} ${hospitals.length === 1 ? 'Hospital' : 'Hospitals'} within ${radiusKm} KM`}
                 </h2>
               </div>
 
@@ -278,7 +493,7 @@ export default function HospitalDiscoveryPage() {
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <span className="font-semibold text-slate-500">Distance:</span>
-                <span className="font-bold text-slate-800">{viewingHospital.distanceKm} km away</span>
+                <span className="font-bold text-slate-800">{viewingHospital.distanceKm ? `${viewingHospital.distanceKm} km away` : 'Nearby'}</span>
               </div>
               <div className="pt-1">
                 <span className="font-semibold text-slate-500 block mb-1.5">Departments Available:</span>
@@ -308,6 +523,13 @@ export default function HospitalDiscoveryPage() {
           </div>
         </div>
       )}
+
+      {/* Custom Location Modal */}
+      <CustomLocationModal
+        isOpen={showCustomLocationModal}
+        onClose={() => setShowCustomLocationModal(false)}
+        onSubmit={handleCustomLocationSubmit}
+      />
     </div>
   );
 }
