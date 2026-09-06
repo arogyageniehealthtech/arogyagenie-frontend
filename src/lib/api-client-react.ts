@@ -83,13 +83,11 @@ export interface DoctorPatientAiSummary {
   disclaimer?: string;
 }
 
-// Query keys
 export const getGetDoctorDashboardQueryKey = () => ["doctor-dashboard"];
 export const getListDoctorAppointmentsQueryKey = (params?: any) => ["doctor-appointments", params];
 export const getListPrescriptionsQueryKey = () => ["doctor-prescriptions"];
 export const getGetDoctorProfileQueryKey = () => ["doctor-profile"];
 
-// Helper to format ISO date to display time/date
 function formatAppointment(apt: DoctorAppointment): Appointment {
   const startDate = new Date(apt.scheduledStart);
   const dateStr = !isNaN(startDate.getTime()) ? startDate.toISOString().split("T")[0] : apt.scheduledStart;
@@ -112,7 +110,6 @@ function formatAppointment(apt: DoctorAppointment): Appointment {
   };
 }
 
-// Hooks
 export const useGetDoctorDashboard = () => {
   return useQuery<DoctorDashboardData>({
     queryKey: getGetDoctorDashboardQueryKey(),
@@ -391,7 +388,6 @@ export const useGetDoctorPatientAiSummary = (patientId: string | number) => {
     queryKey: ["doctor-patient-ai-summary", String(patientId)],
     queryFn: async () => {
       try {
-        // AI analysis endpoint if available
         const res = await axiosInstance.get(`/ai/summary/patient/${patientId}`).catch(() => null);
         if (res?.data?.data) {
           return res.data.data;
@@ -415,10 +411,8 @@ export const useCreatePrescription = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: any) => {
-      // If consultationId is provided, call backend createPrescription
       let consultationId = data.consultationId;
       if (!consultationId && data.patientId) {
-        // Start quick consultation first if none provided
         try {
           const c = await doctorService.startConsultation({
             patientId: String(data.patientId),
@@ -432,7 +426,6 @@ export const useCreatePrescription = () => {
       }
 
       if (consultationId) {
-        // Parse medicines text or structured items
         let items: Array<{
           medicineName: string;
           dosage: string;
@@ -496,7 +489,6 @@ export const useExtractOcr = () => {
   });
 };
 
-// --- PATIENT DASHBOARD / HEALTH QUERIES ---
 export const customFetch = async <T>(url: string, _options?: any): Promise<T> => {
   const res = await axiosInstance.get(url).catch(() => ({ data: {} }));
   return res.data as T;

@@ -36,6 +36,6 @@ export const facilityApi = {
   getNearbyFacilities: async (params: NearbyFacilityParams): Promise<Facility[]> => {
     const response = await axiosInstance.get('/locations/nearby-facilities', { params });
     console.log(response.data);
-    return response.data?.data || response.data;
+    return response.data?.data;
   }
 };

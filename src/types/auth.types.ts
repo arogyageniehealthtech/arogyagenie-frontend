@@ -125,7 +125,7 @@ export interface IdentityDTO {
   status: AccountStatus;
   userType: BackendUserType;
   mfaEnabled: boolean;
-  profile: IdentityProfile;
+  profile: IdentityProfile | null; // Allowed null explicitly
   memberships: UserMembershipDTO[];
   activeOrganizationId: string | null;
   activeOrgRole: OrgRole | null;
@@ -150,10 +150,10 @@ export interface AuthUser {
   phoneVerifiedAt?: string | null;
   mfaEnabled: boolean;
   userType: BackendUserType;
-  firstName?: string;
-  lastName?: string;
+  firstName?: string | null; // Allowed null explicitly
+  lastName?: string | null;  // Allowed null explicitly
   profilePicture?: string;
-  profile?: IdentityProfile;
+  profile?: IdentityProfile | null; // Allowed null explicitly
   patient?: PatientProfile | null;
   doctor?: DoctorProfile | null;
   employee?: EmployeeProfile | null;

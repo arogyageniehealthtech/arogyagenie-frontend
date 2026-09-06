@@ -294,11 +294,11 @@ export function LoginPage() {
             </form>
 
             {/* Compact Divider */}
-            <div className="flex items-center gap-2 my-1">
+            {/* <div className="flex items-center gap-2 my-1">
               <div className="h-px flex-1 bg-white/10" />
               <span className="text-[9px] uppercase tracking-widest text-slate-500 font-medium">Or</span>
               <div className="h-px flex-1 bg-white/10" />
-            </div>
+            </div> */}
 
             {/* Google Sign In */}
             {/* <div className="flex justify-center">
