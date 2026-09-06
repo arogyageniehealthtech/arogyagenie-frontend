@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp, ChevronDown, Layers, MapPin, Sparkles } from 'lucide-react';
+import { ChevronUp, ChevronDown, MapPin } from 'lucide-react';
 
-export type SheetSnapState = 'peek' | 'half' | 'full';
+export type SheetSnapState = 'min' | 'peek' | 'half' | 'full';
 
 interface MapBottomSheetProps {
   children: React.ReactNode;
@@ -21,11 +21,11 @@ export default function MapBottomSheet({
   itemNoun,
   radiusKm,
   isLoading = false,
-  activeLocationName,
   snapState: externalSnapState,
   onSnapChange,
 }: MapBottomSheetProps) {
-  const [internalSnap, setInternalSnap] = useState<SheetSnapState>('peek');
+  // Default snap state is 'half' so 2-3 cards are immediately visible on load
+  const [internalSnap, setInternalSnap] = useState<SheetSnapState>('half');
   const snap = externalSnapState !== undefined ? externalSnapState : internalSnap;
 
   const setSnap = (newSnap: SheetSnapState) => {
@@ -35,27 +35,24 @@ export default function MapBottomSheet({
     }
   };
 
-  // Drag handling variables
+  // Drag tracking refs
   const dragStartY = useRef<number>(0);
   const isDragging = useRef<boolean>(false);
 
-  // Height configurations for mobile
-  // peek: 88px, half: 48vh, full: calc(100vh - 120px)
+  // Height configurations for mobile bottom sheet
+  // min/peek: ~18vh (~130px), half (DEFAULT): ~52vh (~380px), full: ~88vh
   const getSheetStyle = () => {
     switch (snap) {
+      case 'min':
       case 'peek':
-        return 'h-24 sm:h-28';
+        return 'h-[18vh] sm:h-[20vh]';
       case 'half':
-        return 'h-[50vh] sm:h-[52vh]';
+        return 'h-[52vh] sm:h-[54vh]';
       case 'full':
-        return 'h-[86vh] sm:h-[88vh]';
+        return 'h-[88vh] sm:h-[90vh]';
+      default:
+        return 'h-[52vh] sm:h-[54vh]';
     }
-  };
-
-  const cycleSnap = () => {
-    if (snap === 'peek') setSnap('half');
-    else if (snap === 'half') setSnap('full');
-    else setSnap('peek');
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -69,15 +66,20 @@ export default function MapBottomSheet({
     isDragging.current = false;
 
     // Upward drag (negative deltaY) expands
-    if (deltaY < -40) {
-      if (snap === 'peek') setSnap('half');
+    if (deltaY < -35) {
+      if (snap === 'min' || snap === 'peek') setSnap('half');
       else if (snap === 'half') setSnap('full');
     } 
     // Downward drag (positive deltaY) collapses
-    else if (deltaY > 40) {
+    else if (deltaY > 35) {
       if (snap === 'full') setSnap('half');
-      else if (snap === 'half') setSnap('peek');
+      else if (snap === 'half') setSnap('min');
     }
+  };
+
+  const toggleExpand = () => {
+    if (snap === 'full') setSnap('half');
+    else setSnap('full');
   };
 
   return (
@@ -85,7 +87,7 @@ export default function MapBottomSheet({
       {/* ========================================================================= */}
       {/* MOBILE BOTTOM SHEET (visible on < lg screens)                            */}
       {/* ========================================================================= */}
-      <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 pointer-events-none pb-[env(safe-area-inset-bottom)]">
+      <div className="lg:hidden fixed inset-x-0 bottom-12 sm:bottom-0 z-30 pointer-events-none pb-[env(safe-area-inset-bottom)]">
         {/* Backdrop for full expansion */}
         <AnimatePresence>
           {snap === 'full' && (
@@ -94,7 +96,7 @@ export default function MapBottomSheet({
               animate={{ opacity: 0.3 }}
               exit={{ opacity: 0 }}
               onClick={() => setSnap('half')}
-              className="fixed inset-0 bg-slate-900 pointer-events-auto"
+              className="fixed inset-0 bg-slate-900 pointer-events-auto z-0"
             />
           )}
         </AnimatePresence>
@@ -102,22 +104,22 @@ export default function MapBottomSheet({
         <motion.div
           layout
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className={`pointer-events-auto w-full bg-white/98 backdrop-blur-xl rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.18)] border-t border-slate-200/80 flex flex-col transition-all duration-300 ${getSheetStyle()}`}
+          className={`relative z-10 pointer-events-auto w-full bg-white/98 backdrop-blur-xl rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.18)] border-t border-slate-200/90 flex flex-col transition-all duration-300 ${getSheetStyle()}`}
         >
           {/* DRAG HANDLE BAR */}
           <div
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
-            onClick={cycleSnap}
-            className="w-full pt-2.5 pb-2 px-4 flex flex-col items-center justify-center cursor-pointer select-none shrink-0 group active:bg-slate-50/50 rounded-t-3xl"
+            onClick={toggleExpand}
+            className="w-full pt-2 pb-1.5 px-4 flex flex-col items-center justify-center cursor-pointer select-none shrink-0 group active:bg-slate-50/50 rounded-t-3xl"
           >
             {/* Pill drag indicator */}
-            <div className="w-12 h-1.5 bg-slate-300 group-hover:bg-indigo-500 rounded-full transition-colors mb-1.5" />
+            <div className="w-10 h-1.5 bg-slate-300 group-hover:bg-[#5B21B6] rounded-full transition-colors mb-1.5" />
 
             {/* Compact Header Summary Bar */}
             <div className="w-full flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-black text-xs shrink-0 shadow-2xs">
+                <div className="w-5 h-5 rounded-full bg-purple-50 text-[#5B21B6] flex items-center justify-center font-black text-[11px] shrink-0 shadow-2xs border border-purple-100">
                   {isLoading ? '...' : resultCount}
                 </div>
                 <div className="min-w-0">
@@ -127,37 +129,35 @@ export default function MapBottomSheet({
                       : `${resultCount} ${resultCount === 1 ? itemNoun : itemNoun + 's'} Nearby`}
                   </h3>
                   <p className="text-[10px] text-slate-500 font-medium truncate flex items-center gap-1">
-                    <MapPin className="w-2.5 h-2.5 text-indigo-500 shrink-0" />
-                    <span>Within {radiusKm} KM radius</span>
+                    <MapPin className="w-2.5 h-2.5 text-[#5B21B6] shrink-0" />
+                    <span>Within {radiusKm} KM • {snap === 'full' ? 'Swipe down to minimize' : 'Swipe up for full list'}</span>
                   </p>
                 </div>
               </div>
 
-              {/* Snap State Toggle Button */}
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    cycleSnap();
-                  }}
-                  className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-extrabold flex items-center gap-1 transition-all"
-                >
-                  <span>{snap === 'full' ? 'Collapse' : snap === 'half' ? 'Full List' : 'View List'}</span>
-                  {snap === 'full' ? (
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  ) : (
-                    <ChevronUp className="w-3.5 h-3.5" />
-                  )}
-                </button>
-              </div>
+              {/* Snap State Toggle Icon */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleExpand();
+                }}
+                className="p-1 rounded-lg bg-slate-100 hover:bg-purple-50 text-slate-600 hover:text-[#5B21B6] transition-colors shrink-0 cursor-pointer"
+                title={snap === 'full' ? 'Collapse' : 'Expand full list'}
+              >
+                {snap === 'full' ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronUp className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
 
-          {/* SCROLLABLE CARDS CONTENT */}
+          {/* SCROLLABLE CARDS CONTENT (2-3 cards visible in 'half' state) */}
           <div
-            className={`flex-1 overflow-y-auto px-3 sm:px-4 pb-16 pt-1 space-y-3 custom-scrollbar ${
-              snap === 'peek' ? 'overflow-hidden pointer-events-none opacity-40' : 'opacity-100'
+            className={`flex-1 overflow-y-auto px-2.5 sm:px-4 pb-14 pt-1 space-y-2.5 custom-scrollbar overscroll-contain ${
+              snap === 'min' || snap === 'peek' ? 'overflow-hidden pointer-events-none opacity-40' : 'opacity-100'
             }`}
           >
             {children}
@@ -178,16 +178,16 @@ export default function MapBottomSheet({
                 : `${resultCount} Available ${resultCount === 1 ? itemNoun : itemNoun + 's'}`}
             </h2>
             <p className="text-[11px] text-slate-500 font-medium">
-              Filtered within <span className="font-bold text-indigo-600">{radiusKm} KM</span> of your location
+              Filtered within <span className="font-bold text-[#5B21B6]">{radiusKm} KM</span> of your location
             </p>
           </div>
-          <div className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-black shadow-2xs">
+          <div className="px-2.5 py-1 bg-purple-50 text-[#5B21B6] border border-purple-100 rounded-lg text-xs font-black shadow-2xs">
             {resultCount} Results
           </div>
         </div>
 
         {/* Scrollable Results List */}
-        <div className="flex-1 overflow-y-auto p-3.5 space-y-3 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar">
           {children}
         </div>
       </div>

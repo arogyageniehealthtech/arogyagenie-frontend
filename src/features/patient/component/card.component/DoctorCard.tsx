@@ -1,106 +1,109 @@
-import { Clock, MapPin, Building2, CalendarDays, Star, ShieldCheck, Navigation } from 'lucide-react';
+import { Clock, MapPin, Building2, Star, ShieldCheck, CalendarDays } from 'lucide-react';
 import type { Doctor } from '../../types/doctor';
 
 export default function DoctorCard({ doctor, onBook }: { doctor: Doctor; onBook: () => void }) {
-  // const priceDisplay = doctor.consultationOptions.length > 1 
-  //   ? `₹${Math.min(...doctor.consultationOptions.map(o => o.fee))} - ₹${Math.max(...doctor.consultationOptions.map(o => o.fee))}`
-  //   : `₹${doctor.consultationOptions[0]?.fee || 0}`;
- const priceDisplay = doctor.facilityAffiliations[0]?.consultationFee
-  ? `₹${doctor.facilityAffiliations[0].consultationFee}`
-  : "N/A";
+  const priceDisplay = doctor.facilityAffiliations?.[0]?.consultationFee
+    ? `₹${doctor.facilityAffiliations[0].consultationFee}`
+    : "N/A";
   
-console.log(doctor)
-  return (
-    <div className="relative bg-[#F4F6F9] rounded-xl sm:rounded-2xl border border-indigo-100 shadow-[0_4px_20px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_30px_-6px_rgba(99,102,241,0.15)] hover:border-indigo-300 transition-all duration-300 w-full overflow-hidden flex flex-col group">
-      
-      {/* Top Section: Main Content - Mobile optimized */}
-      <div className="p-3 sm:p-4 md:p-5 flex flex-col gap-3 sm:gap-4">
-        
-        {/* Row 1: Avatar, Name/Specialty, and Consultation Fee */}
-        <div className="flex items-start justify-between gap-2 sm:gap-3">
-          
-          {/* Left: Avatar & Info */}
-          <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0">
-            <div className="relative shrink-0">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-lg sm:rounded-2xl overflow-hidden bg-white border-2 border-white shadow-md">
-                {doctor.image ? (
-                  <img src={doctor.image} alt={doctor.firstName} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-indigo-700 font-extrabold text-xl sm:text-2xl bg-indigo-50">
-                    {doctor.firstName.replace('Dr. ', '').charAt(0)}
-                  </div>
-                )}
-              </div>
-              <div className="absolute -bottom-0.5 -right-0.5 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-full p-0.5 border-2 border-white shadow-sm" title="Verified Doctor">
-                <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              </div>
-            </div>
+  const specialtyName = doctor.specializations?.map(s => s.specialization?.name || s.specialization).filter(Boolean).join(", ") || "General Physician";
 
-            <div className="min-w-0 flex flex-col justify-center">
-             <h3 className="text-sm sm:text-base font-black text-slate-900 leading-snug truncate group-hover:text-indigo-600 transition-colors">
-  {`${doctor.firstName} ${doctor.lastName}`}
-</h3>
-              <p className="text-xs font-bold text-indigo-600 mt-0.5 truncate">
-                {doctor.specializations?.map(s => s.specialization.name).join(", ") || "General"}
-              </p>
-              <div className="flex items-center gap-0.5 text-xs text-slate-500 font-medium mt-1 truncate">
-                <Building2 className="w-3 h-3 shrink-0 text-slate-400" />
-                <span className="truncate">{doctor.clinicName}</span>
-              </div>
+  return (
+    <div className="relative bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-[#5B21B6]/40 transition-all duration-200 w-full overflow-hidden flex flex-col p-2.5 sm:p-3 group">
+      
+      {/* Main Top Row: Avatar + Doctor Info + Consultation Fee */}
+      <div className="flex items-start justify-between gap-2.5">
+        
+        {/* Left: Avatar & Info */}
+        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+          {/* Avatar */}
+          <div className="relative shrink-0">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-purple-50 border border-purple-100/80 shadow-2xs flex items-center justify-center">
+              {doctor.image ? (
+                <img src={doctor.image} alt={doctor.firstName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[#5B21B6] font-black text-sm sm:text-base">
+                  {doctor.firstName?.replace('Dr. ', '').charAt(0) || 'D'}
+                </span>
+              )}
+            </div>
+            <div className="absolute -bottom-1 -right-1 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-full p-0.5 border-2 border-white shadow-2xs" title="Verified Doctor">
+              <ShieldCheck className="w-2.5 h-2.5" />
             </div>
           </div>
 
-          {/* Right: Consultation Fee - Compact on mobile */}
-          <div className="text-right shrink-0 bg-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border border-indigo-100/60 shadow-sm">
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+          {/* Text Details */}
+          <div className="min-w-0 flex-1 flex flex-col justify-center">
+            <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate group-hover:text-[#5B21B6] transition-colors">
+              {doctor.firstName?.startsWith('Dr.') ? `${doctor.firstName} ${doctor.lastName || ''}` : `Dr. ${doctor.firstName} ${doctor.lastName || ''}`}
+            </h3>
+            
+            <p className="text-[11px] font-bold text-[#5B21B6] mt-0.5 truncate">
+              {specialtyName}
+            </p>
+
+            <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium mt-0.5 truncate">
+              <Building2 className="w-3 h-3 shrink-0 text-slate-400" />
+              <span className="truncate">{doctor.clinicName || "Associated Healthcare Center"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Fee & Rating Badge */}
+        <div className="flex flex-col items-end shrink-0 gap-0.5">
+          <div className="bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100 text-right">
+            <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block leading-none">
               Fee
             </span>
-            <span className="text-xs sm:text-lg font-black text-slate-900 line-clamp-1">
+            <span className="text-xs font-black text-slate-900 leading-tight">
               {priceDisplay}
             </span>
           </div>
 
-        </div>
-
-        {/* Row 2: Stats Pills - Horizontal scroll on mobile */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-hide text-xs font-bold text-slate-700">
-          <div className="flex items-center gap-1 bg-white text-blue-900 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border border-indigo-100/60 shadow-sm shrink-0">
-            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500 shrink-0" />
-            <span className="text-xs">{doctor.experienceYears} Yrs</span>
-          </div>
-          
-          <div className="flex items-center gap-1 bg-white text-amber-900 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border border-indigo-100/60 shadow-sm shrink-0">
-            <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 fill-amber-500 shrink-0" />
-            <span className="text-xs">{doctor.reviewCount}</span>
-          </div>
-
-          <div className="flex items-center gap-1 bg-white text-rose-900 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border border-indigo-100/60 shadow-sm shrink-0">
-            <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-500 shrink-0" />
-            <span className="text-xs">{doctor.distanceKm} km</span>
-          </div>
+          {doctor.distanceKm != null && (
+            <span className="text-[10px] font-bold text-rose-600 flex items-center gap-0.5 mt-0.5">
+              <MapPin className="w-2.5 h-2.5" />
+              {doctor.distanceKm} km
+            </span>
+          )}
         </div>
 
       </div>
 
-      {/* Row 3: Availability Ribbon - Responsive height */}
-      <div className="bg-linear-to-r from-emerald-100/80 via-teal-50 to-transparent border-t border-b border-emerald-200/60 px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-emerald-900 min-h-10 sm:min-h-auto">
-        <CalendarDays className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
-        <span className="truncate text-xs">Next: <span className="text-emerald-700 font-black">{doctor.nextAvailableSlot}</span></span>
-      </div>
+      {/* Bottom Row: Stats & Action Button */}
+      <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-100/80">
+        
+        {/* Pills / Quick Info */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide shrink-0 text-[10px] font-bold">
+          {doctor.experienceYears != null && doctor.experienceYears > 0 && (
+            <span className="inline-flex items-center gap-1 bg-slate-50 text-slate-700 px-1.5 py-0.5 rounded-md border border-slate-100">
+              <Clock className="w-2.5 h-2.5 text-blue-500" />
+              {doctor.experienceYears}y exp
+            </span>
+          )}
 
-      {/* Row 4: Action Buttons - Stacked on mobile */}
-      <div className="bg-white/80 px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row items-stretch gap-2 border-t border-indigo-100/50">
-        <button className="flex-1 flex items-center justify-center gap-1 px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-lg sm:rounded-xl transition-all shadow-sm">
-          <Navigation className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-500 shrink-0" />
-          <span className="hidden sm:inline">Direction</span>
-          <span className="sm:hidden">Map</span>
-        </button>
-        <button 
-          onClick={onBook} 
-          className="flex-1 px-2 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-white bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-lg sm:rounded-xl shadow-[0_4px_12px_rgba(79,70,229,0.3)] hover:shadow-[0_6px_16px_rgba(79,70,229,0.4)] transition-all active:scale-95"
+          <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded-md border border-amber-100/80">
+            <Star className="w-2.5 h-2.5 text-amber-500 fill-amber-500" />
+            {doctor.rating ?? 4.8}
+          </span>
+
+          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-1.5 py-0.5 rounded-md border border-emerald-100/80">
+            <CalendarDays className="w-2.5 h-2.5 text-emerald-600" />
+            <span className="truncate max-w-20 sm:max-w-none">{doctor.nextAvailableSlot || "Today"}</span>
+          </span>
+        </div>
+
+        {/* Book Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onBook();
+          }}
+          className="px-3 py-1 sm:px-3.5 sm:py-1.5 bg-linear-to-r from-[#5B21B6] to-indigo-600 hover:from-[#4c1d95] hover:to-indigo-700 text-white rounded-lg text-xs font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
         >
           Book Now
         </button>
+
       </div>
 
     </div>

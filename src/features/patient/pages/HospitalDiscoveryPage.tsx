@@ -231,7 +231,7 @@ export default function HospitalDiscoveryPage() {
   const [bookingHospital, setBookingHospital] = useState<Hospital | null>(null);
   const [viewingHospital, setViewingHospital] = useState<Hospital | null>(null);
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | number | null>(null);
-  const [sheetSnap, setSheetSnap] = useState<SheetSnapState>('peek');
+  const [sheetSnap, setSheetSnap] = useState<SheetSnapState>('half');
   
   const [showLocationOptions, setShowLocationOptions] = useState(false);
   const [showCustomLocationModal, setShowCustomLocationModal] = useState(false);
@@ -364,7 +364,7 @@ export default function HospitalDiscoveryPage() {
 
   const handleSelectLocation = (id: string | number) => {
     setSelectedHospitalId(id);
-    if (sheetSnap === 'peek') {
+    if (sheetSnap === 'min' || sheetSnap === 'peek') {
       setSheetSnap('half');
     }
     const cardEl = cardRefs.current[String(id)];
@@ -387,90 +387,96 @@ export default function HospitalDiscoveryPage() {
       {/* ========================================================================= */}
       {/* TOP FLOATING SEARCH & CONTROLS BAR                                        */}
       {/* ========================================================================= */}
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-2.5 sm:px-4 pt-2 sm:pt-3 shrink-0">
-        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-md border border-slate-200/90 p-2 sm:p-2.5 flex flex-col md:flex-row items-stretch md:items-center gap-2 transition-all">
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-2 sm:px-4 pt-1.5 sm:pt-2 shrink-0">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 p-1.5 sm:p-2 flex flex-col md:flex-row items-stretch md:items-center gap-1.5 transition-all">
           
-          {/* Search Input */}
-          <div className="relative flex-1 h-9 min-w-45">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className={`w-4 h-4 transition-colors ${searchQuery ? 'text-[#5B21B6]' : 'text-slate-400'}`} />
+          {/* Top Row on Mobile: Search + Location Button */}
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            {/* Search Input */}
+            <div className="relative flex-1 h-8 sm:h-9 min-w-0">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                <Search className={`w-3.5 h-3.5 transition-colors ${searchQuery ? 'text-[#5B21B6]' : 'text-slate-400'}`} />
+              </div>
+              <input 
+                type="text" 
+                placeholder="Search hospitals, emergency care..." 
+                className="w-full h-full pl-8 pr-7 bg-slate-50 border border-slate-200/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] text-[#13102F] text-xs font-semibold placeholder:text-slate-400 transition-all shadow-inner" 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery("")} 
+                  className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
-            <input 
-              type="text" 
-              placeholder="Search hospitals, emergency care..." 
-              className="w-full h-full pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] text-[#13102F] text-xs font-semibold placeholder:text-slate-400 transition-all shadow-inner" 
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-            />
-            {searchQuery && (
+
+            {/* Location Trigger */}
+            <div className="relative shrink-0">
               <button 
-                onClick={() => setSearchQuery("")} 
-                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                ref={locationButtonRef}
+                onClick={() => setShowLocationOptions(!showLocationOptions)}
+                disabled={isLocating}
+                className="h-8 sm:h-9 px-2.5 sm:px-3 flex items-center justify-center gap-1 rounded-xl font-bold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-2xs hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70 cursor-pointer"
+                title="Select location"
               >
-                <X className="w-3.5 h-3.5" />
+                {isLocating ? <Loader2 className="w-3 h-3 animate-spin" /> : <MapPin className="w-3 h-3" />}
+                <span className="truncate max-w-20 sm:max-w-28">
+                  {locationState.isUsingCustom ? 'Custom' : isLocating ? 'Locating...' : 'GPS'}
+                </span>
+                <ChevronDown className="w-3 h-3 ml-0.5" />
               </button>
-            )}
+
+              <LocationOptionsDropdown
+                isOpen={showLocationOptions}
+                isLocating={isLocating}
+                onCurrentLocation={fetchLocation}
+                onCustomLocation={() => setShowCustomLocationModal(true)}
+                onClose={() => setShowLocationOptions(false)}
+                buttonRef={locationButtonRef}
+              />
+            </div>
           </div>
 
-          {/* Department Filter */}
-          <div className="w-full md:w-44 shrink-0">
-            <CustomSelect 
-              value={selectedDepartment || ""} 
-              onChange={(val) => setSelectedDepartment(val === "All Departments" ? null : val)} 
-              options={["All Departments", ...MOCK_HOSPITAL_DEPARTMENTS]} 
-              placeholder="Department" 
-            />
-          </div>
+          {/* Bottom Row on Mobile / Inline on Desktop: Department Dropdown + Radius Step Control */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Department Filter */}
+            <div className="flex-1 md:w-44 h-8 sm:h-9">
+              <CustomSelect 
+                value={selectedDepartment || ""} 
+                onChange={(val) => setSelectedDepartment(val === "All Departments" ? null : val)} 
+                options={["All Departments", ...MOCK_HOSPITAL_DEPARTMENTS]} 
+                placeholder="Department" 
+              />
+            </div>
 
-          {/* Radius Increment/Decrement UI */}
-          <div className="flex items-center justify-between md:justify-center gap-1.5 h-9 px-2 bg-slate-50 rounded-xl border border-slate-200/80 shrink-0">
-            <button
-              onClick={handleDecreaseRadius}
-              disabled={radiusKm <= 2}
-              className="w-6 h-6 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 flex items-center justify-center font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 cursor-pointer shadow-2xs"
-              title="Decrease radius"
-            >
-              <Minus className="w-3 h-3" />
-            </button>
+            {/* Step-based Radius Control [-] 10 km [+] */}
+            <div className="flex items-center justify-between gap-1 h-8 sm:h-9 px-1.5 bg-slate-50 rounded-xl border border-slate-200/90 shrink-0">
+              <button
+                onClick={handleDecreaseRadius}
+                disabled={radiusKm <= 2}
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-white hover:bg-purple-50 border border-slate-200 text-slate-700 hover:text-[#5B21B6] flex items-center justify-center font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 cursor-pointer shadow-2xs"
+                title="Decrease radius"
+              >
+                <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              </button>
 
-            <span className="text-xs font-extrabold text-[#5B21B6] min-w-14 text-center select-none">
-              {radiusKm} KM
-            </span>
-
-            <button
-              onClick={handleIncreaseRadius}
-              disabled={radiusKm >= 50}
-              className="w-6 h-6 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 flex items-center justify-center font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 cursor-pointer shadow-2xs"
-              title="Increase radius"
-            >
-              <Plus className="w-3 h-3" />
-            </button>
-          </div>
-
-          {/* Location Trigger */}
-          <div className="relative shrink-0">
-            <button 
-              ref={locationButtonRef}
-              onClick={() => setShowLocationOptions(!showLocationOptions)}
-              disabled={isLocating}
-              className="w-full md:w-auto h-9 px-3.5 flex items-center justify-center gap-1.5 rounded-xl font-extrabold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-sm hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70 cursor-pointer"
-              title="Select location"
-            >
-              {isLocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
-              <span className="truncate max-w-28 sm:max-w-none">
-                {locationState.isUsingCustom ? 'Custom Loc' : isLocating ? 'Locating...' : 'My GPS'}
+              <span className="text-[11px] sm:text-xs font-black text-[#5B21B6] min-w-12 text-center select-none">
+                {radiusKm} KM
               </span>
-              <ChevronDown className="w-3 h-3 ml-0.5" />
-            </button>
 
-            <LocationOptionsDropdown
-              isOpen={showLocationOptions}
-              isLocating={isLocating}
-              onCurrentLocation={fetchLocation}
-              onCustomLocation={() => setShowCustomLocationModal(true)}
-              onClose={() => setShowLocationOptions(false)}
-              buttonRef={locationButtonRef}
-            />
+              <button
+                onClick={handleIncreaseRadius}
+                disabled={radiusKm >= 50}
+                className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-white hover:bg-purple-50 border border-slate-200 text-slate-700 hover:text-[#5B21B6] flex items-center justify-center font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 cursor-pointer shadow-2xs"
+                title="Increase radius"
+              >
+                <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              </button>
+            </div>
           </div>
 
         </div>
@@ -479,7 +485,7 @@ export default function HospitalDiscoveryPage() {
       {/* ========================================================================= */}
       {/* MAIN CONTENT AREA: MAP DOMINANT + BOTTOM SHEET OVERLAY                    */}
       {/* ========================================================================= */}
-      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 flex flex-col lg:flex-row gap-3 items-stretch min-h-0">
+      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-1.5 flex flex-col lg:flex-row gap-3 items-stretch min-h-0">
         
         {/* BOTTOM SHEET / SIDEBAR */}
         <MapBottomSheet
@@ -512,7 +518,7 @@ export default function HospitalDiscoveryPage() {
               onChangeLocation={() => setShowCustomLocationModal(true)}
             />
           ) : (
-            <div className="flex flex-col gap-3 pb-2">
+            <div className="flex flex-col gap-2.5 pb-2">
               {hospitals.map((hospital) => {
                 const isSelected = String(hospital.id) === String(selectedHospitalId);
                 return (
@@ -520,8 +526,8 @@ export default function HospitalDiscoveryPage() {
                     key={hospital.id}
                     ref={(el) => { cardRefs.current[String(hospital.id)] = el; }}
                     onClick={() => setSelectedHospitalId(hospital.id)}
-                    className={`transition-all rounded-2xl cursor-pointer ${
-                      isSelected ? 'ring-2 ring-indigo-600 shadow-lg scale-[1.01]' : ''
+                    className={`transition-all rounded-xl cursor-pointer ${
+                      isSelected ? 'ring-2 ring-[#5B21B6] shadow-md scale-[1.01]' : ''
                     }`}
                   >
                     <HospitalCard 
