@@ -162,7 +162,8 @@ export const initializeAuth = createAsyncThunk<
     if (!identity) {
       return rejectWithValue("User session invalid or expired");
     }
-    return identity;
+    
+    return (identity as any).data || identity;
   } catch (error: unknown) {
     return rejectWithValue(extractErrorMessage(error, "Authentication session expired"));
   }
@@ -226,31 +227,39 @@ const authSlice = createSlice({
       action: PayloadAction<{ AccessToken: string; user: AuthUser }>
     ) => {
       const { AccessToken, user } = action.payload;
+      
+      const newUser: AuthUser = {
+        ...user,
+        profile: user.profile ?? null,
+      };
+      
       state.isAuthenticated = true;
       state.AccessToken = AccessToken;
-      state.user = user;
+      state.user = newUser;
       state.userType = user.userType ?? null;
       state.isLoading = false;
       state.error = null;
       state.mfaPending = null;
 
-      persistAuth(AccessToken, user);
+      persistAuth(AccessToken, newUser);
     },
 
     updateUser: (state, action: PayloadAction<Partial<AuthUser>>) => {
       if (!state.user) return;
 
-      state.user = {
+      const updatedUser = {
         ...state.user,
         ...action.payload,
-      };
+      } as AuthUser;
+
+      state.user = updatedUser;
 
       if (action.payload.userType) {
         state.userType = action.payload.userType;
       }
 
       if (state.AccessToken) {
-        persistAuth(state.AccessToken, state.user);
+        persistAuth(state.AccessToken, updatedUser);
       }
     },
 
@@ -287,29 +296,37 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(initializeAuth.fulfilled, (state, action) => {
-        const identity = action.payload;
-        state.isAuthenticated = true;
-        state.user = {
+        const identity = action.payload as any;
+        const userProfile = identity.profile ?? null;
+        
+        // Safely extract names using the 'in' operator to satisfy TypeScript
+        const extractedFirstName = userProfile && 'firstName' in userProfile ? userProfile.firstName : null;
+        const extractedLastName = userProfile && 'lastName' in userProfile ? userProfile.lastName : null;
+
+        const userObj = {
           id: identity.id,
           email: identity.email,
-          phone: identity.phone,
+          phone: identity.phone ?? null,
           status: identity.status,
           emailVerified: identity.emailVerified,
           mfaEnabled: identity.mfaEnabled,
           userType: identity.userType,
-          profile: identity.profile,
-          memberships: identity.memberships,
-          activeOrganizationId: identity.activeOrganizationId,
-          activeOrgRole: identity.activeOrgRole,
-          firstName: identity.profile && 'firstName' in identity.profile ? identity.profile.firstName : undefined,
-          lastName: identity.profile && 'lastName' in identity.profile ? identity.profile.lastName : undefined,
-        };
+          profile: userProfile,
+          memberships: identity.memberships ?? [],
+          activeOrganizationId: identity.activeOrganizationId ?? null,
+          activeOrgRole: identity.activeOrgRole ?? null,
+          firstName: extractedFirstName,
+          lastName: extractedLastName,
+        } as AuthUser;
+
+        state.isAuthenticated = true;
+        state.user = userObj;
         state.userType = identity.userType;
         state.isLoading = false;
         state.error = null;
 
-        if (state.AccessToken && state.user) {
-          persistAuth(state.AccessToken, state.user);
+        if (state.AccessToken) {
+          persistAuth(state.AccessToken, userObj);
         }
       })
       .addCase(initializeAuth.rejected, (state, action) => {
@@ -347,24 +364,35 @@ const authSlice = createSlice({
           return;
         }
 
-        const accessToken = result.AccessToken || result.accessToken || "";
-        const user = result.user;
+        const accessToken = result.AccessToken || (result as any).accessToken || "";
+        const rawUser = result.user;
 
-        if (!accessToken || !user) {
+        if (!accessToken || !rawUser) {
           state.isLoading = false;
           state.error = "Invalid login response received from server.";
           return;
         }
 
+        const profile = rawUser.profile ?? null;
+        const profileFirstName = profile && 'firstName' in profile ? profile.firstName : null;
+        const profileLastName = profile && 'lastName' in profile ? profile.lastName : null;
+
+        const userObj = {
+          ...rawUser,
+          profile: profile,
+          firstName: profileFirstName ?? rawUser.firstName ?? null,
+          lastName: profileLastName ?? rawUser.lastName ?? null,
+        } as AuthUser;
+
         state.isAuthenticated = true;
         state.AccessToken = accessToken;
-        state.user = user;
-        state.userType = user.userType ?? null;
+        state.user = userObj;
+        state.userType = rawUser.userType ?? null;
         state.isLoading = false;
         state.error = null;
         state.mfaPending = null;
 
-        persistAuth(accessToken, user);
+        persistAuth(accessToken, userObj);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
@@ -380,24 +408,35 @@ const authSlice = createSlice({
       })
       .addCase(verifyMfaLoginThunk.fulfilled, (state, action) => {
         const result = action.payload;
-        const accessToken = result.AccessToken || result.accessToken || "";
-        const user = result.user;
+        const accessToken = result.AccessToken || (result as any).accessToken || "";
+        const rawUser = result.user;
 
-        if (!accessToken || !user) {
+        if (!accessToken || !rawUser) {
           state.isLoading = false;
           state.error = "Invalid MFA verification response received.";
           return;
         }
 
+        const profile = rawUser.profile ?? null;
+        const profileFirstName = profile && 'firstName' in profile ? profile.firstName : null;
+        const profileLastName = profile && 'lastName' in profile ? profile.lastName : null;
+
+        const userObj = {
+          ...rawUser,
+          profile: profile,
+          firstName: profileFirstName ?? rawUser.firstName ?? null,
+          lastName: profileLastName ?? rawUser.lastName ?? null,
+        } as AuthUser;
+
         state.isAuthenticated = true;
         state.AccessToken = accessToken;
-        state.user = user;
-        state.userType = user.userType ?? null;
+        state.user = userObj;
+        state.userType = rawUser.userType ?? null;
         state.isLoading = false;
         state.error = null;
         state.mfaPending = null;
 
-        persistAuth(accessToken, user);
+        persistAuth(accessToken, userObj);
       })
       .addCase(verifyMfaLoginThunk.rejected, (state, action) => {
         state.isLoading = false;
@@ -436,4 +475,4 @@ export const {
   resetAuthState,
 } = authSlice.actions;
 
-export default authSlice.reducer;
+export default authSlice.reducer;

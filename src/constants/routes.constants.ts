@@ -36,14 +36,16 @@ export const ROUTES = {
     EMERGENCY: '/ambulance',
     ASSISTANT: '/assistant',
     CHECKOUT:'/patient/checkout',
-    PHARMACY_SELECT:'/patient/pharmacy-select'
-  },
-  APPOINTMENT:{
-    CREATE_APPOINTMENT:'/appointment',
-    ALL_APPOINTMENT:'./appointment',
-    CANCEL_APPOINTMMENT:(id:string) => `/appoointment/${id}/cancel`,
-    RESCHEDULE_APPOINTMENT: (id:string)=>`/appintment/${id}/rescheduleAppointment`
+    PHARMACY_SELECT:'/patient/pharmacy-select',
+    LAB_BOOKING:'/lab-booking',
+    BED_BOOKING:'/bed-booking'
 
+  },
+APPOINTMENT: {
+    CREATE_APPOINTMENT: '/appointments',
+    ALL_APPOINTMENT: '/appointments',
+    CANCEL_APPOINTMMENT: (id: string) => `/appointments/${id}/cancel`,
+    RESCHEDULE_APPOINTMENT: (id: string) => `/appointments/${id}/reschedule`,
   },
   PRESCRIPTION:{
     CREATE_PRESCRIPTION:'/prescriptions',

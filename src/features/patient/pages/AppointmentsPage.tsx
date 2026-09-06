@@ -11,9 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import appointmentApi, { type AppointmentListParams } from '../api/appointmentApi';
 
-// ==========================================
-// Types
-// ==========================================
 type TabStatus = 'upcoming' | 'completed' | 'cancelled' | 'all';
 
 interface PatientAppointment {
@@ -39,7 +36,6 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<PatientAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Cancellation Modal State
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [targetCancelId, setTargetCancelId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -49,7 +45,13 @@ export default function AppointmentsPage() {
       setIsLoading(true);
       const params: AppointmentListParams = { page: 1, limit: 50 };
       const res = await appointmentApi.getAppointments(params);
-      const items = Array.isArray(res?.data) ? res.data : [];
+      
+      const rawData = res as any;
+      const items = Array.isArray(rawData) 
+        ? rawData 
+        : Array.isArray(rawData?.data) 
+          ? rawData.data 
+          : [];
 
       const formatted: PatientAppointment[] = items.map((apt: any) => {
         const start = new Date(apt.scheduledStart);
@@ -127,12 +129,10 @@ export default function AppointmentsPage() {
     }
   };
 
-  // Helper to categorize statuses
   const isUpcoming = (s: string) => ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'upcoming', 'pending', 'confirmed'].includes(s);
   const isCompleted = (s: string) => ['COMPLETED', 'completed'].includes(s);
   const isCancelled = (s: string) => ['CANCELLED', 'NO_SHOW', 'cancelled', 'no_show'].includes(s);
 
-  // Calculate counts for each tab
   const counts = {
     upcoming: appointments.filter(a => isUpcoming(a.status)).length,
     completed: appointments.filter(a => isCompleted(a.status)).length,
@@ -140,7 +140,6 @@ export default function AppointmentsPage() {
     all: appointments.length,
   };
 
-  // Filter appointments
   const filteredAppointments = appointments.filter(apt => {
     let matchesTab = true;
     if (activeTab === 'upcoming') matchesTab = isUpcoming(apt.status);
@@ -156,9 +155,7 @@ export default function AppointmentsPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-5 pt-4 sm:pt-6 pb-16 px-3 sm:px-6 font-sans">
       
-      {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
-        {/* Tabs with Counts */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
           {[
             { id: 'upcoming', label: 'Upcoming', count: counts.upcoming },
@@ -186,7 +183,6 @@ export default function AppointmentsPage() {
           ))}
         </div>
 
-        {/* Search Bar */}
         <div className="relative w-full sm:w-64 shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input 
@@ -199,7 +195,6 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      {/* --- APPOINTMENTS LIST --- */}
       <div className="space-y-3.5">
         {isLoading ? (
           <div className="py-20 text-center text-slate-400 font-medium space-y-2">
@@ -225,7 +220,6 @@ export default function AppointmentsPage() {
                 key={apt.id}
                 className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md hover:border-violet-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 group"
               >
-                {/* Doctor Details */}
                 <div className="flex items-start gap-3.5">
                   <img 
                     src={apt.imageUrl} 
@@ -253,7 +247,6 @@ export default function AppointmentsPage() {
                   </div>
                 </div>
 
-                {/* Date, Time & Actions */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3.5 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                   <div className="bg-slate-50 border border-slate-200/70 px-3.5 py-2 rounded-xl flex flex-col justify-center shrink-0">
                     <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -264,7 +257,6 @@ export default function AppointmentsPage() {
                     </span>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex items-center gap-2 flex-wrap">
                     {upcoming && (
                       <>
@@ -311,7 +303,6 @@ export default function AppointmentsPage() {
         )}
       </div>
 
-      {/* Cancellation Modal */}
       <Dialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
         <DialogContent className="sm:max-w-md rounded-3xl">
           <DialogHeader>
@@ -343,3 +334,4 @@ export default function AppointmentsPage() {
     </div>
   );
 }
+

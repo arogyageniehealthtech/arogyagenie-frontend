@@ -4,6 +4,10 @@ import {
   Calendar as CalendarIcon, Clock, Loader2 
 } from 'lucide-react';
 import { doctorApi } from '../../api/doctorApi';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom'; 
+import { ROUTES } from '@/constants/routes.constants';
+import toast from 'react-hot-toast'; // IMPORT TOAST HERE
 
 interface BookAppointmentModalProps {
   doctor: any;
@@ -12,6 +16,10 @@ interface BookAppointmentModalProps {
 }
 
 export default function BookAppointmentModal({ doctor, onClose, onSuccess }: BookAppointmentModalProps) {
+  // Redux & Router Hooks
+  const user = useSelector((state: any) => state.auth.user); 
+  const navigate = useNavigate();
+
   const [step, setStep] = useState(1);
   const [selectedMode, setSelectedMode] = useState<'VIDEO' | 'IN_PERSON' | null>(null);
   const [selectedAffiliation, setSelectedAffiliation] = useState<any | null>(null);
@@ -56,13 +64,27 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
   const formatScheduledStart = (dateStr: string, timeStr: string) => {
     const [time, modifier] = timeStr.split(' ');
     let [hours, minutes] = time.split(':');
+    
     if (modifier === 'PM' && hours !== '12') hours = (parseInt(hours, 10) + 12).toString();
     if (modifier === 'AM' && hours === '12') hours = '00';
-    return new Date(`${dateStr}T${hours.padStart(2, '0')}:${minutes}:00Z`).toISOString();
+    
+    return new Date(`${dateStr}T${hours.padStart(2, '0')}:${minutes}:00`).toISOString();
   };
 
   const handleConfirmBooking = async () => {
-    if (!selectedAffiliation || !selectedDate || !selectedTime) return;
+    if (!selectedMode || !selectedAffiliation || !selectedDate || !selectedTime) return;
+
+    // ==========================================
+    // Check Profile Status on Confirm
+    // ==========================================
+    if (!user?.profile || user.profile.type === null) {
+      // Trigger the Toaster Notification here!
+      toast.error("Please complete your profile first to book an appointment.");
+      
+      onClose();
+      navigate(ROUTES.PATIENT.PROFILE);
+      return; 
+    }
 
     setIsSubmitting(true);
     setBookingError(null);
@@ -72,20 +94,28 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
       const startDateObj = new Date(scheduledStart);
       const scheduledEnd = new Date(startDateObj.getTime() + 30 * 60000).toISOString();
 
-      await doctorApi.bookAppointment({
+       const response = await doctorApi.bookAppointment({
         doctorId: doctor.id,
         facilityId: selectedAffiliation.facilityId,
-        type: selectedAffiliation.consultationModes === 'IN_PERSON' ? 'VIDEO' : 'IN_PERSON',
-        scheduledStart,
-        scheduledEnd,
+        type: selectedMode, 
+        scheduledStart: scheduledStart,
+        scheduledEnd: scheduledEnd,
       });
+      console.log(response);
+      
 
       if (onSuccess) {
         onSuccess();
       }
       onClose();
     } catch (err: any) {
-      setBookingError(err?.response?.data?.message || "Failed to book appointment. Please try again.");
+      console.error("Booking API Error:", err?.response?.data || err);
+      
+      const serverMessage = err?.response?.data?.error?.message 
+                         || err?.response?.data?.message 
+                         || err?.message;
+                         
+      setBookingError(serverMessage || "Failed to book appointment. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -177,7 +207,7 @@ export default function BookAppointmentModal({ doctor, onClose, onSuccess }: Boo
               <div className="space-y-2 pt-0.5 max-h-48 overflow-y-auto">
                 {filteredAffiliations.map((opt: any, idx: number) => (
                   <button
-                    key={idx}
+                    key={opt.id || idx}
                     onClick={() => setSelectedAffiliation(opt)}
                     className={`w-full flex items-center justify-between p-3 rounded-xl border-2 text-left transition-all ${
                       selectedAffiliation?.id === opt.id 

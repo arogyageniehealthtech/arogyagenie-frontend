@@ -10,6 +10,7 @@ import { GuestRoute } from "./GuestRoute.tsx";
 const PatientLayout = lazy(() => import("../layouts/PatientLayout.tsx"));
 const PartnerLayout = lazy(() => import("../layouts/PartnerLayout.tsx"));
 const DoctorLayout = lazy(() => import("../features/doctor/component/DoctorLayout.tsx"));
+const DeliveryLayout = lazy(() => import("@/layouts/DeliveryLayout.tsx"));
 
 // ====================================AUTH===========================================================
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage.tsx"));
@@ -32,6 +33,9 @@ const HospitalDiscoveryPage = lazy(() => import("../features/patient/pages/Hospi
 const CheckoutPage = lazy(() => import("../features/patient/pages/CheckoutPage.tsx"));
 const PharmacySelectionPage = lazy(() => import("../features/patient/pages/PharmacySelectionPage.tsx"));
 const PatientVideoConsultationPage = lazy(() => import("../features/patient/pages/PatientVideoConsultationPage.tsx"));
+const LabBookingPage = lazy(() => import("../features/patient/pages/LabBookingsPage.tsx"));
+const BedBookingsPage = lazy(() => import("../features/patient/pages/BedBookingsPage.tsx")); 
+const MyorderPage = lazy(() => import("../features/patient/pages/MyorderPage.tsx")); 
 const AiAssistantPage = lazy(() => import("../features/patient/pages/AiAssistantPage.tsx"));
 // ==========================================INVITATION===================================================
 // const AcceptInvitationPage = lazy(() => import("../features/organisation-admin/pages/AcceptInvitationPage.tsx"));
@@ -43,6 +47,7 @@ const DoctorPrescriptionsPage = lazy(() => import("../features/doctor/pages/Pres
 const DoctorProfilePage = lazy(() => import("../features/doctor/pages/Profilepage.tsx").then(m => ({ default: m.DoctorProfile })));
 const DoctorSchedulePage = lazy(() => import("../features/doctor/pages/DoctorSchedulePage.tsx"));
 const DoctorVideoConsultationPage = lazy(() => import("../features/doctor/pages/DoctorVideoConsultationPage.tsx"));
+
 
 // =====================================ADMIN===========================================================
 const AdminDashboardPage = lazy(() => import("../features/admin/pages/AdminDashboardPage.tsx"));
@@ -82,12 +87,11 @@ const DeliverySettings = lazy(() => import("@/features/delivery-partner/pages/De
 const DeliveryEarnings = lazy(() => import("@/features/delivery-partner/pages/DeliveryEarnings.tsx"));
 
 import { RouteErrorElement } from "../components/RouteErrorElement.tsx";
-import type { element } from "three/src/nodes/tsl/TSLCore.js";
-
+// import type { element } from "three/src/nodes/tsl/TSLCore.js";
 // ==============================OTHERS=================================================================
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage.tsx"));
 const UnauthorizedPage = lazy(() => import("../pages/UnauthorizedPage.tsx"));
-const DeliveryLayout = lazy(() => import("@/layouts/DeliveryLayout.tsx"));
+
 
 
 
@@ -139,11 +143,13 @@ export const router = createBrowserRouter([
               { path: ROUTES.PATIENT.PRESCRIBTION, element: withSuspense(<PrescriptionsPage />) },
               { path: ROUTES.PATIENT.APPOINTMENTS, element: withSuspense(<AppointmentsPage />) },
               { path: ROUTES.PATIENT.LAB_REPORTS, element: withSuspense(<LabReportsPage />) },
+              { path: ROUTES.PATIENT.LAB_BOOKING, element: withSuspense(<LabBookingPage />) },
+              { path: ROUTES.PATIENT.BED_BOOKING, element: withSuspense(<BedBookingsPage />) },
               { path: ROUTES.PATIENT.LAB, element: withSuspense(<DiagnosticDiscoveryPage />) },
               { path: ROUTES.PATIENT.FINDDOCTOR, element: withSuspense(<DoctorDiscoveryPage />) },
               { path: ROUTES.PATIENT.HOSPITAL, element: withSuspense(<HospitalDiscoveryPage />) },
-              { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<PharmacyModule />) },
-              { path: ROUTES.PATIENT.MEDICINE_ORDERS, element: withSuspense(<MedicineOderPage />) },
+              { path: ROUTES.PATIENT.MEDICINE, element: withSuspense(<MedicineOderPage />) },
+              { path: ROUTES.PATIENT.MEDICINE_ORDERS, element: withSuspense(<MyorderPage />) },
               { path: ROUTES.PATIENT.PHARMACY_SELECT, element: withSuspense(<PharmacySelectionPage />) },
               { path: ROUTES.PATIENT.CHECKOUT, element: withSuspense(<CheckoutPage />) },
               { path: ROUTES.PATIENT.ASSISTANT, element: withSuspense(<AiAssistantPage />) },

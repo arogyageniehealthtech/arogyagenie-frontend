@@ -42,7 +42,7 @@ const getCategoryLabel = (category: string) => {
 const getPageTitle = (pathname: string) => {
   const path = pathname.toLowerCase();
   if (path.includes('doctor')) return 'Nearest Doctor Discovery';
-  if (path.includes('hospital')) return 'Nearest Hospital Discovery';
+  if (path.includes('hospital') || path.includes('checkhospital') || path.includes('bed-booking')) return 'Nearest Hospital Discovery';
   if (path.includes('lab') || path.includes('diagnostic')) return 'Nearest Diagnostics Discovery';
   if (path.includes('medicine-order')) return 'Medicines Order';
   if (path.includes('medicine')) return 'Medicine Delivery';
@@ -79,8 +79,11 @@ export default function PatientLayout() {
   const [isDoctorOpen, setIsDoctorOpen] = useState(
     location.pathname.includes('doctor') || location.pathname.includes('appointment') || location.pathname.includes('prescription')
   );
+  const [isHospitalOpen, setIsHospitalOpen] = useState(
+    location.pathname.includes('hospital') || location.pathname.includes('checkhospital') || location.pathname.includes('bed-booking')
+  );
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(
-    location.pathname.includes('lab') || location.pathname.includes('diagnostic')
+    location.pathname.includes('lab') || location.pathname.includes('diagnostic') || location.pathname.includes('lab-booking')
   );
   const [isMedicineOpen, setIsMedicineOpen] = useState(
     location.pathname.includes('medicine') || location.pathname.includes('medicine-orders')
@@ -131,34 +134,35 @@ export default function PatientLayout() {
     }
   };
 
-  const handleProfileRedirect = () => {
-    setIsSidebarOpen(false);
-    navigate(ROUTES.PATIENT.PROFILE);
-  };
-
   return (
+<<<<<<< HEAD
     <div className={`font-sans ${isAiChatPage ? 'fixed inset-0 w-full h-[100dvh] h-full bg-[#060819] flex flex-col overflow-hidden z-50 overscroll-none' : 'relative flex min-h-screen bg-[#F8FAFC]'}`}>
+=======
+    <div className={`font-sans relative flex ${isAiChatPage ? 'min-h-dvh h-dvh bg-[#060819] overflow-hidden' : 'min-h-screen bg-[#F8FAFC]'}`}>
+>>>>>>> f0cb659beed032bd4a5af5fb55ac94b5366d0466
 
       {/* --- LEFT SIDEBAR --- */}
       {!isAiChatPage && (
         <>
-          <div
-            className={`fixed inset-0 z-60 bg-slate-900/50 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-              }`}
+          <div 
+            className={`fixed inset-0 z-100 bg-slate-900/50 backdrop-blur-sm lg:hidden transition-opacity duration-300 ease-in-out ${
+              isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            }`}
             onClick={() => setIsSidebarOpen(false)}
           />
 
-          <aside
-            className={`fixed top-0 left-0 z-70 h-full bg-[#13102F] shadow-2xl border-r border-[#1e1a45] transform transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) will-change-transform flex flex-col ${isSidebarOpen
-                ? 'translate-x-0 w-64'
-                : `-translate-x-full lg:translate-x-0 ${isSidebarCollapsed ? 'lg:w-[72px]' : 'w-64'}`
-              }`}
+          <aside 
+            className={`fixed top-0 left-0 z-110 h-full bg-[#13102F] shadow-2xl border-r border-[#1e1a45] transform transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) will-change-transform flex flex-col ${
+              isSidebarOpen 
+                ? 'translate-x-0 w-56 sm:w-64' 
+                : `-translate-x-full lg:translate-x-0 ${isSidebarCollapsed ? 'lg:w-18' : 'w-64'}`
+            }`}
           >
             <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-start'} px-3 sm:px-5 h-14 sm:h-20 border-b border-[#1e1a45] shrink-0`}>
               <div className="flex items-center gap-2 min-w-0">
                 <button
                   onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                  className={`hidden lg:flex p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0 ${isSidebarCollapsed ? '' : '-ml-2'}`}
+                  className={`hidden lg:flex p-1.5 text-slate-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0 ${isSidebarCollapsed ? '' : '-ml-2'}`}
                   title="Toggle Sidebar"
                 >
                   <Menu size={20} />
@@ -166,7 +170,7 @@ export default function PatientLayout() {
 
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="lg:hidden p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
+                  className="lg:hidden p-1.5 text-slate-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors shrink-0"
                   title="Close sidebar"
                 >
                   <Menu size={20} />
@@ -174,31 +178,33 @@ export default function PatientLayout() {
 
                 {!isSidebarCollapsed && (
                   <div className="flex items-center gap-2 min-w-0">
-                    <img src="/LOGO.png" alt="ArogyaGenie Logo" className="h-6 sm:h-7 w-6 sm:w-7 object-contain brightness-0 invert" />
+                    <img src="/LOGO.png" alt="ArogyaGenie Logo" className="h-5 sm:h-7 w-5 sm:w-7 object-contain brightness-0 invert" />
                     <div className="flex flex-col justify-center min-w-0">
-                      <h1 className="text-base sm:text-xl font-extrabold text-white leading-none tracking-wide truncate">ArogyaGenie</h1>
+                      <h1 className="text-sm sm:text-xl font-extrabold text-white leading-none tracking-wide truncate">ArogyaGenie</h1>
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar px-2 sm:px-3 py-3 sm:py-4 space-y-0.5 sm:space-y-1">
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-2 sm:px-3 py-3 sm:py-4 space-y-0.5 sm:space-y-1 pb-24 sm:pb-6">
               <NavLink
                 to={ROUTES.PATIENT.DASHBOARD}
                 onClick={() => setIsSidebarOpen(false)}
                 className={`group w-full transition-all font-semibold flex ${isSidebarCollapsed
                     ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
-                    : 'items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
-                  } ${isRouteActive(ROUTES.PATIENT.DASHBOARD)
-                    ? 'bg-indigo-500/20 text-indigo-400'
-                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                  }`}
+                    : 'items-center gap-2 sm:gap-3 px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
+                } ${
+                  isRouteActive(ROUTES.PATIENT.DASHBOARD) 
+                    ? 'bg-indigo-700 text-white shadow-md' 
+                    : 'text-slate-100 hover:bg-white/10 hover:text-white'
+                }`}
               >
-                <Home size={isSidebarCollapsed ? 22 : 16} strokeWidth={isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 2.5 : 2} className={`shrink-0 ${isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                <Home size={isSidebarCollapsed ? 22 : 16} strokeWidth={isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 2.5 : 2} className={`shrink-0 ${isRouteActive(ROUTES.PATIENT.DASHBOARD) ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
                 <span className={isSidebarCollapsed ? 'truncate w-full text-center' : 'truncate'}>Home</span>
               </NavLink>
 
+              {/* DOCTOR SECTION */}
               <div>
                 <button
                   onClick={() => {
@@ -207,21 +213,22 @@ export default function PatientLayout() {
                   }}
                   className={`group w-full transition-all font-semibold flex ${isSidebarCollapsed
                       ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
-                      : 'items-center justify-between px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
-                    } ${location.pathname.includes('doctor') || location.pathname.includes('appointment') || location.pathname.includes('prescription')
-                      ? 'bg-indigo-500/20 text-indigo-400'
-                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                    }`}
+                      : 'items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
+                  } ${
+                    location.pathname.includes('doctor') || location.pathname.includes('appointment') || location.pathname.includes('prescription')
+                      ? 'bg-indigo-700 text-white shadow-md' 
+                      : 'text-slate-100 hover:bg-white/10 hover:text-white'
+                  }`}
                 >
                   {isSidebarCollapsed ? (
                     <>
-                      <Stethoscope size={22} strokeWidth={location.pathname.includes('doctor') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('doctor') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                      <Stethoscope size={22} strokeWidth={location.pathname.includes('doctor') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('doctor') ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
                       <span className="truncate w-full text-center">Doctor</span>
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                        <Stethoscope size={16} strokeWidth={location.pathname.includes('doctor') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('doctor') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <Stethoscope size={16} strokeWidth={location.pathname.includes('doctor') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('doctor') ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
                         <span className="truncate">Doctor</span>
                       </div>
                       <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${isDoctorOpen ? 'rotate-180' : ''}`} />
@@ -230,53 +237,104 @@ export default function PatientLayout() {
                 </button>
 
                 {!isSidebarCollapsed && isDoctorOpen && (
-                  <div className="pl-6 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
+                  <div className="pl-5 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
                     <NavLink
                       to={ROUTES.PATIENT.FINDDOCTOR}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${location.pathname === ROUTES.PATIENT.FINDDOCTOR ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                        }`}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        location.pathname === ROUTES.PATIENT.FINDDOCTOR ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
                       <span className="truncate">Find Doctor</span>
                     </NavLink>
 
                     <NavLink
                       to={ROUTES.PATIENT.APPOINTMENTS}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${isRouteActive(ROUTES.PATIENT.APPOINTMENTS) ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                        }`}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.APPOINTMENTS) ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
                       <span className="truncate">Appointments</span>
                     </NavLink>
 
                     <NavLink
                       to={ROUTES.PATIENT.PRESCRIBTION}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${isRouteActive(ROUTES.PATIENT.PRESCRIBTION) ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                        }`}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.PRESCRIBTION) ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
                       <span className="truncate">Prescriptions</span>
                     </NavLink>
                   </div>
                 )}
               </div>
 
-              <NavLink
-                to={ROUTES.PATIENT.HOSPITAL}
-                onClick={() => setIsSidebarOpen(false)}
-                className={`group flex w-full transition-all font-semibold ${isSidebarCollapsed
-                    ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
-                    : 'items-center gap-2.5 sm:gap-3 px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
-                  } ${isRouteActive(ROUTES.PATIENT.HOSPITAL) ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-300 hover:bg-white/5 hover:text-white'
+              {/* HOSPITAL SECTION */}
+              <div>
+                <button
+                  onClick={() => {
+                    if (isSidebarCollapsed) setIsSidebarCollapsed(false);
+                    else setIsHospitalOpen(!isHospitalOpen);
+                  }}
+                  className={`group w-full transition-all font-semibold flex ${
+                    isSidebarCollapsed
+                      ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
+                      : 'items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
+                  } ${
+                    location.pathname.includes('hospital') || location.pathname.includes('checkhospital') || location.pathname.includes('bed-booking') 
+                      ? 'bg-indigo-700 text-white shadow-md' 
+                      : 'text-slate-100 hover:bg-white/10 hover:text-white'
                   }`}
-              >
-                <Building2 size={isSidebarCollapsed ? 22 : 16} strokeWidth={isRouteActive(ROUTES.PATIENT.HOSPITAL) ? 2.5 : 2} className={`shrink-0 ${location.pathname.startsWith(ROUTES.PATIENT.HOSPITAL) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
-                <span className={isSidebarCollapsed ? 'truncate w-full text-center' : 'truncate'}>Hospital</span>
-              </NavLink>
+                >
+                  {isSidebarCollapsed ? (
+                    <>
+                      <Building2 size={22} strokeWidth={location.pathname.includes('hospital') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('hospital') ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
+                      <span className="truncate w-full text-center">Hospital</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <Building2 size={16} strokeWidth={location.pathname.includes('hospital') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('hospital') ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
+                        <span className="truncate">Hospital</span>
+                      </div>
+                      <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${isHospitalOpen ? 'rotate-180' : ''}`} />
+                    </>
+                  )}
+                </button>
 
+                {!isSidebarCollapsed && isHospitalOpen && (
+                  <div className="pl-5 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
+                    <NavLink
+                      to={ROUTES.PATIENT.HOSPITAL}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        location.pathname === ROUTES.PATIENT.HOSPITAL ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
+                      <span className="truncate">Find Hospital</span>
+                    </NavLink>
+
+                    <NavLink
+                      to={ROUTES.PATIENT.BED_BOOKING}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.BED_BOOKING) ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
+                      <span className="truncate">Bed Booking Details</span>
+                    </NavLink>
+                  </div>
+                )}
+              </div>
+
+              {/* DIAGNOSTICS SECTION */}
               <div>
                 <button
                   onClick={() => {
@@ -285,19 +343,20 @@ export default function PatientLayout() {
                   }}
                   className={`group w-full transition-all font-semibold flex ${isSidebarCollapsed
                       ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
-                      : 'items-center justify-between px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
-                    } ${location.pathname.includes('lab') || location.pathname.includes('diagnostic') ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                    }`}
+                      : 'items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
+                  } ${
+                    location.pathname.includes('lab') || location.pathname.includes('diagnostic') ? 'bg-indigo-700 text-white shadow-md' : 'text-slate-100 hover:bg-white/10 hover:text-white'
+                  }`}
                 >
                   {isSidebarCollapsed ? (
                     <>
-                      <Microscope size={22} strokeWidth={location.pathname.includes('lab') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('lab') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                      <Microscope size={22} strokeWidth={location.pathname.includes('lab') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('lab') ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
                       <span className="truncate w-full text-center">Diagnostics</span>
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                        <Microscope size={16} strokeWidth={location.pathname.includes('lab') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('lab') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <Microscope size={16} strokeWidth={location.pathname.includes('lab') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('lab') ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
                         <span className="truncate">Diagnostics</span>
                       </div>
                       <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${isDiagnosticsOpen ? 'rotate-180' : ''}`} />
@@ -306,30 +365,44 @@ export default function PatientLayout() {
                 </button>
 
                 {!isSidebarCollapsed && isDiagnosticsOpen && (
-                  <div className="pl-6 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
+                  <div className="pl-5 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
                     <NavLink
                       to={ROUTES.PATIENT.LAB}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${location.pathname === ROUTES.PATIENT.LAB ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                        }`}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        location.pathname === ROUTES.PATIENT.LAB ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
                       <span className="truncate">Find Diagnostics</span>
+                    </NavLink>
+
+                    <NavLink
+                      to={ROUTES.PATIENT.LAB_BOOKING}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.LAB_BOOKING) ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
+                      <span className="truncate">Diagnostics Appointment</span>
                     </NavLink>
 
                     <NavLink
                       to={ROUTES.PATIENT.LAB_REPORTS}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${isRouteActive(ROUTES.PATIENT.LAB_REPORTS) ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                        }`}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.LAB_REPORTS) ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
                       <span className="truncate">Lab Report</span>
                     </NavLink>
                   </div>
                 )}
               </div>
 
+              {/* MEDICINE SECTION */}
               <div>
                 <button
                   onClick={() => {
@@ -338,19 +411,20 @@ export default function PatientLayout() {
                   }}
                   className={`group w-full transition-all font-semibold flex ${isSidebarCollapsed
                       ? 'flex-col items-center justify-center py-3 px-1 gap-1 text-[10px] rounded-lg'
-                      : 'items-center justify-between px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
-                    } ${location.pathname.includes('medicine') || location.pathname.includes('medicine-orders') ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                    }`}
+                      : 'items-center justify-between px-2 sm:px-3.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm'
+                  } ${
+                    location.pathname.includes('medicine') || location.pathname.includes('medicine-orders') ? 'bg-indigo-700 text-white shadow-md' : 'text-slate-100 hover:bg-white/10 hover:text-white'
+                  }`}
                 >
                   {isSidebarCollapsed ? (
                     <>
-                      <Pill size={22} strokeWidth={location.pathname.includes('medicine') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('medicine') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                      <Pill size={22} strokeWidth={location.pathname.includes('medicine') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('medicine') ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
                       <span className="truncate w-full text-center">Medicine</span>
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                        <Pill size={16} strokeWidth={location.pathname.includes('medicine') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('medicine') ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <Pill size={16} strokeWidth={location.pathname.includes('medicine') ? 2.5 : 2} className={`shrink-0 ${location.pathname.includes('medicine') ? 'text-white' : 'text-slate-100 group-hover:text-white'}`} />
                         <span className="truncate">Medicine</span>
                       </div>
                       <ChevronDown size={14} className={`transition-transform duration-200 shrink-0 ${isMedicineOpen ? 'rotate-180' : ''}`} />
@@ -359,24 +433,26 @@ export default function PatientLayout() {
                 </button>
 
                 {!isSidebarCollapsed && isMedicineOpen && (
-                  <div className="pl-6 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
+                  <div className="pl-5 sm:pl-9 pr-1 sm:pr-2 py-1 space-y-0.5 sm:space-y-1">
                     <NavLink
                       to={ROUTES.PATIENT.MEDICINE}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${location.pathname === ROUTES.PATIENT.MEDICINE ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                        }`}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        location.pathname === ROUTES.PATIENT.MEDICINE ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
                       <span className="truncate">Find Pharmacy</span>
                     </NavLink>
 
                     <NavLink
                       to={ROUTES.PATIENT.MEDICINE_ORDERS}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${isRouteActive(ROUTES.PATIENT.MEDICINE_ORDERS) ? 'text-indigo-400 bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                        }`}
+                      className={`flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-[11px] sm:text-xs font-semibold transition-all ${
+                        isRouteActive(ROUTES.PATIENT.MEDICINE_ORDERS) ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                      }`}
                     >
-                      <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0"></span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0"></span>
                       <span className="truncate">Medicine Order</span>
                     </NavLink>
                   </div>
@@ -388,72 +464,33 @@ export default function PatientLayout() {
                 <NavLink
                   to={ROUTES.PATIENT.PROFILE}
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`group w-full transition-all font-semibold flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs ${isRouteActive(ROUTES.PATIENT.PROFILE) ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                    }`}
+                  className={`group w-full transition-all font-semibold flex items-center gap-2 px-2 py-2 rounded-lg text-xs ${
+                    isRouteActive(ROUTES.PATIENT.PROFILE) ? 'text-white bg-indigo-600 shadow-sm' : 'text-slate-200 hover:text-white hover:bg-white/10'
+                  }`}
                 >
-                  <User size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.PROFILE) ? 2.5 : 2} className={`shrink-0 ${isRouteActive(ROUTES.PATIENT.PROFILE) ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`} />
+                  <User size={16} strokeWidth={isRouteActive(ROUTES.PATIENT.PROFILE) ? 2.5 : 2} className={`shrink-0 ${isRouteActive(ROUTES.PATIENT.PROFILE) ? 'text-white' : 'text-slate-200 group-hover:text-white'}`} />
                   <span className="truncate">My Profile</span>
                 </NavLink>
               </div>
             </div>
 
-            <div className={`p-2 sm:p-3.5 border-t border-[#1e1a45] shrink-0 ${isSidebarCollapsed ? 'flex flex-col items-center gap-3' : ''}`}>
+            <div className={`p-2 sm:p-3.5 border-t border-[#1e1a45] shrink-0 bg-[#13102F] ${isSidebarCollapsed ? 'flex flex-col items-center gap-3' : ''}`}>
               {isSidebarCollapsed ? (
-                <>
-                  <button
-                    onClick={handleProfileRedirect}
-                    className="focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded-full transition-transform active:scale-95"
-                    title="View Profile"
-                  >
-                    {user?.profilePicture ? (
-                      <img src={user.profilePicture} alt="Profile" className="h-8 w-8 rounded-full object-cover shrink-0 bg-slate-800 ring-1 ring-white/20 hover:ring-indigo-400 transition-all" />
-                    ) : (
-                      <div className="h-8 w-8 rounded-full shrink-0 bg-indigo-500 hover:bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-inner transition-colors">
-                        {getInitials(user ? `${user.firstName} ${user.lastName}` : undefined)}
-                      </div>
-                    )}
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="p-2 w-full text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border border-red-500/40 rounded-lg flex justify-center transition-all shadow-sm shadow-red-950/40"
-                    title="Sign Out"
-                  >
-                    <LogOut size={16} strokeWidth={2.5} />
-                  </button>
-                </>
+                <button 
+                  onClick={handleSignOut}
+                  className="p-2 w-full text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border border-red-500/40 rounded-lg flex justify-center transition-all shadow-sm shadow-red-950/40 cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut size={16} strokeWidth={2.5} />
+                </button>
               ) : (
-                <>
-                  <div className="hidden sm:flex items-center gap-2 sm:gap-2.5 mb-2.5 sm:mb-3 px-1">
-                    <button
-                      onClick={handleProfileRedirect}
-                      className="cursor-pointer focus:outline-none rounded-full transition-transform active:scale-95 group/user"
-                      title="View Profile"
-                    >
-                      {user?.profilePicture ? (
-                        <img src={user.profilePicture} alt="Profile" className="h-7 sm:h-9 w-7 sm:w-9 rounded-full object-cover shrink-0 bg-slate-800 ring-1 ring-white/20 group-hover/user:ring-indigo-400 transition-all" />
-                      ) : (
-                        <div className="h-7 sm:h-9 w-7 sm:w-9 rounded-full shrink-0 bg-indigo-500 group-hover/user:bg-indigo-600 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-inner transition-colors">
-                          {getInitials(user ? `${user.firstName} ${user.lastName}` : undefined)}
-                        </div>
-                      )}
-                    </button>
-
-                    <div onClick={handleProfileRedirect} className="flex flex-col min-w-0 cursor-pointer group/name">
-                      <h2 className="text-[10px] sm:text-xs font-bold text-white leading-tight truncate group-hover/name:text-indigo-300 transition-colors">
-                        Hi, {user ? (user.firstName || user.email.split('@')[0]) : "Guest"}
-                      </h2>
-                      <span className="text-[9px] text-slate-400 group-hover/name:text-slate-300">View Profile</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleSignOut}
-                    className="flex w-full items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 text-xs text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border border-red-500/40 rounded-lg font-bold transition-all shadow-sm shadow-red-950/40"
-                  >
-                    <LogOut size={14} strokeWidth={2.5} />
-                    <span>Sign Out</span>
-                  </button>
-                </>
+                <button 
+                  onClick={handleSignOut}
+                  className="flex w-full items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 text-xs text-white bg-red-600 hover:bg-red-700 active:bg-red-800 border border-red-500/40 rounded-lg font-bold transition-all shadow-sm shadow-red-950/40 cursor-pointer"
+                >
+                  <LogOut size={14} strokeWidth={2.5} />
+                  <span>Sign Out</span>
+                </button>
               )}
             </div>
           </aside>
@@ -498,26 +535,12 @@ export default function PatientLayout() {
               </div>
             </div>
 
-            {/* Right Side: Bell & Profile */}
-            <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0 z-10">
-              <button
-                onClick={() => {
-                  if (typeof window !== "undefined" && window.innerWidth < 768) {
-                    navigate(ROUTES.PATIENT.ASSISTANT);
-                  } else {
-                    window.dispatchEvent(new Event('open-ai-assistant'));
-                  }
-                }}
-                className="p-2 text-white bg-white/10 hover:bg-white/20 lg:text-indigo-600 lg:bg-indigo-50 lg:hover:bg-indigo-100 rounded-lg sm:rounded-full transition-colors flex items-center gap-2 px-2 sm:px-3 lg:px-4 min-h-11 min-w-11 justify-center sm:justify-start shrink-0 cursor-pointer"
-                title="Chat with AI Health Assistant"
-              >
-                <Bot size={20} className="shrink-0" />
-                <span className="text-xs sm:text-sm font-bold hidden sm:block text-white lg:text-indigo-600">AI Assistant</span>
-              </button>
-
-              {/* Notification Bell */}
-              <div className="relative pointer-events-auto" ref={notificationRef}>
-                <button
+            {/* Right Side: Bell & Profile Image Ordered Correctly */}
+            <div className="flex items-center gap-2.5 sm:gap-3.5 ml-auto shrink-0 z-10">
+              
+              {/* --- PROPERLY ALIGNED NOTIFICATION DROPDOWN --- */}
+              <div className="relative" ref={notificationRef}>
+                <button 
                   onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                   className={`relative p-2 rounded-xl sm:rounded-full transition-all duration-200 min-h-10 min-w-10 sm:min-h-11 sm:min-w-11 flex items-center justify-center shrink-0 ${isNotificationOpen
                       ? 'bg-indigo-500/20 text-indigo-300 ring-2 ring-indigo-500/40 lg:bg-indigo-50 lg:text-indigo-600 lg:ring-indigo-200'
@@ -542,8 +565,8 @@ export default function PatientLayout() {
                     />
 
                     {/* Perfectly anchored & aligned dropdown */}
-                    <div className="absolute -right-8 sm:right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden text-left flex flex-col max-h-[50vh] sm:max-h-[340px] animate-in fade-in duration-100">
-
+                    <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-1.5rem)] bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden text-left flex flex-col max-h-[50vh] sm:max-h-85 animate-in fade-in duration-100">
+                      
                       {/* Centered & Slightly Enlarged Notification Header */}
                       <div className="bg-[#13102F] px-3 py-2.5 shrink-0 flex items-center justify-center border-b border-[#1e1a45]">
                         <div className="flex items-center gap-1.5">
@@ -637,13 +660,13 @@ export default function PatientLayout() {
               {/* Mobile Profile Image */}
               <button
                 onClick={() => navigate(ROUTES.PATIENT.PROFILE)}
-                className="lg:hidden flex items-center cursor-pointer rounded-full active:scale-95 transition-transform"
+                className="flex items-center cursor-pointer rounded-full active:scale-95 transition-transform"
                 title="View Profile"
               >
                 {user?.profilePicture ? (
-                  <img src={user.profilePicture} alt="Profile" className="h-8 w-8 rounded-full object-cover shrink-0 ring-2 ring-indigo-400/40 bg-slate-800" />
+                  <img src={user.profilePicture} alt="Profile" className="h-8 w-8 sm:h-9 sm:w-9 rounded-full object-cover shrink-0 ring-2 ring-indigo-400/40 bg-slate-800 shadow-sm" />
                 ) : (
-                  <div className="h-8 w-8 rounded-full shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-inner">
+                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full shrink-0 bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-inner">
                     {getInitials(user ? `${user.firstName} ${user.lastName}` : undefined)}
                   </div>
                 )}
@@ -653,7 +676,11 @@ export default function PatientLayout() {
         )}
 
         {/* MAIN CONTENT AREA */}
+<<<<<<< HEAD
         <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-full max-w-none p-0 overflow-hidden bg-[#060819] flex flex-col min-h-0' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
+=======
+        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-dvh max-w-none p-0 overflow-hidden' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
+>>>>>>> f0cb659beed032bd4a5af5fb55ac94b5366d0466
           <Outlet />
         </main>
       </div>
@@ -671,8 +698,8 @@ export default function PatientLayout() {
                   to={item.to}
                   className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 min-w-0"
                 >
-                  <Icon size={20} strokeWidth={active ? 2.5 : 2} className={`shrink-0 ${active ? 'text-indigo-400' : 'text-slate-400'}`} />
-                  <span className={`text-[9px] font-semibold truncate max-w-full ${active ? 'text-indigo-400' : 'text-slate-400'}`}>
+                  <Icon size={20} strokeWidth={active ? 2.5 : 2} className={`shrink-0 ${active ? 'text-indigo-400' : 'text-slate-100'}`} />
+                  <span className={`text-[9px] font-semibold truncate max-w-full ${active ? 'text-indigo-400' : 'text-slate-100'}`}>
                     {item.label}
                   </span>
                 </NavLink>

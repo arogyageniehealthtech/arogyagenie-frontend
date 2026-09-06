@@ -9,9 +9,20 @@ import BookBedModal from '../component/others/BookBedModal';
 import { LocationBanner } from '../component/common/LocationBanner';
 import { EmptyNearbyHealthcare } from '../component/common/EmptyNearbyHealthcare';
 import { useGeolocation } from '../hooks/useGeolocation';
-import { HOSPITAL_DEPARTMENTS } from '../data/mockHospitals';
 import type { Hospital } from '../types/hospital';
 import { facilityApi } from '../api/facilityApi';
+import { hospitalApi } from '../api/hospitalApi';
+
+const MOCK_HOSPITAL_DEPARTMENTS = [
+  "Cardiology",
+  "Emergency Care",
+  "General Medicine",
+  "Neurology",
+  "Orthopedics",
+  "Pediatrics",
+  "Dermatology",
+  "Oncology"
+];
 
 const FALLBACK_COORDS = { lat: 22.5726, lng: 88.3639 };
 
@@ -266,32 +277,17 @@ export default function HospitalDiscoveryPage() {
         });
 
         if (isMounted) {
-          const mappedHospitals: Hospital[] = (data || []).map((facility: any) => ({
-            id: String(facility.id),
-            name: facility.name,
-            facilityType: facility.type || facility.facilityType || 'Hospital',
-            establishedYear: facility.establishedYear || 2005,
-            departments: facility.departments || ['General Medicine', 'Emergency', 'Cardiology'],
-            distanceKm: facility.distanceKm != null ? Number(Number(facility.distanceKm).toFixed(1)) : 0,
-            lat: facility.lat != null ? Number(facility.lat) : (facility.address?.latitude ? Number(facility.address.latitude) : undefined),
-            lng: facility.lng != null ? Number(facility.lng) : (facility.address?.longitude ? Number(facility.address.longitude) : undefined),
-            address: typeof facility.address === 'object' ? [facility.address?.line1, facility.address?.city, facility.address?.state].filter(Boolean).join(', ') : (facility.address || 'Address available on request'),
-            phone: facility.phone || '+91 33 2200 0000',
-            image: facility.image,
-            rating: facility.rating ?? 4.7,
-            reviewCount: facility.reviewCount ?? 120,
-            about: facility.about || 'Premier healthcare institution providing emergency and specialized medical care.',
-            availableDates: facility.availableDates || ['Today', 'Tomorrow'],
-            nextAvailableBed: facility.nextAvailableBed || 'General Ward (Available)',
-            emergencyServices: facility.emergencyServices ?? true,
-            bedOptions: facility.bedOptions || [
-              { type: 'general', label: 'General Ward', rate: 1200, availableCount: 5 },
-              { type: 'semi-private', label: 'Semi-Private Room', rate: 2500, availableCount: 2 },
-              { type: 'private', label: 'Private Deluxe', rate: 4500, availableCount: 1 },
-              { type: 'icu', label: 'ICU Critical Care', rate: 8000, availableCount: 2 },
-            ],
-          }));
-
+          const mappedHospitals = (data || []).map((facility: any) => {
+            const rawDepts = facility.departments || [];
+            const formattedDepts = rawDepts.map((d: any) => typeof d === 'string' ? d : d.name).filter(Boolean);
+            
+            return {
+              ...facility,
+              facilityType: facility.facilityType || 'Hospital',
+              establishedYear: facility.establishedYear || 2000,
+              departments: formattedDepts.length > 0 ? formattedDepts : MOCK_HOSPITAL_DEPARTMENTS.slice(0, 4)
+            };
+          });
           setAllHospitals(mappedHospitals);
           setHospitals(mappedHospitals);
         }
@@ -315,7 +311,6 @@ export default function HospitalDiscoveryPage() {
     };
   }, [radiusKm, activeCoordinates]);
 
-  // Local filtering for text search and department selection
   useEffect(() => {
     let filtered = allHospitals;
 
@@ -329,14 +324,16 @@ export default function HospitalDiscoveryPage() {
 
     if (selectedDepartment) {
       filtered = filtered.filter(h => 
-        h.departments?.includes(selectedDepartment)
+        h.departments?.some(d => {
+          const name = typeof d === 'string' ? d : (d as any)?.name;
+          return name && typeof name === 'string' && name.toLowerCase() === selectedDepartment.toLowerCase();
+        })
       );
     }
 
     setHospitals(filtered);
   }, [searchQuery, selectedDepartment, allHospitals]);
 
-  // Type-safe coordinate extraction for Map markers
   const mapLocations = hospitals
     .filter((h): h is Hospital & { lat: number; lng: number } => 
       typeof h.lat === 'number' && typeof h.lng === 'number'
@@ -357,20 +354,18 @@ export default function HospitalDiscoveryPage() {
   return (
     <div className="min-h-screen flex flex-col font-sans relative bg-[#F1F5F9]">
       <div className="relative z-10 flex flex-col flex-1">
-        <main className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-2 p-2 sm:p-4">
+        <main className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-2 p-3">
           
-          {/* SEARCH & FILTER SECTION */}
           <section className="relative z-25 w-full bg-white px-3 py-2.5 shadow-sm border border-slate-200/80 rounded-xl flex flex-col lg:flex-row items-center gap-2.5 transition-all">
             
-            {/* Search Input */}
             <div className="relative w-full lg:flex-1 h-9 min-w-50">
-              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className={`w-3.5 h-3.5 transition-colors ${searchQuery ? 'text-[#5B21B6]' : 'text-slate-400'}`} />
               </div>
-              <input 
+               <input 
                 type="text" 
                 placeholder="Search hospitals, emergency care..." 
-                className="w-full h-full pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#5B21B6] focus:border-[#5B21B6] text-[#13102F] text-xs font-medium transition-all" 
+                className="w-full h-full pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] text-[#13102F] text-xs md:text-sm font-medium transition-all shadow-inner" 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)} 
               />
@@ -381,24 +376,21 @@ export default function HospitalDiscoveryPage() {
               )}
             </div>
 
-            {/* Desktop Divider */}
             <div className="hidden lg:block w-px h-5 bg-slate-200 shrink-0"></div>
 
-            {/* Department Filter */}
-            <div className="relative z-50 w-full lg:w-44 shrink-0">
+            <div className="relative z-50 w-full lg:w-48 shrink-0">
               <CustomSelect 
                 value={selectedDepartment || ""} 
                 onChange={(val) => setSelectedDepartment(val === "All Departments" ? null : val)} 
-                options={["All Departments", ...HOSPITAL_DEPARTMENTS]} 
+                options={["All Departments", ...MOCK_HOSPITAL_DEPARTMENTS]} 
                 placeholder="Department" 
+                className="h-9 text-xs bg-slate-50 border-slate-200 rounded-xl hover:border-slate-300 focus:ring-1 focus:ring-[#5B21B6]"
               />
             </div>
 
-            {/* Desktop Divider */}
             <div className="hidden lg:block w-px h-5 bg-slate-200 shrink-0"></div>
 
-            {/* Radius Horizontal Bar & Label */}
-            <div className="flex items-center justify-between lg:justify-start gap-2 w-full lg:w-56 h-9 shrink-0 px-2.5 bg-slate-50/80 rounded-lg border border-slate-100">
+            <div className="flex items-center justify-between lg:justify-start gap-2 w-full lg:w-56 h-9 shrink-0 px-3 bg-slate-50/80 rounded-xl border border-slate-100">
               <span className="text-slate-500 font-semibold text-[11px] whitespace-nowrap">Radius:</span>
               <input 
                 type="range" 
@@ -412,44 +404,23 @@ export default function HospitalDiscoveryPage() {
               </span>
             </div>
 
-            {/* Location Button with Dropdown */}
-            <div className="relative w-full lg:w-auto shrink-0">
-              <button 
-                ref={locationButtonRef}
-                onClick={() => setShowLocationOptions(!showLocationOptions)}
-                disabled={isLocating}
-                className="w-full lg:w-auto shrink-0 h-9 px-3.5 flex items-center justify-center gap-1.5 rounded-lg font-bold transition-all text-[11px] bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-sm hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70"
-                title="Location options"
-              >
-                {isLocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
-                <span>{isLocating ? 'Locating...' : 'Location'}</span>
-                <ChevronDown className="w-3 h-3 ml-0.5" />
-              </button>
-
-              <LocationOptionsDropdown
-                isOpen={showLocationOptions}
-                isLocating={isLocating}
-                onCurrentLocation={fetchLocation}
-                onCustomLocation={() => setShowCustomLocationModal(true)}
-                onClose={() => setShowLocationOptions(false)}
-              />
-            </div>
+            <button 
+              onClick={fetchLocation}
+              disabled={isLocating}
+              className="w-full lg:w-auto shrink-0 h-9 px-4 flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-sm hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70"
+              title="Fetch Browser Location"
+            >
+              {isLocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
+              <span>{isLocating ? 'Locating...' : 'My Location'}</span>
+            </button>
           </section>
 
-          {/* LOCATION STATUS BANNER */}
-          <LocationBanner
-            locationName={locationState.addressString || (activeCoordinates ? "Current Live Coordinates" : "Current Location")}
-            isCustomLocation={locationState.isUsingCustom}
-            isLocating={isLocating || locationState.isLoading}
-            hasLocationError={hasLocationError}
-            errorMessage={locationState.error || locationError}
-            radiusKm={radiusKm}
-            onRetryLocation={fetchLocation}
-            onChangeLocation={() => setShowCustomLocationModal(true)}
-            serviceCategory="hospitals"
-          />
+          {locationError && (
+            <div className="text-[11px] text-rose-600 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100 font-medium w-full">
+              {locationError}
+            </div>
+          )}
 
-          {/* RESULTS & MAP SECTION */}
           <div className="flex flex-col lg:flex-row gap-3 items-start w-full relative">
             <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
               <div className="flex items-center justify-between px-1">
@@ -459,25 +430,22 @@ export default function HospitalDiscoveryPage() {
               </div>
 
               {isLoading ? (
-                <div className="bg-white border border-slate-200 p-8 rounded-xl text-center shadow-sm flex flex-col items-center justify-center">
+                <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-sm flex flex-col items-center justify-center">
                   <Loader2 className="w-6 h-6 animate-spin text-[#5B21B6] mb-2" />
                   <p className="text-xs text-slate-500 font-medium">Fetching hospital results from API...</p>
                 </div>
               ) : apiError ? (
-                <div className="bg-white border border-rose-200 p-6 rounded-xl text-center shadow-sm">
+                <div className="bg-white border border-rose-200 p-6 rounded-2xl text-center shadow-sm">
                   <Building2 className="w-6 h-6 text-rose-500 mx-auto mb-2" />
                   <h3 className="text-sm font-bold text-slate-900 mb-1">Unable to Load Data</h3>
                   <p className="text-xs text-slate-500 mb-3">{apiError}</p>
                 </div>
               ) : hospitals.length === 0 ? (
-                <EmptyNearbyHealthcare
-                  serviceName="hospitals"
-                  radiusKm={radiusKm}
-                  message={`No verified hospitals were found within ${radiusKm} KM of your location.`}
-                  hasActiveFilters={Boolean(searchQuery || selectedDepartment)}
-                  onResetSearch={() => { setSearchQuery(""); setSelectedDepartment(null); setRadiusKm(32); }}
-                  onChangeLocation={() => setShowCustomLocationModal(true)}
-                />
+                <div className="bg-white border border-slate-200 p-6 rounded-2xl text-center shadow-sm">
+                  <Building2 className="w-6 h-6 text-slate-400 mx-auto mb-2" />
+                  <h3 className="text-sm font-bold text-slate-900 mb-1">No hospitals found</h3>
+                  <button onClick={() => {setSearchQuery(""); setSelectedDepartment(null); setRadiusKm(32);}} className="text-[#5B21B6] text-xs font-bold hover:underline">Reset Search Filters</button>
+                </div>
               ) : (
                 <div className="flex flex-col gap-3 pb-4">
                   {hospitals.map(hospital => (
@@ -492,7 +460,7 @@ export default function HospitalDiscoveryPage() {
               )}
             </div>
             
-            <div className="w-full lg:flex-1 lg:sticky lg:top-20 z-10 overflow-hidden rounded-xl shadow-sm border border-slate-200 h-64 sm:h-80 lg:h-[calc(100vh-100px)] lg:max-h-150">
+            <div className="w-full lg:flex-1 lg:sticky lg:top-20 z-10 overflow-hidden rounded-2xl shadow-sm border border-slate-200 h-64 sm:h-80 lg:h-[calc(100vh-100px)] lg:max-h-150">
               <MapContainer 
                 locations={mapLocations.map(h => ({ ...h, category: 'hospital' }))} 
                 radiusKm={radiusKm} 
@@ -503,10 +471,8 @@ export default function HospitalDiscoveryPage() {
         </main>
       </div>
 
-      {/* Booking Modal */}
       {bookingHospital && <BookBedModal hospital={bookingHospital} onClose={() => setBookingHospital(null)} />}
 
-      {/* Details Popup Modal */}
       {viewingHospital && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-5 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
@@ -532,11 +498,14 @@ export default function HospitalDiscoveryPage() {
               <div className="pt-1">
                 <span className="font-semibold text-slate-500 block mb-1.5">Departments Available:</span>
                 <div className="max-h-36 overflow-y-auto pr-1 flex flex-wrap gap-1.5 custom-scrollbar">
-                  {viewingHospital.departments?.map((dept, idx) => (
-                    <span key={idx} className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md text-[11px] font-bold border border-purple-100 inline-block">
-                      {dept}
-                    </span>
-                  ))}
+                  {viewingHospital.departments?.map((dept, idx) => {
+                    const deptName = typeof dept === 'string' ? dept : (dept as any).name;
+                    return (
+                      <span key={idx} className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md text-[11px] font-bold border border-purple-100 inline-block">
+                        {deptName}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -547,7 +516,7 @@ export default function HospitalDiscoveryPage() {
                 setViewingHospital(null);
                 setBookingHospital(target);
               }}
-              className="w-full py-2.5 text-xs font-bold text-white bg-[#5B21B6] hover:bg-[#4c1d95] rounded-lg shadow-md transition-all"
+              className="w-full py-2.5 text-xs font-bold text-white bg-[#5B21B6] hover:bg-[#4c1d95] rounded-xl shadow-md transition-all"
             >
               Book Bed Now
             </button>
