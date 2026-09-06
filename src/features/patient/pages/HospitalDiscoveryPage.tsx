@@ -1,17 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, X, Loader2, Building2, ChevronDown, Navigation, Map as MapIcon } from 'lucide-react'; 
+import { Search, MapPin, X, Loader2, Building2, ChevronDown, Navigation, Map as MapIcon, Plus, Minus, Eye, BedDouble } from 'lucide-react'; 
 import { useAppSelector, useAppDispatch } from '../../../store/hooks'; 
 import { fetchCurrentLocation, setCustomLocation } from '@/store/slices/locationSlice';
 import CustomSelect from '../component/common/CustomSelect';
-import MapContainer from '../component/common/MapContainer';
+import MapContainer, { type MapLocation } from '../component/common/MapContainer';
+import MapBottomSheet, { type SheetSnapState } from '../component/common/MapBottomSheet';
 import HospitalCard from '../component/card.component/HospitalCard';
 import BookBedModal from '../component/others/BookBedModal';
-import { LocationBanner } from '../component/common/LocationBanner';
 import { EmptyNearbyHealthcare } from '../component/common/EmptyNearbyHealthcare';
 import { useGeolocation } from '../hooks/useGeolocation';
 import type { Hospital } from '../types/hospital';
 import { facilityApi } from '../api/facilityApi';
-import { hospitalApi } from '../api/hospitalApi';
 
 const MOCK_HOSPITAL_DEPARTMENTS = [
   "Cardiology",
@@ -36,6 +35,7 @@ interface LocationOptionsDropdownProps {
   onCurrentLocation: () => void;
   onCustomLocation: () => void;
   onClose: () => void;
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
 }
 
 const LocationOptionsDropdown = ({
@@ -55,7 +55,7 @@ const LocationOptionsDropdown = ({
       />
 
       <div 
-        className="absolute top-full mt-2 right-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl shadow-purple-950/5 border border-slate-100 overflow-hidden z-50 w-56 p-1.5 transition-all animate-in fade-in zoom-in-95 duration-150"
+        className="absolute top-full mt-2 right-0 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl shadow-purple-950/10 border border-slate-100 overflow-hidden z-50 w-56 p-1.5 transition-all animate-in fade-in zoom-in-95 duration-150"
       >
         <div className="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100/80 mb-1">
           Select Location Source
@@ -67,7 +67,7 @@ const LocationOptionsDropdown = ({
             onClose();
           }}
           disabled={isLocating}
-          className="w-full px-3 py-2.5 flex items-center gap-3 text-left rounded-xl hover:bg-purple-50/80 transition-all disabled:opacity-70 group text-xs font-bold text-slate-700 hover:text-[#5B21B6]"
+          className="w-full px-3 py-2.5 flex items-center gap-3 text-left rounded-xl hover:bg-purple-50/80 transition-all disabled:opacity-70 group text-xs font-bold text-slate-700 hover:text-[#5B21B6] cursor-pointer"
         >
           <div className="w-8 h-8 rounded-lg bg-purple-50 group-hover:bg-[#5B21B6] flex items-center justify-center transition-colors text-[#5B21B6] group-hover:text-white shrink-0 shadow-xs">
             {isLocating ? (
@@ -77,8 +77,8 @@ const LocationOptionsDropdown = ({
             )}
           </div>
           <div className="flex flex-col">
-            <span>Current Location</span>
-            <span className="text-[10px] font-normal text-slate-400">Use GPS or device sensor</span>
+            <span>Current GPS</span>
+            <span className="text-[10px] font-normal text-slate-400">Use device sensor</span>
           </div>
         </button>
 
@@ -87,14 +87,14 @@ const LocationOptionsDropdown = ({
             onCustomLocation();
             onClose();
           }}
-          className="w-full px-3 py-2.5 flex items-center gap-3 text-left rounded-xl hover:bg-purple-50/80 transition-all group text-xs font-bold text-slate-700 hover:text-[#5B21B6]"
+          className="w-full px-3 py-2.5 flex items-center gap-3 text-left rounded-xl hover:bg-purple-50/80 transition-all group text-xs font-bold text-slate-700 hover:text-[#5B21B6] cursor-pointer"
         >
           <div className="w-8 h-8 rounded-lg bg-purple-50 group-hover:bg-[#5B21B6] flex items-center justify-center transition-colors text-[#5B21B6] group-hover:text-white shrink-0 shadow-xs">
             <MapIcon className="w-4 h-4" />
           </div>
           <div className="flex flex-col">
             <span>Custom Location</span>
-            <span className="text-[10px] font-normal text-slate-400">Search city or address</span>
+            <span className="text-[10px] font-normal text-slate-400">Search city or area</span>
           </div>
         </button>
       </div>
@@ -103,7 +103,7 @@ const LocationOptionsDropdown = ({
 };
 
 // ============================================================================
-// CUSTOM LOCATION MODAL COMPONENT (SEARCH & SUGGESTIONS ONLY)
+// CUSTOM LOCATION MODAL COMPONENT
 // ============================================================================
 
 interface CustomLocationModalProps {
@@ -171,7 +171,7 @@ const CustomLocationModal = ({
             </div>
             <button
               onClick={handleClose}
-              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-5 h-5 text-slate-600" />
             </button>
@@ -183,7 +183,8 @@ const CustomLocationModal = ({
                 type="text"
                 placeholder="Search city, area, pincode..."
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full px-4 py-2.5 pl-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B21B6] focus:border-transparent text-sm"
+                autoFocus
+                className="w-full px-4 py-2.5 pl-10 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6] focus:border-transparent text-sm"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
             </div>
@@ -200,7 +201,7 @@ const CustomLocationModal = ({
                   <button
                     key={result.id}
                     onClick={() => handleSearchResultClick(result)}
-                    className="w-full text-left px-3 py-2.5 hover:bg-purple-50 rounded-lg transition-colors flex items-start gap-2.5 group"
+                    className="w-full text-left px-3 py-2.5 hover:bg-purple-50 rounded-xl transition-colors flex items-start gap-2.5 group cursor-pointer"
                   >
                     <MapPin className="w-4 h-4 text-slate-400 group-hover:text-[#5B21B6] shrink-0 mt-0.5" />
                     <div>
@@ -219,20 +220,23 @@ const CustomLocationModal = ({
 };
 
 // ============================================================================
-// MAIN HOSPITAL DISCOVERY PAGE COMPONENT
+// MAIN HOSPITAL DISCOVERY PAGE COMPONENT (MAP-FIRST + BOTTOM SHEET OVERLAY)
 // ============================================================================
 
 export default function HospitalDiscoveryPage() {
   const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
-  const [radiusKm, setRadiusKm] = useState<number>(32);
+  const [radiusKm, setRadiusKm] = useState<number>(10);
   const [bookingHospital, setBookingHospital] = useState<Hospital | null>(null);
   const [viewingHospital, setViewingHospital] = useState<Hospital | null>(null);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<string | number | null>(null);
+  const [sheetSnap, setSheetSnap] = useState<SheetSnapState>('peek');
   
   const [showLocationOptions, setShowLocationOptions] = useState(false);
   const [showCustomLocationModal, setShowCustomLocationModal] = useState(false);
   const locationButtonRef = useRef<HTMLButtonElement | null>(null);
+  const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const locationState = useAppSelector((state) => state.location);
 
@@ -247,14 +251,13 @@ export default function HospitalDiscoveryPage() {
   );
 
   const activeCoordinates = locationState.coordinates || browserCoords;
-  const hasLocationError = Boolean(locationState.error || locationError);
 
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [allHospitals, setAllHospitals] = useState<Hospital[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Fetch Hospitals from Backend API with radiusKm (32 KM default) and type='HOSPITAL'
+  // Fetch Hospitals from Backend API with radiusKm and type='HOSPITAL'
   useEffect(() => {
     let isMounted = true;
 
@@ -280,12 +283,17 @@ export default function HospitalDiscoveryPage() {
           const mappedHospitals = (data || []).map((facility: any) => {
             const rawDepts = facility.departments || [];
             const formattedDepts = rawDepts.map((d: any) => typeof d === 'string' ? d : d.name).filter(Boolean);
+            const lat = facility.address?.latitude ? Number(facility.address.latitude) : (facility.lat ?? 0);
+            const lng = facility.address?.longitude ? Number(facility.address.longitude) : (facility.lng ?? 0);
             
             return {
               ...facility,
+              lat,
+              lng,
               facilityType: facility.facilityType || 'Hospital',
-              establishedYear: facility.establishedYear || 2000,
-              departments: formattedDepts.length > 0 ? formattedDepts : MOCK_HOSPITAL_DEPARTMENTS.slice(0, 4)
+              establishedYear: facility.establishedYear || 2005,
+              departments: formattedDepts.length > 0 ? formattedDepts : MOCK_HOSPITAL_DEPARTMENTS.slice(0, 4),
+              distanceKm: facility.distanceKm !== undefined ? Number(facility.distanceKm.toFixed(1)) : 0
             };
           });
           setAllHospitals(mappedHospitals);
@@ -311,13 +319,14 @@ export default function HospitalDiscoveryPage() {
     };
   }, [radiusKm, activeCoordinates]);
 
+  // Search & Filter
   useEffect(() => {
     let filtered = allHospitals;
 
     if (searchQuery.trim()) {
       const query = searchQuery.trim().toLowerCase();
       filtered = filtered.filter(h => 
-        h.name.toLowerCase().includes(query) || 
+        h.name?.toLowerCase().includes(query) || 
         h.facilityType?.toLowerCase().includes(query)
       );
     }
@@ -334,9 +343,9 @@ export default function HospitalDiscoveryPage() {
     setHospitals(filtered);
   }, [searchQuery, selectedDepartment, allHospitals]);
 
-  const mapLocations = hospitals
+  const mapLocations: MapLocation[] = hospitals
     .filter((h): h is Hospital & { lat: number; lng: number } => 
-      typeof h.lat === 'number' && typeof h.lng === 'number'
+      typeof h.lat === 'number' && typeof h.lng === 'number' && !isNaN(h.lat) && !isNaN(h.lng)
     )
     .map((h) => ({
       id: h.id,
@@ -344,6 +353,8 @@ export default function HospitalDiscoveryPage() {
       lat: h.lat,
       lng: h.lng,
       category: 'hospital' as const,
+      specialty: h.facilityType || 'Hospital',
+      distanceKm: h.distanceKm,
     }));
 
   const handleCustomLocationSubmit = (coordinates: { lat: number; lng: number; address: string }) => {
@@ -351,140 +362,210 @@ export default function HospitalDiscoveryPage() {
     setShowCustomLocationModal(false);
   };
 
+  const handleSelectLocation = (id: string | number) => {
+    setSelectedHospitalId(id);
+    if (sheetSnap === 'peek') {
+      setSheetSnap('half');
+    }
+    const cardEl = cardRefs.current[String(id)];
+    if (cardEl) {
+      cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
+
+  const handleIncreaseRadius = () => {
+    setRadiusKm((prev) => Math.min(prev + 5, 50));
+  };
+
+  const handleDecreaseRadius = () => {
+    setRadiusKm((prev) => Math.max(prev - 5, 2));
+  };
+
   return (
-    <div className="min-h-screen flex flex-col font-sans relative bg-[#F1F5F9]">
-      <div className="relative z-10 flex flex-col flex-1">
-        <main className="flex-1 max-w-7xl mx-auto w-full flex flex-col gap-2 p-3">
+    <div className="relative w-full h-[calc(100vh-60px)] lg:h-[calc(100vh-90px)] overflow-hidden flex flex-col font-sans bg-[#F8FAFC]">
+      
+      {/* ========================================================================= */}
+      {/* TOP FLOATING SEARCH & CONTROLS BAR                                        */}
+      {/* ========================================================================= */}
+      <div className="relative z-20 w-full max-w-7xl mx-auto px-2.5 sm:px-4 pt-2 sm:pt-3 shrink-0">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-md border border-slate-200/90 p-2 sm:p-2.5 flex flex-col md:flex-row items-stretch md:items-center gap-2 transition-all">
           
-          <section className="relative z-25 w-full bg-white px-3 py-2.5 shadow-sm border border-slate-200/80 rounded-xl flex flex-col lg:flex-row items-center gap-2.5 transition-all">
-            
-            <div className="relative w-full lg:flex-1 h-9 min-w-50">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className={`w-3.5 h-3.5 transition-colors ${searchQuery ? 'text-[#5B21B6]' : 'text-slate-400'}`} />
-              </div>
-               <input 
-                type="text" 
-                placeholder="Search hospitals, emergency care..." 
-                className="w-full h-full pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] text-[#13102F] text-xs md:text-sm font-medium transition-all shadow-inner" 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600">
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
+          {/* Search Input */}
+          <div className="relative flex-1 h-9 min-w-45">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className={`w-4 h-4 transition-colors ${searchQuery ? 'text-[#5B21B6]' : 'text-slate-400'}`} />
             </div>
+            <input 
+              type="text" 
+              placeholder="Search hospitals, emergency care..." 
+              className="w-full h-full pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5B21B6]/20 focus:border-[#5B21B6] text-[#13102F] text-xs font-semibold placeholder:text-slate-400 transition-all shadow-inner" 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery("")} 
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
 
-            <div className="hidden lg:block w-px h-5 bg-slate-200 shrink-0"></div>
+          {/* Department Filter */}
+          <div className="w-full md:w-44 shrink-0">
+            <CustomSelect 
+              value={selectedDepartment || ""} 
+              onChange={(val) => setSelectedDepartment(val === "All Departments" ? null : val)} 
+              options={["All Departments", ...MOCK_HOSPITAL_DEPARTMENTS]} 
+              placeholder="Department" 
+            />
+          </div>
 
-            <div className="relative z-50 w-full lg:w-48 shrink-0">
-              <CustomSelect 
-                value={selectedDepartment || ""} 
-                onChange={(val) => setSelectedDepartment(val === "All Departments" ? null : val)} 
-                options={["All Departments", ...MOCK_HOSPITAL_DEPARTMENTS]} 
-                placeholder="Department" 
-                className="h-9 text-xs bg-slate-50 border-slate-200 rounded-xl hover:border-slate-300 focus:ring-1 focus:ring-[#5B21B6]"
-              />
-            </div>
+          {/* Radius Increment/Decrement UI */}
+          <div className="flex items-center justify-between md:justify-center gap-1.5 h-9 px-2 bg-slate-50 rounded-xl border border-slate-200/80 shrink-0">
+            <button
+              onClick={handleDecreaseRadius}
+              disabled={radiusKm <= 2}
+              className="w-6 h-6 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 flex items-center justify-center font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 cursor-pointer shadow-2xs"
+              title="Decrease radius"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
 
-            <div className="hidden lg:block w-px h-5 bg-slate-200 shrink-0"></div>
+            <span className="text-xs font-extrabold text-[#5B21B6] min-w-14 text-center select-none">
+              {radiusKm} KM
+            </span>
 
-            <div className="flex items-center justify-between lg:justify-start gap-2 w-full lg:w-56 h-9 shrink-0 px-3 bg-slate-50/80 rounded-xl border border-slate-100">
-              <span className="text-slate-500 font-semibold text-[11px] whitespace-nowrap">Radius:</span>
-              <input 
-                type="range" 
-                min="2" max="32" step="2" 
-                value={radiusKm} 
-                onChange={(e) => setRadiusKm(Number(e.target.value))} 
-                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#5B21B6]" 
-              />
-              <span className="text-[#5B21B6] text-[11px] font-bold min-w-9 text-right shrink-0">
-                {radiusKm} km
-              </span>
-            </div>
+            <button
+              onClick={handleIncreaseRadius}
+              disabled={radiusKm >= 50}
+              className="w-6 h-6 rounded-lg bg-white hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 flex items-center justify-center font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-90 cursor-pointer shadow-2xs"
+              title="Increase radius"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
 
+          {/* Location Trigger */}
+          <div className="relative shrink-0">
             <button 
-              onClick={fetchLocation}
+              ref={locationButtonRef}
+              onClick={() => setShowLocationOptions(!showLocationOptions)}
               disabled={isLocating}
-              className="w-full lg:w-auto shrink-0 h-9 px-4 flex items-center justify-center gap-1.5 rounded-xl font-bold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-sm hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70"
-              title="Fetch Browser Location"
+              className="w-full md:w-auto h-9 px-3.5 flex items-center justify-center gap-1.5 rounded-xl font-extrabold transition-all text-xs bg-linear-to-r from-[#5B21B6] to-indigo-600 text-white shadow-sm hover:from-[#4c1d95] hover:to-indigo-700 active:scale-95 disabled:opacity-70 cursor-pointer"
+              title="Select location"
             >
               {isLocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MapPin className="w-3.5 h-3.5" />}
-              <span>{isLocating ? 'Locating...' : 'My Location'}</span>
+              <span className="truncate max-w-28 sm:max-w-none">
+                {locationState.isUsingCustom ? 'Custom Loc' : isLocating ? 'Locating...' : 'My GPS'}
+              </span>
+              <ChevronDown className="w-3 h-3 ml-0.5" />
             </button>
-          </section>
 
-          {locationError && (
-            <div className="text-[11px] text-rose-600 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100 font-medium w-full">
-              {locationError}
+            <LocationOptionsDropdown
+              isOpen={showLocationOptions}
+              isLocating={isLocating}
+              onCurrentLocation={fetchLocation}
+              onCustomLocation={() => setShowCustomLocationModal(true)}
+              onClose={() => setShowLocationOptions(false)}
+              buttonRef={locationButtonRef}
+            />
+          </div>
+
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* MAIN CONTENT AREA: MAP DOMINANT + BOTTOM SHEET OVERLAY                    */}
+      {/* ========================================================================= */}
+      <div className="relative flex-1 w-full max-w-7xl mx-auto px-2 sm:px-4 py-2 flex flex-col lg:flex-row gap-3 items-stretch min-h-0">
+        
+        {/* BOTTOM SHEET / SIDEBAR */}
+        <MapBottomSheet
+          resultCount={hospitals.length}
+          itemNoun="Hospital"
+          radiusKm={radiusKm}
+          isLoading={isLoading}
+          snapState={sheetSnap}
+          onSnapChange={setSheetSnap}
+          activeLocationName={locationState.addressString || undefined}
+        >
+          {isLoading ? (
+            <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-xs flex flex-col items-center justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-[#5B21B6] mb-2" />
+              <p className="text-xs text-slate-500 font-medium">Fetching nearby hospitals from API...</p>
             </div>
-          )}
-
-          <div className="flex flex-col lg:flex-row gap-3 items-start w-full relative">
-            <div className="w-full lg:w-5/12 xl:w-[40%] shrink-0 space-y-2">
-              <div className="flex items-center justify-between px-1">
-                <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                  {isLoading ? 'Searching hospitals...' : `${hospitals.length} ${hospitals.length === 1 ? 'Hospital' : 'Hospitals'} within ${radiusKm} KM`}
-                </h2>
-              </div>
-
-              {isLoading ? (
-                <div className="bg-white border border-slate-200 p-8 rounded-2xl text-center shadow-sm flex flex-col items-center justify-center">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#5B21B6] mb-2" />
-                  <p className="text-xs text-slate-500 font-medium">Fetching hospital results from API...</p>
-                </div>
-              ) : apiError ? (
-                <div className="bg-white border border-rose-200 p-6 rounded-2xl text-center shadow-sm">
-                  <Building2 className="w-6 h-6 text-rose-500 mx-auto mb-2" />
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">Unable to Load Data</h3>
-                  <p className="text-xs text-slate-500 mb-3">{apiError}</p>
-                </div>
-              ) : hospitals.length === 0 ? (
-                <div className="bg-white border border-slate-200 p-6 rounded-2xl text-center shadow-sm">
-                  <Building2 className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                  <h3 className="text-sm font-bold text-slate-900 mb-1">No hospitals found</h3>
-                  <button onClick={() => {setSearchQuery(""); setSelectedDepartment(null); setRadiusKm(32);}} className="text-[#5B21B6] text-xs font-bold hover:underline">Reset Search Filters</button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3 pb-4">
-                  {hospitals.map(hospital => (
+          ) : apiError ? (
+            <div className="bg-white border border-rose-200 p-6 rounded-2xl text-center shadow-sm">
+              <Building2 className="w-6 h-6 text-rose-500 mx-auto mb-2" />
+              <h3 className="text-sm font-bold text-slate-900 mb-1">Unable to Load Hospitals</h3>
+              <p className="text-xs text-slate-500 mb-3">{apiError}</p>
+            </div>
+          ) : hospitals.length === 0 ? (
+            <EmptyNearbyHealthcare
+              serviceName="hospitals"
+              radiusKm={radiusKm}
+              message={`No hospitals found within ${radiusKm} KM. Try expanding radius or clearing filters.`}
+              hasActiveFilters={Boolean(searchQuery || selectedDepartment)}
+              onResetSearch={() => { setSearchQuery(""); setSelectedDepartment(null); setRadiusKm(15); }}
+              onChangeLocation={() => setShowCustomLocationModal(true)}
+            />
+          ) : (
+            <div className="flex flex-col gap-3 pb-2">
+              {hospitals.map((hospital) => {
+                const isSelected = String(hospital.id) === String(selectedHospitalId);
+                return (
+                  <div
+                    key={hospital.id}
+                    ref={(el) => { cardRefs.current[String(hospital.id)] = el; }}
+                    onClick={() => setSelectedHospitalId(hospital.id)}
+                    className={`transition-all rounded-2xl cursor-pointer ${
+                      isSelected ? 'ring-2 ring-indigo-600 shadow-lg scale-[1.01]' : ''
+                    }`}
+                  >
                     <HospitalCard 
-                      key={hospital.id} 
                       hospital={hospital} 
                       onBook={() => setBookingHospital(hospital)} 
                       onViewDetails={() => setViewingHospital(hospital)} 
                     />
-                  ))}
-                </div>
-              )}
+                  </div>
+                );
+              })}
             </div>
-            
-            <div className="w-full lg:flex-1 lg:sticky lg:top-20 z-10 overflow-hidden rounded-2xl shadow-sm border border-slate-200 h-64 sm:h-80 lg:h-[calc(100vh-100px)] lg:max-h-150">
-              <MapContainer 
-                locations={mapLocations.map(h => ({ ...h, category: 'hospital' }))} 
-                radiusKm={radiusKm} 
-                centerCoordinates={activeCoordinates} 
-              />
-            </div>
-          </div>
-        </main>
+          )}
+        </MapBottomSheet>
+
+        {/* MAP CONTAINER */}
+        <div className="flex-1 w-full h-full relative rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm z-0">
+          <MapContainer 
+            category="hospital"
+            locations={mapLocations} 
+            radiusKm={radiusKm} 
+            centerCoordinates={activeCoordinates}
+            selectedLocationId={selectedHospitalId}
+            onSelectLocation={handleSelectLocation}
+          />
+        </div>
+
       </div>
 
+      {/* Book Bed Modal */}
       {bookingHospital && <BookBedModal hospital={bookingHospital} onClose={() => setBookingHospital(null)} />}
 
+      {/* Hospital Details Modal */}
       {viewingHospital && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-5 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
             <button 
               onClick={() => setViewingHospital(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-full bg-slate-100"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full bg-slate-100 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
 
             <h2 className="text-lg font-black text-slate-900 mb-1">{viewingHospital.name}</h2>
-            <p className="text-xs font-bold text-purple-600 mb-4">{viewingHospital.facilityType}</p>
+            <p className="text-xs font-bold text-indigo-600 mb-4">{viewingHospital.facilityType}</p>
 
             <div className="space-y-2 text-xs text-slate-600 mb-5">
               <div className="flex justify-between py-1.5 border-b border-slate-100">
@@ -501,7 +582,7 @@ export default function HospitalDiscoveryPage() {
                   {viewingHospital.departments?.map((dept, idx) => {
                     const deptName = typeof dept === 'string' ? dept : (dept as any).name;
                     return (
-                      <span key={idx} className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-md text-[11px] font-bold border border-purple-100 inline-block">
+                      <span key={idx} className="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md text-[11px] font-bold border border-indigo-100 inline-block">
                         {deptName}
                       </span>
                     );
@@ -516,7 +597,7 @@ export default function HospitalDiscoveryPage() {
                 setViewingHospital(null);
                 setBookingHospital(target);
               }}
-              className="w-full py-2.5 text-xs font-bold text-white bg-[#5B21B6] hover:bg-[#4c1d95] rounded-xl shadow-md transition-all"
+              className="w-full py-2.5 text-xs font-bold text-white bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl shadow-md transition-all cursor-pointer"
             >
               Book Bed Now
             </button>
