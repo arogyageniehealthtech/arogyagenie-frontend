@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { GoogleMap, useJsApiLoader, MarkerF, CircleF, InfoWindowF } from '@react-google-maps/api';
-import { LocateFixed, MapPin, AlertTriangle, ExternalLink } from 'lucide-react';
+import { LocateFixed } from 'lucide-react';
 
 export interface MapLocation {
   id: string | number;
@@ -126,35 +126,16 @@ export default function MapContainer({
   onSelectLocation,
   category = 'doctor'
 }: MapContainerProps) {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-
-  const { isLoaded, loadError } = useJsApiLoader({
+  const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: apiKey
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
   });
 
-  const [hasAuthError, setHasAuthError] = useState(false);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [activeMarkerId, setActiveMarkerId] = useState<string | number | null>(selectedLocationId ?? null);
   const [isUserMarkerOpen, setIsUserMarkerOpen] = useState(false);
   const [browserCoords, setBrowserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const hasInitiallyFittedBounds = useRef(false);
-
-  // Catch Google Maps authentication failure callback (BillingNotEnabled, ApiNotActivated, RefererNotAllowed)
-  useEffect(() => {
-    const originalAuthFailure = (window as any).gm_authFailure;
-    (window as any).gm_authFailure = () => {
-      console.warn("Google Maps Platform auth failure intercepted.");
-      setHasAuthError(true);
-      if (typeof originalAuthFailure === 'function') {
-        originalAuthFailure();
-      }
-    };
-
-    return () => {
-      (window as any).gm_authFailure = originalAuthFailure;
-    };
-  }, []);
 
   // Sync activeMarkerId with selectedLocationId from parent
   useEffect(() => {
@@ -252,112 +233,6 @@ export default function MapContainer({
     return isActive ? DOCTOR_PIN_ACTIVE : DOCTOR_PIN;
   };
 
-  const validLocations = locations.filter(
-    (loc): loc is MapLocation & { lat: number; lng: number } =>
-      typeof loc.lat === 'number' && typeof loc.lng === 'number' && !isNaN(loc.lat) && !isNaN(loc.lng)
-  );
-
-  // =========================================================================
-  // GRACEFUL FALLBACK RADAR CANVAS (Rendered if Google Maps auth/billing fails)
-  // =========================================================================
-  if (hasAuthError || loadError || !apiKey) {
-    return (
-      <div className="w-full h-full relative bg-slate-900 overflow-hidden flex flex-col justify-between p-4 select-none font-sans">
-        {/* Animated Background Vector Grid / Radar Rings */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
-                <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#6366F1" strokeWidth="0.8" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-            {/* Concentric Radar Rings */}
-            <circle cx="50%" cy="50%" r="28%" fill="none" stroke="#818CF8" strokeWidth="1.5" strokeDasharray="4 4" className="animate-pulse" />
-            <circle cx="50%" cy="50%" r="42%" fill="none" stroke="#6366F1" strokeWidth="1" />
-          </svg>
-        </div>
-
-        {/* Top Status Banner */}
-        <div className="relative z-10 flex items-center justify-between gap-2">
-          <div className="px-2.5 py-1 bg-slate-800/90 backdrop-blur-md rounded-xl border border-slate-700/80 shadow-md flex items-center gap-1.5 text-xs text-slate-200">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-bold text-[11px]">Active GPS Location • {radiusKm} KM Radius</span>
-          </div>
-
-          <div className="px-2 py-1 bg-amber-500/20 border border-amber-500/30 text-amber-300 rounded-lg text-[10px] font-bold flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3 text-amber-400" />
-            <span>Fallback Map Canvas</span>
-          </div>
-        </div>
-
-        {/* Center User Radar Location Pin */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <div className="relative flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-blue-500/20 animate-ping absolute" />
-            <div className="w-10 h-10 rounded-full bg-blue-500/30 flex items-center justify-center">
-              <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
-            </div>
-            <span className="absolute -bottom-6 bg-slate-950/90 px-2 py-0.5 rounded text-[10px] font-extrabold text-blue-400 border border-blue-500/40 whitespace-nowrap shadow-md">
-              📍 You ({currentCenter.lat.toFixed(2)}, {currentCenter.lng.toFixed(2)})
-            </span>
-          </div>
-        </div>
-
-        {/* Interactive Simulated Marker Coordinates on Canvas */}
-        <div className="absolute inset-0 z-20 pointer-events-auto overflow-hidden">
-          {validLocations.map((loc, idx) => {
-            const isSelected = String(loc.id) === String(activeMarkerId);
-            
-            // Calculate proportional offset from center (normalized to canvas view)
-            const angle = (idx * (360 / Math.max(1, validLocations.length)) * Math.PI) / 180;
-            const distRatio = Math.min(0.35, 0.15 + (idx * 0.05));
-            const leftPct = 50 + Math.cos(angle) * (distRatio * 100);
-            const topPct = 50 + Math.sin(angle) * (distRatio * 100);
-
-            return (
-              <div
-                key={loc.id}
-                style={{ left: `${leftPct}%`, top: `${topPct}%` }}
-                onClick={() => handleMarkerClick(loc)}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all ${
-                  isSelected ? 'scale-125 z-30' : 'hover:scale-110 z-20'
-                }`}
-              >
-                <div className={`p-1.5 rounded-xl shadow-xl flex items-center gap-1 border transition-all ${
-                  isSelected 
-                    ? 'bg-yellow-400 text-slate-950 border-white ring-2 ring-yellow-300' 
-                    : 'bg-slate-900/90 text-white border-purple-500/50 hover:border-purple-400'
-                }`}>
-                  <MapPin className={`w-3.5 h-3.5 ${isSelected ? 'text-slate-950' : 'text-purple-400'}`} />
-                  <span className="text-[10px] font-black truncate max-w-24">{loc.name}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Bottom Interactive Notice & External Map Direction Bar */}
-        <div className="relative z-10 flex items-center justify-between gap-2 mt-auto">
-          <div className="text-[10px] text-slate-400 font-medium">
-            {validLocations.length} providers within {radiusKm} KM radius
-          </div>
-
-          <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(category + ' near ' + currentCenter.lat + ',' + currentCenter.lng)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-2.5 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-md transition-all active:scale-95"
-          >
-            <span>Open Google Maps</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading State
   if (!isLoaded) {
     return (
       <div className="w-full h-full bg-slate-900/10 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center animate-pulse">
@@ -367,9 +242,11 @@ export default function MapContainer({
     );
   }
 
-  // =========================================================================
-  // STANDARD GOOGLE MAP CANVAS
-  // =========================================================================
+  const validLocations = locations.filter(
+    (loc): loc is MapLocation & { lat: number; lng: number } =>
+      typeof loc.lat === 'number' && typeof loc.lng === 'number' && !isNaN(loc.lat) && !isNaN(loc.lng)
+  );
+
   return (
     <div className="w-full h-full relative z-0 overflow-hidden select-none">
       <GoogleMap
@@ -478,7 +355,7 @@ export default function MapContainer({
         })}
       </GoogleMap>
 
-      {/* Floating Recenter Quick Control */}
+      {/* Floating Recenter & Zoom Quick Controls on the Map */}
       <div className="absolute right-3 bottom-24 lg:bottom-5 z-20 flex flex-col gap-2">
         <button
           onClick={handleRecenter}
