@@ -135,11 +135,7 @@ export default function PatientLayout() {
   };
 
   return (
-<<<<<<< HEAD
     <div className={`font-sans ${isAiChatPage ? 'fixed inset-0 w-full h-[100dvh] h-full bg-[#060819] flex flex-col overflow-hidden z-50 overscroll-none' : 'relative flex min-h-screen bg-[#F8FAFC]'}`}>
-=======
-    <div className={`font-sans relative flex ${isAiChatPage ? 'min-h-dvh h-dvh bg-[#060819] overflow-hidden' : 'min-h-screen bg-[#F8FAFC]'}`}>
->>>>>>> f0cb659beed032bd4a5af5fb55ac94b5366d0466
 
       {/* --- LEFT SIDEBAR --- */}
       {!isAiChatPage && (
@@ -676,11 +672,7 @@ export default function PatientLayout() {
         )}
 
         {/* MAIN CONTENT AREA */}
-<<<<<<< HEAD
         <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-full max-w-none p-0 overflow-hidden bg-[#060819] flex flex-col min-h-0' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
-=======
-        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-dvh max-w-none p-0 overflow-hidden' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
->>>>>>> f0cb659beed032bd4a5af5fb55ac94b5366d0466
           <Outlet />
         </main>
       </div>
