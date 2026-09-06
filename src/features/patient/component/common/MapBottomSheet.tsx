@@ -87,7 +87,7 @@ export default function MapBottomSheet({
       {/* ========================================================================= */}
       {/* MOBILE BOTTOM SHEET (visible on < lg screens)                            */}
       {/* ========================================================================= */}
-      <div className="lg:hidden fixed inset-x-0 bottom-12 sm:bottom-0 z-30 pointer-events-none pb-[env(safe-area-inset-bottom)]">
+      <div className="lg:hidden fixed inset-x-0 bottom-0 z-30 pointer-events-none pb-[env(safe-area-inset-bottom)]">
         {/* Backdrop for full expansion */}
         <AnimatePresence>
           {snap === 'full' && (
@@ -104,14 +104,14 @@ export default function MapBottomSheet({
         <motion.div
           layout
           transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className={`relative z-10 pointer-events-auto w-full bg-white/98 backdrop-blur-xl rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.18)] border-t border-slate-200/90 flex flex-col transition-all duration-300 ${getSheetStyle()}`}
+          className={`relative z-10 pointer-events-auto w-full bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.18)] border-t border-slate-200 flex flex-col transition-all duration-300 ${getSheetStyle()}`}
         >
           {/* DRAG HANDLE BAR */}
           <div
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onClick={toggleExpand}
-            className="w-full pt-2 pb-1.5 px-4 flex flex-col items-center justify-center cursor-pointer select-none shrink-0 group active:bg-slate-50/50 rounded-t-3xl"
+            className="w-full pt-2.5 pb-2 px-4 flex flex-col items-center justify-center cursor-pointer select-none shrink-0 group active:bg-slate-50/50 rounded-t-3xl bg-white"
           >
             {/* Pill drag indicator */}
             <div className="w-10 h-1.5 bg-slate-300 group-hover:bg-[#5B21B6] rounded-full transition-colors mb-1.5" />
@@ -154,13 +154,17 @@ export default function MapBottomSheet({
             </div>
           </div>
 
-          {/* SCROLLABLE CARDS CONTENT (2-3 cards visible in 'half' state) */}
+          {/* SCROLLABLE CARDS CONTENT (Solid white background filling all remaining area) */}
           <div
-            className={`flex-1 overflow-y-auto px-2.5 sm:px-4 pb-14 pt-1 space-y-2.5 custom-scrollbar overscroll-contain ${
+            className={`flex-1 bg-white overflow-y-auto px-2.5 sm:px-4 pb-8 pt-1 space-y-2.5 custom-scrollbar overscroll-contain min-h-0 flex flex-col ${
               snap === 'min' || snap === 'peek' ? 'overflow-hidden pointer-events-none opacity-40' : 'opacity-100'
             }`}
           >
-            {children}
+            <div className="flex-1 w-full bg-white flex flex-col">
+              {children}
+            </div>
+            {/* Extra solid white fill ensuring even with 1 doctor card the lower area is completely solid white */}
+            <div className="w-full flex-1 min-h-16 bg-white" />
           </div>
         </motion.div>
       </div>
@@ -168,7 +172,7 @@ export default function MapBottomSheet({
       {/* ========================================================================= */}
       {/* DESKTOP / TABLET RESULTS PANEL (visible on lg+ screens)                   */}
       {/* ========================================================================= */}
-      <div className="hidden lg:flex w-5/12 xl:w-[42%] shrink-0 flex-col h-[calc(100vh-140px)] min-h-125 bg-white/95 backdrop-blur-md rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
+      <div className="hidden lg:flex absolute left-4 top-4 bottom-4 z-20 w-96 lg:w-[420px] shrink-0 flex-col bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
         {/* Results Header */}
         <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between shrink-0">
           <div>
@@ -187,8 +191,11 @@ export default function MapBottomSheet({
         </div>
 
         {/* Scrollable Results List */}
-        <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar">
-          {children}
+        <div className="flex-1 overflow-y-auto p-3.5 space-y-2.5 custom-scrollbar bg-white flex flex-col">
+          <div className="flex-1 w-full bg-white flex flex-col">
+            {children}
+          </div>
+          <div className="w-full flex-1 min-h-16 bg-white" />
         </div>
       </div>
     </>
