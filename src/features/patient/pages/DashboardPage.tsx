@@ -271,10 +271,11 @@ export default function DashboardPage() {
               <span className="hidden md:inline">Here is your health overview, live vitals tracking, and longitudinal health insights.</span>
             </p>
 
-            <div className="grid grid-cols-3 md:flex md:flex-wrap gap-1.5 md:gap-2.5 pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:flex md:flex-wrap gap-1.5 md:gap-2.5 pt-1">
               <QuickAction label="Book Visit" icon={Calendar} href="/patient/appointments" />
               <QuickAction label="Find Doctor" icon={Stethoscope} href="/patient/doctors" />
               <QuickAction label="Book Test" icon={TestTube} href="/patient/diagnostic-bookings" />
+              <QuickAction label="AI Assistant" icon={Sparkles} href="/patient/assistant" />
             </div>
           </div>
 

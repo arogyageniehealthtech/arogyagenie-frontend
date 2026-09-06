@@ -4,14 +4,23 @@ import { Sparkles, X } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HealthAssistantChat } from "./HealthAssistantChat";
 import { ROUTES } from "@/constants/routes.constants";
+import { useAppSelector } from "@/store/hooks";
 
 export function FloatingHealthAssistant() {
+  const { user, userType } = useAppSelector((state) => state.auth);
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
+
+  const effectiveUserType = userType || user?.userType;
+
+  // Strict role verification: only PATIENT role is permitted to see/access the chatbot
+  if (effectiveUserType !== "PATIENT") {
+    return null;
+  }
 
   const isAssistantPage =
     location.pathname === ROUTES.PATIENT.ASSISTANT ||
