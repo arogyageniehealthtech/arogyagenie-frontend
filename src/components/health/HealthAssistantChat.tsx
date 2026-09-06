@@ -629,9 +629,10 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
 
   return (
     <div
-      className={`relative w-full h-full flex flex-col overflow-hidden select-none ${className}`}
+      className={`relative w-full h-full flex flex-col overflow-hidden select-none overscroll-none bg-[#060819] ${className}`}
       style={{
-        background: "radial-gradient(circle at 50% 20%, #0d1033 0%, #080a21 45%, #040510 100%)",
+        backgroundColor: "#060819",
+        backgroundImage: "radial-gradient(circle at 50% 20%, #0d1033 0%, #080a21 45%, #040510 100%)",
         color: "#ffffff",
       }}
     >
@@ -878,7 +879,7 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
           {activeNavTab === "chat" && (
             <div className="flex-1 flex flex-col min-h-0 relative">
               {/* Message Thread */}
-              <div className="flex-1 overflow-y-auto px-2.5 py-2 sm:p-6 space-y-2 sm:space-y-4 scrollbar-thin scrollbar-thumb-indigo-900/60">
+              <div className="flex-1 overflow-y-auto overscroll-contain px-2.5 py-2 sm:p-6 space-y-2 sm:space-y-4 scrollbar-thin scrollbar-thumb-indigo-900/60">
                 {/* 1. Welcome Message & Quick Actions (Rendered as first item in thread) */}
                 <div className="space-y-2 sm:space-y-4">
                   {/* Mobile/Tablet Lightweight Glowing Mascot Card */}
@@ -1118,6 +1119,14 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                       rows={1}
                       value={inputQuery}
                       onChange={(e) => setInputQuery(e.target.value)}
+                      onFocus={() => {
+                        if (typeof window !== "undefined") {
+                          window.scrollTo(0, 0);
+                        }
+                        setTimeout(() => {
+                          messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                        }, 120);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
@@ -1126,7 +1135,7 @@ export function HealthAssistantChat({ className = "", onClose, isFullPage = fals
                       }}
                       placeholder="Type your health question..."
                       disabled={askAssistant.isPending}
-                      className="w-full bg-transparent border-0 text-white placeholder:text-slate-500 focus:outline-none focus:ring-0 text-xs sm:text-[15px] resize-none max-h-24 min-h-[30px] sm:min-h-[36px] py-1 sm:py-2 px-1 block min-w-0"
+                      className="w-full bg-transparent border-0 text-white placeholder:text-slate-500 focus:outline-none focus:ring-0 text-base sm:text-[15px] resize-none max-h-24 min-h-[30px] sm:min-h-[36px] py-1 sm:py-2 px-1 block min-w-0"
                     />
 
                     {/* Circular Glowing Send Button */}

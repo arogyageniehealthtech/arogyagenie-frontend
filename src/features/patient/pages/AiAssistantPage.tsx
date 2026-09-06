@@ -8,6 +8,24 @@ export default function AiAssistantPage() {
 
   useEffect(() => {
     document.title = "ArogyaGenie AI - Health Assistant";
+
+    const prevBodyBg = document.body.style.backgroundColor;
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    const prevBodyOverscroll = document.body.style.overscrollBehavior;
+    const prevHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+
+    // Lock html and body background to eliminate white canvas flashes on mobile resize
+    document.body.style.backgroundColor = "#060819";
+    document.documentElement.style.backgroundColor = "#060819";
+    document.body.style.overscrollBehavior = "none";
+    document.documentElement.style.overscrollBehavior = "none";
+
+    return () => {
+      document.body.style.backgroundColor = prevBodyBg;
+      document.documentElement.style.backgroundColor = prevHtmlBg;
+      document.body.style.overscrollBehavior = prevBodyOverscroll;
+      document.documentElement.style.overscrollBehavior = prevHtmlOverscroll;
+    };
   }, []);
 
   const handleClose = () => {
@@ -20,7 +38,7 @@ export default function AiAssistantPage() {
   };
 
   return (
-    <div className="w-full h-[100dvh] bg-[#060819] flex flex-col overflow-hidden">
+    <div className="w-full h-full flex-1 flex flex-col overflow-hidden bg-[#060819] select-none">
       {/* Ambient glowing top border beam */}
       <div className="h-1 w-full bg-linear-to-r from-purple-600 via-indigo-500 to-cyan-400 shrink-0" />
       

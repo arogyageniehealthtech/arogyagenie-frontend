@@ -137,7 +137,7 @@ export default function PatientLayout() {
   };
 
   return (
-    <div className={`font-sans relative flex ${isAiChatPage ? 'min-h-[100dvh] h-[100dvh] bg-[#060819] overflow-hidden' : 'min-h-screen bg-[#F8FAFC]'}`}>
+    <div className={`font-sans ${isAiChatPage ? 'fixed inset-0 w-full h-[100dvh] h-full bg-[#060819] flex flex-col overflow-hidden z-50 overscroll-none' : 'relative flex min-h-screen bg-[#F8FAFC]'}`}>
 
       {/* --- LEFT SIDEBAR --- */}
       {!isAiChatPage && (
@@ -653,7 +653,7 @@ export default function PatientLayout() {
         )}
 
         {/* MAIN CONTENT AREA */}
-        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-[100dvh] max-w-none p-0 overflow-hidden' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
+        <main className={`relative mx-auto w-full flex-1 ${isAiChatPage ? 'h-full max-w-none p-0 overflow-hidden bg-[#060819] flex flex-col min-h-0' : 'max-w-7xl p-2 sm:p-3 lg:p-4 pb-20 sm:pb-3 lg:pb-4'}`}>
           <Outlet />
         </main>
       </div>
